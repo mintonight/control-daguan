@@ -143,7 +143,7 @@ async def main():
     stored = await pg.evaluate("CDGStore.get('rec')"); ok('导入后数据写回(IndexedDB)', stored and len(stored['marks']) >= 1, json.dumps(stored['marks'])[:80])
     bad = '/tmp/bad.json'; open(bad, 'w').write('{"x":1}'); await t('#importFile').set_input_files(bad); await pg.wait_for_timeout(300)
     ok('导入无效 JSON 提示', '不是有效' in await txt('#setMsg'), await txt('#setMsg'))
-    await pg.mouse.click(1300, 700); ok('点击外部关闭设置', not await t('#settings').is_visible())
+    await pg.mouse.click(400, 400); ok('点击外部关闭设置', not await t('#settings').is_visible())
     # 品牌链接
     await t('#tabs button[data-tab="fav"]').click(); await t('#brand').click(); ok('品牌 Logo: 回到题库首页', await t('#tabs button[data-tab="bank"]').get_attribute('aria-selected') == 'true')
     # 每一道题渲染检查

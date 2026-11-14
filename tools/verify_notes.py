@@ -142,9 +142,9 @@ async def main():
     ok('搜索能找到笔记内容', await t('.card[data-id="202301"]').count() == 1)
     await t('#search').fill(''); await pg.wait_for_timeout(400)
     # 多题模式
-    await t('#gearBtn').click(); await open_sec(pg, 'read'); await t('#modeSeg button[data-mode="multiple"]').click(); await pg.mouse.click(1300, 860)
+    await t('#gearBtn').click(); await open_sec(pg, 'read'); await t('#modeSeg button[data-mode="multiple"]').click(); await pg.mouse.click(400, 400)
     ok('多题模式: 每张卡片各自有笔记按钮，有笔记的题显示标识', await t('.card button[data-act="note"]').count() > 1 and await t('.card[data-id="202301"] .note-flag').count() == 1)
-    await t('#gearBtn').click(); await open_sec(pg, 'read'); await t('#modeSeg button[data-mode="single"]').click(); await pg.mouse.click(1300, 860)
+    await t('#gearBtn').click(); await open_sec(pg, 'read'); await t('#modeSeg button[data-mode="single"]').click(); await pg.mouse.click(400, 400)
     # ---------- 导出 / 导入 ----------
     await t('#gearBtn').click(); await open_sec(pg, 'records')
     async with pg.expect_download() as d: await t('#exportBtn').click()
@@ -198,7 +198,7 @@ async def main():
     await t('#syncNowBtn').click(); await pg.wait_for_function("document.querySelector('#setMsg').textContent.includes('同步完成')", timeout=8000)
     r = await rec()
     ok('Gist 同步: 拉取远端较新的笔记并刷新界面', r['notes']['202301']['text'].startswith('## 远端更新') and await t('.card[data-id="202301"] .md-body h2').count() == 1 and r['notes'].get('202302', {}).get('text') == '远端新增')
-    await pg.mouse.click(1300, 860)
+    await pg.mouse.click(400, 400)
     if await t('textarea.note-input').count() == 0: await t('.nb-tabs button[data-act="nedit"]').click()
     await t('textarea.note-input').fill('本地再改'); await pg.wait_for_timeout(900 + 3500)
     ok('Gist 同步: 本地编辑笔记后自动上传', gh.content(gid)['notes']['202301']['text'] == '本地再改', [gh.content(gid)['notes']['202301'], (await rec())['notes']['202301'], await t('#syncStatus').inner_text(), await t('.card').get_attribute('data-id')])

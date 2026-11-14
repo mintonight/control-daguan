@@ -4,8 +4,8 @@ import asyncio, sys, json
 from playwright.async_api import async_playwright
 BASE = sys.argv[1] if len(sys.argv) > 1 else 'http://localhost:8765/'
 R = []
-SECS = ['read', 'review', 'records', 'sync', 'offline']
-CTRL = {'read': '#modeSeg', 'review': '#retention', 'records': '#exportBtn', 'sync': '#gistToken', 'offline': '#offlineDlBtn'}
+SECS = ['read', 'review', 'records', 'sync', 'offline', 'about']
+CTRL = {'read': '#modeSeg', 'review': '#retention', 'records': '#exportBtn', 'sync': '#gistToken', 'offline': '#offlineDlBtn', 'about': '#aboutRepo'}
 def ok(name, cond, detail=''):
     R.append((name, bool(cond), detail)); print(('PASS' if cond else 'FAIL'), name, detail)
 
@@ -30,10 +30,14 @@ async def main():
     await pg.goto(BASE + '?list=complete&question=202501', wait_until='networkidle')
     t = pg.locator
     await t('#gearBtn').click()
+    gb = await box(pg, '#gearBtn'); vw = 1440
+    ok('设置按钮在顶栏右上角', gb and gb['y'] < 56 and gb['x'] + gb['width'] >= vw - 24 - 1, gb)
     st = await state(pg); ok('默认: 只展开「阅读」，其余收起', only(st, 'read'), json.dumps(st))
     ok('收起分组里的控件不可见', await t('#modeSeg').is_visible() and await t('#fontSeg').is_visible() and not any([await t(CTRL[k]).is_visible() for k in SECS[1:]]))
     aria = [(await t(f'#acc-{k}-btn').get_attribute('aria-controls'), await t(f'#acc-{k}').get_attribute('aria-labelledby')) for k in SECS]
     ok('标题按钮 aria-controls / 面板 aria-labelledby 互相对应', aria == [(f'acc-{k}', f'acc-{k}-btn') for k in SECS], aria)
+    repo = t('#aboutRepo')
+    ok('关于: GitHub 链接指向仓库并新标签打开', await repo.get_attribute('href') == 'https://github.com/mintonight/control-daguan' and await repo.get_attribute('target') == '_blank' and 'noopener' in (await repo.get_attribute('rel') or ''), f"{await repo.get_attribute('href')} {await repo.get_attribute('target')} {await repo.get_attribute('rel')}")
     ok('收起时标题显示摘要', [await t(s).text_content() for s in ('#accReadSum', '#accReviewSum', '#accSyncSum')] == ['单题 · 标准', '记忆率 0.90', '未连接'],
        [await t(s).text_content() for s in ('#accReadSum', '#accReviewSum', '#accSyncSum')])
     L = await layout(pg); h_read = L['h']
@@ -56,7 +60,7 @@ async def main():
     await pg.keyboard.press('ArrowDown'); ok('键盘: ↓ 移到下一个标题', await pg.evaluate("document.activeElement.id") == 'acc-sync-btn')
     await pg.keyboard.press('Space'); ok('键盘: Space 展开并收起其他组', only(await state(pg), 'sync'))
     await pg.keyboard.press('Home'); ok('键盘: Home 回到第一个标题', await pg.evaluate("document.activeElement.id") == 'acc-read-btn')
-    await pg.keyboard.press('ArrowUp'); ok('键盘: ↑ 从第一个循环到最后一个', await pg.evaluate("document.activeElement.id") == 'acc-offline-btn')
+    await pg.keyboard.press('ArrowUp'); ok('键盘: ↑ 从第一个循环到最后一个', await pg.evaluate("document.activeElement.id") == 'acc-about-btn')
     # 学习记录 + 提示条
     await t('#acc-records-btn').click()
     L = await layout(pg); ok('学习记录展开: 面板在视口内', L['bottom'] <= L['vh'] and not L['hOverflow'], L)
@@ -78,7 +82,7 @@ async def main():
     ok('复习: 切走再回来确认行仍在', await t('#resetConfirm').is_visible()); await t('#resetNo').click()
     ok('复习: 取消后恢复按钮', await t('#resetSrsBtn').is_visible() and not await t('#resetConfirm').is_visible())
     # 记住上次分组（本机偏好，不进同步）
-    await pg.mouse.click(1300, 860); ok('点击外部关闭设置', not await t('#settings').is_visible())
+    await pg.mouse.click(400, 400); ok('点击外部关闭设置', not await t('#settings').is_visible())
     await t('#gearBtn').click(); ok('再次打开: 展开上次的分组', only(await state(pg), 'review'))
     await pg.wait_for_timeout(300); await pg.reload(wait_until='networkidle'); await t('#gearBtn').click()
     ok('刷新后: 仍展开上次的分组', only(await state(pg), 'review'))
@@ -89,7 +93,9 @@ async def main():
     # 手机宽度
     m = await b.new_page(viewport={'width': 390, 'height': 844}); merrs = []
     m.on('pageerror', lambda e: merrs.append(str(e)))
-    await m.goto(BASE + '?list=complete&question=202501', wait_until='networkidle'); await m.locator('#gearBtn').click()
+    await m.goto(BASE + '?list=complete&question=202501', wait_until='networkidle')
+    gb = await box(m, '#gearBtn'); ok('手机: 设置按钮在顶栏右上角', gb and gb['y'] < 56 and gb['x'] + gb['width'] >= 390 - 16 - 1, gb)
+    await m.locator('#gearBtn').click()
     L = await layout(m); ok('手机: 默认展开阅读，面板完整在屏幕内、无横向滚动', only(await state(m), 'read') and L['left'] >= 0 and L['right'] <= L['vw'] and L['bottom'] <= L['vh'] and not L['hOverflow'], L)
     await m.screenshot(path='shots/settings-mobile.png')
     for k in SECS:

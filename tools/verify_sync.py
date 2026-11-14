@@ -118,7 +118,7 @@ async def main():
     ok('令牌不写入 localStorage / 记录 / 导出', await pg.evaluate("JSON.stringify(localStorage).includes('ghp_')") is False and TOKEN not in json.dumps(await rec()))
     ok('显示同步状态与最近同步时间', '已同步' in await txt('#syncStatus') and '最近成功同步' in await txt('#syncMeta'), await txt('#syncStatus'))
     # 改动 → 防抖上传
-    n0 = len(gh.log); await pg.mouse.click(1300, 700)
+    n0 = len(gh.log); await pg.mouse.click(400, 400)
     await t('#nextBtn').click(); q2 = int(re.search(r'question=(\d+)', pg.url).group(1))
     await t('button[data-mark="shaky"]').click(); await t('.mk.fav').click()
     await pg.wait_for_timeout(1000); early = [l for l in gh.log[n0:] if l[0] == 'PATCH']
@@ -152,7 +152,7 @@ async def main():
     ok('错误恢复后同步成功', '已同步' in await txt('#syncStatus'), await txt('#syncStatus'))
     # 离线
     await ctx.set_offline(True); await pg.wait_for_timeout(200); n0 = len(gh.log)
-    await pg.mouse.click(1300, 700); await t('button[data-mark="unknown"]').click(); await pg.wait_for_timeout(3600)
+    await pg.mouse.click(400, 400); await t('button[data-mark="unknown"]').click(); await pg.wait_for_timeout(3600)
     await t('#gearBtn').click(); await open_sec(pg, 'sync')
     ok('离线: 改动保存在本地并提示离线', '离线' in await txt('#syncStatus') and len(gh.log) == n0 and (await rec())['marks']['202306']['state'] == 'unknown', await txt('#syncStatus'))
     await ctx.set_offline(False); await pg.wait_for_timeout(1500)
@@ -168,7 +168,7 @@ async def main():
     # 断开
     await t('#syncOffBtn').click(); await pg.wait_for_timeout(200)
     ok('断开同步: 删除本机令牌、恢复连接表单、本地记录保留', await pg.evaluate("CDGStore.get('gist')") is None and await t('#syncOff').is_visible() and (await rec())['marks']['202306']['state'] == 'unknown')
-    n0 = len(gh.log); await pg.mouse.click(1300, 700); await t('button[data-mark="shaky"]').click(); await pg.wait_for_timeout(3600)
+    n0 = len(gh.log); await pg.mouse.click(400, 400); await t('button[data-mark="shaky"]').click(); await pg.wait_for_timeout(3600)
     ok('断开后不再请求 GitHub', len(gh.log) == n0)
     # 导出 / 记录码仍可用
     await t('#gearBtn').click(); await open_sec(pg, 'records'); await t('#genCodeBtn').click(); code = await t('#codeInput').input_value()

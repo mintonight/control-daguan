@@ -29,6 +29,7 @@
     </nav>
     <button type="button" class="btn soft" id="tocBtn" aria-label="章节目录" aria-expanded="true"><svg viewBox="0 0 24 24" class="ic"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>目录</button>
     <span class="section-label" id="sectionLabel"></span>
+    <div class="topbar-end">
     <button type="button" class="btn soft" id="installTopBtn" hidden>安装应用</button>
     <div class="pop-wrap">
       <button type="button" class="icon-btn" id="gearBtn" aria-label="设置" title="设置" aria-expanded="false"><svg viewBox="0 0 24 24" class="ic"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
@@ -101,9 +102,17 @@
               <div class="confirm-row" id="offlineClearConfirm" hidden><span>清除后，离线时只能打开已经访问过的题目。</span><button type="button" class="btn danger" id="offlineClearYes">确认清除</button><button type="button" class="btn ghost" id="offlineClearNo">取消</button></div>
             </div>
           </section>
+          <section class="acc" data-acc="about">
+            <h3 class="acc-h"><button type="button" class="acc-btn" id="acc-about-btn" data-acc="about" aria-expanded="false" aria-controls="acc-about"><span class="acc-title">关于</span><svg viewBox="0 0 24 24" class="ic chev" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></h3>
+            <div class="acc-panel" id="acc-about" role="region" aria-labelledby="acc-about-btn" hidden>
+              <p class="hint">控制大观 · 自动控制原理真题</p>
+              <p class="hint">源代码：<a id="aboutRepo" href="https://github.com/mintonight/control-daguan" target="_blank" rel="noopener">github.com/mintonight/control-daguan</a></p>
+            </div>
+          </section>
         </div>
         <p class="set-msg" id="setMsg" role="status"></p>
       </div>
+    </div>
     </div>
   </header>
   <div class="layout">

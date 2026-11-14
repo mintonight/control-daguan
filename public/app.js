@@ -24,7 +24,7 @@ const GRADE = { unknown: F.Rating.Again, shaky: F.Rating.Hard, mastered: F.Ratin
 // ---------- 存储：IndexedDB（idb-keyval），首次加载自动从 localStorage 迁移 ----------
 const { CDGStore, CDGSync, CDGNotes } = window;
 // 设置面板折叠分组；最近展开的一组记在本机偏好（不导出、不同步）
-const SET_SECS = ['read', 'review', 'records', 'sync', 'offline'];
+const SET_SECS = ['read', 'review', 'records', 'sync', 'offline', 'about'];
 function normRec(r) {
   const ret = +r.retention;
   return { favorites: Array.isArray(r.favorites) ? r.favorites.map(Number) : [], marks: r.marks && typeof r.marks === 'object' ? r.marks : {},
