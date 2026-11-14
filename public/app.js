@@ -240,6 +240,31 @@ function errataHTML(d) {
   const sev = lv === 'ok' ? 'ok' : (lv === 'severe' || lv === 'conflict') ? 'severe' : 'warn';
   return `<aside class="note errata" data-sev="${sev}"><div class="errata-hd"><span class="errata-tag">${title}</span>${badge ? `<span class="errata-badge">${badge}</span>` : ''}</div><div class="errata-bd">${md(d.notes)}</div></aside>`;
 }
+// 勘误针对原图内容：有文字/原图切换时，跟原图一起出现；已改正的文字视图不显示。
+// 严重/题目矛盾且文字尚未改正时，文字视图也保留勘误，避免只看到可照抄的错文。
+// 仅有原图（无文字切换）时，勘误始终与原图一起显示。答案与解析同时展开时只出现一次，优先在解析框。
+function showingOrigImages(kind, sh, d, hasImgs) {
+  if (kind === 'answer') {
+    if (d.answer && hasImgs) return sh.ansSrc === 'orig';
+    if (d.answer) return false;
+    return hasImgs && !sh.exp;
+  }
+  if (d.explanation && hasImgs) return sh.expSrc === 'orig';
+  return hasImgs;
+}
+function showingUncorrectedText(kind, sh, d, hasImgs) {
+  const lv = d.errataLevel || '';
+  if (lv !== 'severe' && lv !== 'conflict') return false;
+  if (kind === 'answer') return !!(d.answer && (!hasImgs || sh.ansSrc !== 'orig'));
+  return !!(d.explanation && (!hasImgs || sh.expSrc !== 'orig'));
+}
+function errataIn(kind, sh, d, hasImgs) {
+  if (!d || !d.notes) return '';
+  const expGets = sh.exp && (showingOrigImages('exp', sh, d, hasImgs) || showingUncorrectedText('exp', sh, d, hasImgs));
+  const ansGets = sh.answer && (showingOrigImages('answer', sh, d, hasImgs) || showingUncorrectedText('answer', sh, d, hasImgs));
+  if (kind === 'exp' ? expGets : ansGets && !expGets) return errataHTML(d);
+  return '';
+}
 function origHTML(d) {
   if (!d || !d.originalImages.length) return '';
   return `<div class="orig"><div class="lab">原图解析（源文件顺序，PDF 第 ${d.answerPdfPages} 页）</div>${d.originalImages.map(o => `<img src="${o.src}" style="width:${o.w}px" alt="原图解析" loading="lazy" data-zoom title="单击放大图片">`).join('')}</div>`;
@@ -271,19 +296,19 @@ function cardHTML(id, idx) {
   const sh = st.show[id] || {}; const mk = rec.marks[id]?.state; const fav = rec.favorites.includes(id);
   const hl = st.q && st.q.length > 0 ? st.q : null;
   let ans = '';
-  const noteHTML = errataHTML(d);
   const hasImgs = !!(d && d.originalImages.length);
   if (sh.answer) {
     let body = '加载中', tabs = '';
     if (d) {
+      const noteHTML = errataIn('answer', sh, d, hasImgs);
       if (d.answer && hasImgs) {
         const view = sh.ansSrc === 'orig' ? 'orig' : 'text';
         tabs = srcTabsHTML('answer', view);
-        body = view === 'orig' ? origHTML(d) : md(d.answer) + (!sh.exp ? noteHTML : '');
+        body = (view === 'orig' ? origHTML(d) : md(d.answer)) + noteHTML;
       } else if (d.answer) {
-        body = md(d.answer) + (!sh.exp ? noteHTML : '');
+        body = md(d.answer) + noteHTML;
       } else {
-        body = (sh.exp ? '<p class="muted">本题答案见下方「解析」中的原图。</p>' : origHTML(d)) + (!sh.exp ? noteHTML : '');
+        body = (sh.exp ? '<p class="muted">本题答案见下方「解析」中的原图。</p>' : origHTML(d)) + noteHTML;
       }
     }
     ans += boxHTML('答案', 'answer', id, body, tabs);
@@ -291,10 +316,11 @@ function cardHTML(id, idx) {
   if (sh.exp) {
     let body = '加载中', tabs = '';
     if (d) {
+      const noteHTML = errataIn('exp', sh, d, hasImgs);
       if (d.explanation && hasImgs) {
         const view = sh.expSrc === 'orig' ? 'orig' : 'text';
         tabs = srcTabsHTML('exp', view);
-        body = view === 'orig' ? origHTML(d) : md(d.explanation) + noteHTML;
+        body = (view === 'orig' ? origHTML(d) : md(d.explanation)) + noteHTML;
       } else {
         body = (d.explanation ? md(d.explanation) : '') + origHTML(d) + noteHTML;
       }
