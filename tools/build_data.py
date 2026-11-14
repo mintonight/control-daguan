@@ -68,7 +68,7 @@ for qf in sorted(glob.glob(os.path.join(ROOT,'data-src','*','questions.json'))):
 questions.sort(key=lambda x:(-x['year'],x['number']))
 years=sorted({q['year'] for q in questions},reverse=True)
 TOPIC_ORDER=['建模','时域分析','根轨迹','频域分析','校正','离散系统','非线性系统','状态空间']
-# 考点页点名的重点题目（按章节、点名顺序）。站内没有的年份在生成时跳过。
+# 考点页点名的重点题目（点名顺序；目录按专题分类，与专题树相同）。站内没有的年份在生成时跳过。
 FEATURED=[
   ('第二章',2023,1),('第二章',2019,1),('第二章',2018,1),
   ('第三章',2019,2),('第三章',2023,2),('第三章',2024,2),
@@ -81,7 +81,6 @@ FEATURED=[
   ('其他点名',2017,1),('其他点名',2012,6),('其他点名',2014,6),('其他点名',2019,5),
   ('其他点名',2017,5),('其他点名',2012,7),('其他点名',2020,5),('其他点名',2021,5),
 ]
-CHAPTER_ORDER=['第二章','第三章','第四章','第五章','第六章','第七章','第八章','第九章','其他点名']
 available={q['id'] for q in questions}
 feat_entries=[]; feat_skipped=[]; feat_seen=set()
 for ch,y,no in FEATURED:
@@ -94,24 +93,23 @@ if feat_skipped:
   print('featured skipped (year not in bank):', ', '.join(f'{y}年第{no}题（{ch}）' for ch,y,no in feat_skipped))
 by_id={q['id']:q for q in questions}
 feat_qs=[by_id[qid] for _,qid in feat_entries]
-feat_ch={qid:ch for ch,qid in feat_entries}
 def lst(id,name,qs,catfn):
   return dict(id=id,name=name,questionIds=[q['id'] for q in qs],categoryByQuestion={str(q['id']):catfn(q) for q in qs})
 def topic_cats(q): return [c for c in q['categories'] if not c.startswith('历年真题')]
 def year_cat(q): return [f"历年真题 / {q['year']}"]
 def with_featured(cats,q):
-  ch=feat_ch.get(q['id'])
-  return ([f'重点题目 / {ch}']+cats) if ch else cats
+  if q['id'] not in feat_seen: return cats
+  return [f'重点题目 / {c}' for c in topic_cats(q)]+cats
 lists=[lst('complete','完整题库',questions,lambda q:with_featured(topic_cats(q)+year_cat(q),q)),
        lst('exam-by-year','真题按年',questions,lambda q:with_featured(year_cat(q),q)),
        lst('by-topic','专题分类',questions,topic_cats),
-       lst('featured','重点题目',feat_qs,lambda q:[feat_ch[q['id']]])]
+       lst('featured','重点题目',feat_qs,topic_cats)]
 for y in years: lists.append(lst(f'exam-{y}',f'{y} 真题',[q for q in questions if q['year']==y],lambda q:topic_cats(q)))
 for t in TOPIC_ORDER:
   qs=[q for q in questions if t in q['tags']]
   if qs: lists.append(lst(f'topic-{t}',f'专题·{t}',qs,lambda q:[c for c in topic_cats(q)]))
 lib=dict(subject='自动控制原理（重庆大学 844）',source=f'重庆大学 {min(q["year"] for q in questions)}–{max(q["year"] for q in questions)} 初试真题',
-         topicOrder=['历年真题','重点题目']+TOPIC_ORDER+CHAPTER_ORDER,years=years,lists=lists,questions=questions)
+         topicOrder=['历年真题','重点题目']+TOPIC_ORDER,years=years,lists=lists,questions=questions)
 json.dump(lib,open(os.path.join(OUT,'library.json'),'w'),ensure_ascii=False)
 for k,v in details.items(): json.dump(v,open(os.path.join(OUT,'questions',f'{k}.json'),'w'),ensure_ascii=False)
 print(len(questions),'questions;',{y:sum(1 for q in questions if q['year']==y) for y in years},
