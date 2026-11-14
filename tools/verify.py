@@ -26,6 +26,28 @@ async def main():
     await t('#listPop button[data-list="exam-2024"]').click(); ok('选择题单: 切到 2024 真题', '2024 真题 · 8 题' in await txt('#listName') and '2024' in await txt('.src'), await txt('#listName'))
     ok('URL 同步 list', 'list=exam-2024' in pg.url, pg.url)
     await t('#listBtn').click(); await t('#listPop button[data-list="complete"]').click()
+    # 重点题目题单与目录分组
+    await t('#listBtn').click()
+    ok('题单含重点题目', await t('#listPop button[data-list="featured"]').count() == 1, await t('#listPop').inner_text())
+    await t('#listPop button[data-list="featured"]').click()
+    ok('选择题单: 切到重点题目', '重点题目 · 23 题' in await txt('#listName'), await txt('#listName'))
+    ok('URL 同步 featured', 'list=featured' in pg.url, pg.url)
+    feat_chs = ['第二章','第三章','第四章','第五章','第六章','第七章','第八章','第九章','其他点名']
+    feat_names = await pg.evaluate("()=>[...document.querySelectorAll('.tree > .node .nm .t')].map(e=>e.textContent)")
+    ok('重点题目目录按章节排列', feat_names == feat_chs, str(feat_names))
+    await t('.node[data-path="第二章"] .nm').click()
+    ok('重点题目: 第二章首题为 2023 第一题', '2023重大844 · 第一题' in await txt('.src'), await txt('.src'))
+    await t('.node[data-path="其他点名"] .nm').click()
+    ok('重点题目: 其他点名首题为 2017 第一题', '2017重大844 · 第一题' in await txt('.src'), await txt('.src'))
+    await t('#listBtn').click(); await t('#listPop button[data-list="complete"]').click()
+    ok('完整题库目录含重点题目分组', await t('.node[data-path="重点题目"]').count() == 1)
+    await t('.node[data-path="重点题目"] > .tw').click()
+    ok('完整题库: 展开重点题目可见第二章', await t('.node[data-path="重点题目 / 第二章"]').count() == 1)
+    await t('.node[data-path="重点题目 / 第二章"] .nm').click()
+    ok('完整题库: 重点题目/第二章顺序与点名一致', '2023重大844 · 第一题' in await txt('.src'), await txt('.src'))
+    await t('#listBtn').click(); await t('#listPop button[data-list="exam-by-year"]').click()
+    ok('真题按年目录含重点题目分组', await t('.node[data-path="重点题目"]').count() == 1)
+    await t('#listBtn').click(); await t('#listPop button[data-list="complete"]').click()
     # 目录树
     first = t('.tree > .node').first
     name = await first.locator('.t').inner_text()

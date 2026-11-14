@@ -148,6 +148,16 @@ function buildTree(ids) {
     if (/^\d{4}$/.test(a.name) && /^\d{4}$/.test(b.name)) return b.name - a.name;
     return 0; }); n.list.forEach(sortKids); };
   sortKids(root);
+  // 重点题目按考点页点名顺序排列（与 featured 题单一致）
+  const feat = lib.lists.find(l => l.id === 'featured');
+  if (feat) {
+    const rank = id => { const i = feat.questionIds.indexOf(id); return i < 0 ? 1e9 : i; };
+    const walk = n => {
+      if (n.path === '重点题目' || (n.path && n.path.startsWith('重点题目 / '))) n.ids.sort((a, b) => rank(a) - rank(b));
+      (n.list || []).forEach(walk);
+    };
+    walk(root);
+  }
   return root;
 }
 function flatNodes(root) { const out = []; const walk = n => n.list.forEach(k => { out.push(k); walk(k); }); walk(root); return out; }
