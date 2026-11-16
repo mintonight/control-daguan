@@ -46,7 +46,7 @@ Node 测试还覆盖异步回调、取消、拒绝、恢复、并发观察者及
 ## CI 约束
 
 `npm run check:waits` 对 Python 工具做 AST 检查，拒绝固定 sleep、`wait_for_timeout` 以及字符串中的 JavaScript 定时等待。
-旧 `shot*.py` 脚本按完整文件哈希保留例外，等待第 11 项替换。任何修改都必须消除对应固定等待，不能新增同类用法。
+截图统一由 `tools/verify_all.py URL --shots` 生成；旧 `shot*.py` 已删除。固定等待检查没有例外。
 GitHub Actions 用可重试的 HTTP 请求确认服务器就绪，不再无条件等待一秒。
 
 类型检查范围保持第 8 项的配置，README 和持久化格式均未改动。

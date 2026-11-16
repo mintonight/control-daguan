@@ -15,7 +15,6 @@ from verify_sw_update import verify_upgrade
 ROOT = Path(__file__).resolve().parents[1]
 PREFIX = '/control-daguan'
 R = []
-SHOT = ROOT / 'shots'
 
 def ok(name, cond, detail=''):
     R.append((name, bool(cond), detail)); print(('PASS' if cond else 'FAIL'), name, detail)
@@ -87,7 +86,6 @@ async def open_offline_sec(page):
         await page.locator('#acc-offline-btn').click()
 
 async def main():
-    SHOT.mkdir(parents=True, exist_ok=True)
     subprocess.check_call([sys.executable, str(ROOT / 'tools' / 'build_precache.py')])
     tmp = Path(tempfile.mkdtemp(prefix='cdg-pwa-'))
     site = tmp / 'public'
@@ -164,12 +162,10 @@ async def main():
         await pg.locator('button[aria-label="答案"]').click()
         await pg.wait_for_selector('.box', timeout=8000)
         ok('离线：已访问题目的答案仍能打开', await pg.locator('.box').count() > 0)
-        await pg.screenshot(path=str(SHOT / 'pwa-offline-question.png'))
         await ctx.set_offline(False)
 
         # --- 全量离线下载后打开未访问过的题 ---
         await open_offline_sec(pg)
-        await pg.screenshot(path=str(SHOT / 'pwa-settings-offline.png'))
         await pg.locator('#offlineDlBtn').click()
         await pg.wait_for_function("""() => (document.querySelector('#offlineProgText')||{}).textContent.includes('已')""", timeout=90000)
         prog = await pg.locator('#offlineProgText').inner_text()
@@ -242,7 +238,6 @@ async def main():
         await pg.evaluate('() => navigator.serviceWorker.getRegistration().then(r => r.update())')
         await pg.wait_for_selector('#updateToast:not([hidden])', timeout=30000)
         ok('新版本 SW 等待时显示「有新版本，点击更新」', '有新版本' in (await pg.locator('#updateToast').inner_text()))
-        await pg.screenshot(path=str(SHOT / 'pwa-update-toast.png'))
         async with pg.expect_navigation(wait_until='domcontentloaded'):
             await pg.locator('#updateToast').click()
         await pg.wait_for_function("version => caches.keys().then(keys => keys.includes('cdg-shell-' + version) && keys.filter(k => k.startsWith('cdg-shell-')).length === 1)", arg=updated['version'])
@@ -272,7 +267,6 @@ async def main():
         ok('beforeinstallprompt 后顶栏出现「安装应用」', top_vis)
         await open_offline_sec(pg)
         ok('设置「离线与安装」中出现「安装应用」按钮', await pg.locator('#installBtn').is_visible())
-        await pg.screenshot(path=str(SHOT / 'pwa-install-button.png'))
 
         # 模拟 standalone
         await cdp.send('Emulation.setEmulatedMedia', {
@@ -298,7 +292,6 @@ async def main():
         install_hidden = not await pg.locator('#installBtn').is_visible() and not await pg.locator('#installTopBtn').is_visible()
         ok('standalone 下隐藏安装按钮并显示已安装提示', standalone and already and install_hidden,
            f"matchMedia={standalone} hint={already} install hidden={install_hidden}")
-        await pg.screenshot(path=str(SHOT / 'pwa-standalone.png'))
         await cdp.detach()
 
         page_errs = [e for e in errs if 'favicon' not in e.lower()]

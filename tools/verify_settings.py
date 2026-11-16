@@ -43,7 +43,6 @@ async def main():
        [await t(s).text_content() for s in ('#accReadSum', '#accReviewSum', '#accSyncSum')])
     L = await layout(pg); h_read = L['h']
     ok('桌面: 面板宽 270px、在视口内、无横向滚动', abs(L['w'] - 270) < 1 and L['left'] >= 0 and L['right'] <= L['vw'] and L['bottom'] <= L['vh'] and not L['hOverflow'], L)
-    await pg.screenshot(path='shots/settings-default.png', clip={'x': max(L['left'] - 20, 0), 'y': 0, 'width': L['w'] + 40, 'height': L['bottom'] + 20})
     # 阅读组控件仍然有效
     await t('#modeSeg button[data-mode="multiple"]').click(); ok('阅读: 切到多题生效、摘要更新', await t('.card').count() > 1 and await t('#accReadSum').text_content() == '多题 · 标准')
     await t('#modeSeg button[data-mode="single"]').click(); await t('#fontSeg button[data-font="115"]').click()
@@ -70,7 +69,6 @@ async def main():
     ok('学习记录: 导出可用，导出内容不含界面分组偏好', data.get('version') == 2 and 'setSec' not in data, sorted(data))
     await t('#genCodeBtn').click(); msg = t('#setMsg'); await pg.wait_for_function("document.querySelector('#setMsg').textContent.includes('记录码')", timeout=5000)
     ok('提示条: 操作后在面板底部显示', await msg.is_visible() and '记录码' in await msg.inner_text(), await msg.inner_text())
-    await pg.screenshot(path='shots/settings-records.png', clip={'x': max(L['left'] - 20, 0), 'y': 0, 'width': L['w'] + 40, 'height': min(L['bottom'] + 20, 900)})
     # 文件选择器是浏览器边界：拦住真正的对话框，计数一次用户点击触发几次打开请求。
     await pg.evaluate("""() => {
       const input = document.querySelector('#importFile');
@@ -108,12 +106,11 @@ async def main():
     gb = await box(m, '#gearBtn'); ok('手机: 设置按钮在顶栏右上角', gb and gb['y'] < 56 and gb['x'] + gb['width'] >= 390 - 16 - 1, gb)
     await m.locator('#gearBtn').click()
     L = await layout(m); ok('手机: 默认展开阅读，面板完整在屏幕内、无横向滚动', only(await state(m), 'read') and L['left'] >= 0 and L['right'] <= L['vw'] and L['bottom'] <= L['vh'] and not L['hOverflow'], L)
-    await m.screenshot(path='shots/settings-mobile.png')
     for k in SECS:
         await m.locator(f'#acc-{k}-btn').click() if k != 'read' else None
         L = await layout(m); c = await m.locator(CTRL[k]).bounding_box()
         ok(f'手机: 「{k}」展开后控件可见且在面板宽度内', only(await state(m), k) and c and c['x'] >= L['left'] and c['x'] + c['width'] <= L['right'] + 1 and L['bottom'] <= L['vh'] and not L['hOverflow'], L)
-    await idle(m); await m.screenshot(path='shots/settings-sync-mobile.png')
+    await idle(m)
     ok('手机无页面错误', not merrs, str(merrs[:3]))
     await b.close()
   print(f'{sum(1 for r in R if r[1])}/{len(R)} passed')

@@ -190,7 +190,7 @@ async def main():
     # 权限提醒
     gh.scopes = 'gist, repo'; await t('#syncNowBtn').click(); await idle(pg)
     ok('令牌权限超出 gist 时提醒', await t('#syncWarn').is_visible() and 'repo' in await txt('#syncWarn'), await txt('#syncWarn'))
-    await t('#syncOn').scroll_into_view_if_needed(); await pg.screenshot(path='shots/sync-connected.png')
+    await t('#syncOn').scroll_into_view_if_needed()
     # 断开
     await t('#syncOffBtn').click(); await idle(pg)
     ok('断开同步: 删除本机令牌、恢复连接表单、本地记录保留', await pg.evaluate("__cdg.kv.get('gist')") is None and await t('#syncOff').is_visible() and (await rec())['marks']['202306']['state'] == 'unknown')
@@ -201,7 +201,6 @@ async def main():
     # 导出 / 记录码仍可用
     await t('#gearBtn').click(); await open_sec(pg, 'records'); await t('#genCodeBtn').click(); code = await t('#codeInput').input_value()
     ok('IndexedDB 下记录码仍可生成', code.startswith('CG1-'))
-    await pg.screenshot(path='shots/sync-settings.png')
     ok('无页面错误', not pg.errs, str(pg.errs))
     await b.close()
   print(f'{sum(1 for r in R if r[1])}/{len(R)} passed')

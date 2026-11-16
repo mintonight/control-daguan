@@ -69,7 +69,6 @@ async def main():
     await pg.clock.set_fixed_time(T0 + dt.timedelta(days=1, hours=1)); await pg.reload(wait_until='networkidle')
     ok('1 天后: 角标=1', (await txt('#dueBadge')) == '1', await txt('#dueBadge'))
     ok('1 天后: 今日待复习显示「不会」题', await t('.card').count() == 1 and f'question={q2}' in pg.url, await txt('#sectionLabel'))
-    await pg.screenshot(path='shots/fsrs-due.png')
     ok('到期卡片标红「今日待复习」', '今日待复习' in await txt('.card .due') and await t('.card .due.now').count() == 1, await txt('.card .due'))
     # 模拟到第一题到期
     await pg.clock.set_fixed_time(T0 + dt.timedelta(days=days, hours=1)); await pg.reload(wait_until='networkidle')
@@ -120,7 +119,6 @@ async def main():
     await pg.evaluate("localStorage.setItem('control-daguan:v1', JSON.stringify({favorites:[202301],marks:{'202301':{state:'unknown',at:1}},history:[]}))"); await pg.reload(wait_until='networkidle')
     s = await store(); ok('旧版 localStorage 记录并入 IndexedDB 后删除旧键', await pg.evaluate("localStorage.getItem('control-daguan:v1')") is None and len(s['srs']) == 2 and not errs, str(errs))
     await pg.goto(BASE + '?list=complete&question=202301', wait_until='networkidle'); await pg.clock.set_fixed_time(T0)
-    await pg.screenshot(path='shots/fsrs-card.png')
     # 学习日分界：凌晨 2 点前仍算前一天
     ctx2 = await b.new_context(viewport={'width': 1440, 'height': 900}, timezone_id='Asia/Tokyo'); p2 = await ctx2.new_page()
     p2.on('pageerror', lambda e: errs.append(str(e)))

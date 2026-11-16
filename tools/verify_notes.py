@@ -111,12 +111,12 @@ async def main():
     ok('XSS: 原始 HTML 按文本显示，无 script/onerror/javascript: 链接', chk['script'] == 0 and chk['onerror'] == 0 and not chk['jsHref'] and chk['raw'] and await pg.evaluate('window.__xss') is None, chk)
     ok('题目卡片出现「有笔记」标识，笔记按钮带圆点', await t('.note-flag').count() == 1 and await t('button[data-act="note"] .dot').count() == 1)
     ok('目录树显示笔记数量标识', await t('.node.sel .tn').count() == 1 and (await t('.node.sel .tn').inner_text()).strip() == '1')
-    await t('.notebox').scroll_into_view_if_needed(); await pg.screenshot(path='shots/notes-editor.png')
+    await t('.notebox').scroll_into_view_if_needed()
     # 预览视图
     await t('.nb-tabs button[data-act="nprev"]').click()
     v = t('.nb-view')
     ok('切到「预览」: 渲染 Markdown 而非原文', await v.locator('h1').count() == 1 and await v.locator('.katex').count() >= 3 and '**加粗**' not in await v.inner_text())
-    await t('.notebox').scroll_into_view_if_needed(); await pg.screenshot(path='shots/notes-preview.png')
+    await t('.notebox').scroll_into_view_if_needed()
     # 输入后立即翻题（未等防抖、未失焦）不丢字
     await t('.nb-tabs button[data-act="nedit"]').click()
     ok('「编辑」切回编辑器并聚焦', await pg.evaluate("document.activeElement.matches('textarea.note-input')"))
@@ -237,7 +237,7 @@ async def main():
     ok('手机宽度: 编辑器可用（实时预览隐藏，可切到预览）', await pg4.locator('textarea.note-input').is_visible() and not await pg4.locator('.nb-live').is_visible())
     await pg4.locator('.nb-tabs button[data-act="nprev"]').click()
     ok('手机宽度: 预览渲染', await pg4.locator('.nb-view strong').count() == 1 and await pg4.locator('.nb-view .katex').count() == 1)
-    await pg4.locator('.notebox').scroll_into_view_if_needed(); await pg4.screenshot(path='shots/notes-mobile.png')
+    await pg4.locator('.notebox').scroll_into_view_if_needed()
     ok('无页面错误', not pg.errs and not pg4.errs, str(pg.errs + pg4.errs))
     await b.close()
   n = sum(1 for r in R if r[1]); print(f'{n}/{len(R)} passed'); sys.exit(0 if n == len(R) else 1)
