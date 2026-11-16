@@ -1,43 +1,18 @@
 # 生成 public/data/library.json 与 public/data/questions/<id>.json
-import json, os, re, sys, importlib.util
+import json, os, re, sys
 ROOT=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT=os.path.join(ROOT,'public','data'); os.makedirs(os.path.join(OUT,'questions'),exist_ok=True)
 CN='一二三四五六七八九十'
-# 数据源：一个 Python 模块 + 每题图片映射（crops.json）。新年份追加到这里即可。
-SOURCES=[dict(module='questions_2023_2025.py', crops='crops.json',
-              qpages={2023:'47–50',2024:'51–54',2025:'55–57'}, apages={2023:'170–180',2024:'181–191',2025:'192–202'})]
 questions=[]; details={}
-for src in SOURCES:
-  spec=importlib.util.spec_from_file_location('m',os.path.join(ROOT,'tools',src['module'])); m=importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
-  crops=json.load(open(os.path.join(ROOT,'tools',src['crops'])))
-  for d in m.Q:
-    key=f"{d['year']}-{d['no']}"; qid=d['year']*100+d['no']
-    figs=crops['figs'].get(key,[])
-    stem=d['stem']
-    used=set()
-    def rep(mo):
-      i=int(mo.group(1)); used.add(i)
-      from PIL import Image
-      w=Image.open(os.path.join(ROOT,'public',figs[i-1])).width
-      return f'![图{i}|{round(w*0.55)}]({figs[i-1]})'
-    stem=re.sub(r'\[\[fig:(\d+)\]\]',rep,stem)
-    assert len(used)==len(figs), (key, used, figs)
-    cats=[f"历年真题 / {d['year']}"]+d['cats']
-    plain=re.sub(r'\$+[^$]*\$+',' ',stem)
-    source=f"{d['year']}重大844 · 第{CN[d['no']-1]}题"+(f"（{d['score']}分）" if d['score'] else '')
-    questions.append(dict(id=qid,year=d['year'],number=d['no'],score=d['score'],source=source,
-        categories=cats,tags=[c.split(' / ')[0] for c in d['cats']],hasFigure=bool(figs),
-        stem=stem,pdfPage=src['qpages'][d['year']],
-        search=' '.join([str(qid),source,*cats,stem])))
-    det=dict(answer=d['answer'],explanation=d['explanation'],
-        originalImages=[dict(src=a,w=round(__import__('PIL.Image',fromlist=['x']).open(os.path.join(ROOT,'public',a)).width*0.6)) for a in crops['ans'].get(key,[])],answerPdfPages=src['apages'][d['year']])
-    if d.get('notes'): det['notes']=d['notes']
-    if d.get('errataLevel'): det['errataLevel']=d['errataLevel']
-    details[qid]=det
-# JSON 数据源：data-src/<年份>/questions.json（格式见 incoming/SPEC.md）
+# 唯一数据源：data-src/<年份>/questions.json（格式见 incoming/SPEC.md），先整体校验再生成
 import glob, shutil
 from PIL import Image
-for qf in sorted(glob.glob(os.path.join(ROOT,'data-src','*','questions.json'))):
+from validate_data import validate_all, TOPICS
+SRC_FILES=sorted(glob.glob(os.path.join(ROOT,'data-src','*','questions.json')))
+errs=validate_all(SRC_FILES)
+if errs:
+  sys.exit('数据校验失败，未生成任何文件（共 %d 处）：\n'%len(errs)+'\n'.join('  - '+e for e in errs))
+for qf in SRC_FILES:
   src=json.load(open(qf)); y=src['year']; base=os.path.dirname(qf)
   os.makedirs(os.path.join(ROOT,'public','img'),exist_ok=True)
   def pub(rel):
@@ -58,7 +33,7 @@ for qf in sorted(glob.glob(os.path.join(ROOT,'data-src','*','questions.json'))):
     source=f"{y}重大844 · 第{CN[d['no']-1]}题"+(f"（{d['score']}分）" if d.get('score') else '')
     questions.append(dict(id=qid,year=y,number=d['no'],score=d.get('score'),source=source,categories=cats,
         tags=[c.split(' / ')[0] for c in d['cats']],hasFigure=bool(figs),stem=stem,pdfPage=src.get('questionPages',''),
-        contributor=src.get('contributor',''),search=' '.join([str(qid),source,*cats,stem])))
+        **({'contributor':src['contributor']} if src.get('contributor') else {}),search=' '.join([str(qid),source,*cats,stem])))
     ans=[pub(a) for a in d['answerImages']]
     det=dict(answer=d.get('answer',''),explanation=d.get('explanation',''),notes=d.get('notes',''),
         originalImages=[dict(src=a,w=round(Image.open(os.path.join(ROOT,'public',a)).width*0.6)) for a in ans],
@@ -67,7 +42,7 @@ for qf in sorted(glob.glob(os.path.join(ROOT,'data-src','*','questions.json'))):
     details[qid]=det
 questions.sort(key=lambda x:(-x['year'],x['number']))
 years=sorted({q['year'] for q in questions},reverse=True)
-TOPIC_ORDER=['建模','时域分析','根轨迹','频域分析','校正','离散系统','非线性系统','状态空间']
+TOPIC_ORDER=list(TOPICS)
 # 考点页点名的重点题目（点名顺序；目录按专题分类，与专题树相同）。站内没有的年份在生成时跳过。
 FEATURED=[
   ('第二章',2023,1),('第二章',2019,1),('第二章',2018,1),

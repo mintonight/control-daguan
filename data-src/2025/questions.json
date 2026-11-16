@@ -1,0 +1,158 @@
+{
+ "year": 2025,
+ "questionPages": "55–57",
+ "answerPages": "192–202",
+ "questions": [
+  {
+   "no": 1,
+   "score": 17,
+   "cats": [
+    "建模 / 电路网络 / 运放电路传递函数",
+    "状态空间 / 建立状态空间表达式"
+   ],
+   "stem": "已知某运算放大电路如图 1 所示（17 分）\n\n[[fig:1]]\n\n1. 求运算放大器电路的传递函数；\n\n2. 求以电流 $i_L$ 和电容电压 $u_c$ 为状态变量的状态空间表达式。",
+   "figures": [
+    "img/q2025-1-1.png"
+   ],
+   "answerImages": [
+    "img/a2025-1-1.png",
+    "img/a2025-1-2.png"
+   ],
+   "answer": "1. $\\dfrac{U_o(s)}{U_i(s)}=\\dfrac{-RLCs^2+Ls+R}{RLCs^2+(L+R^2C)s+R}$。\n\n2. 取 $x_1=u_C$，$x_2=i_L$：$\\dot x=\\begin{bmatrix}-\\frac1{RC}&0\\\\-\\frac1L&-\\frac RL\\end{bmatrix}x+\\begin{bmatrix}\\frac1{RC}\\\\\\frac1L\\end{bmatrix}u_i$，$u_o=\\begin{bmatrix}2&R\\end{bmatrix}x-u_i$。",
+   "explanation": "1. 虚短虚断给出 $U_A=U_B=U_C$。列写 KCL / KVL：\n$$\\dfrac{u_i-u_C}{R}=C\\dfrac{\\mathrm du_C}{\\mathrm dt},\\qquad\n\\dfrac{u_i-u_C}{R}=i_L+\\dfrac{u_C-u_o}{R},\\qquad\nu_C-u_o=L\\dfrac{\\mathrm di_L}{\\mathrm dt}.$$\n零初始条件下拉氏变换，由第一式 $U_C=U_i/(1+RCs)$；由第三式 $U_o=U_C-Ls I_L$；代入第二式消去 $I_L$、$U_C$，整理得\n$$\\dfrac{U_o(s)}{U_i(s)}=\\dfrac{-RLCs^2+Ls+R}{RLCs^2+(L+R^2C)s+R}.$$\n\n2. 按题意取状态 $x_1=u_C$、$x_2=i_L$（注意是 $i_L$ 本身，不是 $-i_L$）。由第一式\n$$\\dot x_1=-\\dfrac{1}{RC}x_1+\\dfrac{1}{RC}u_i.$$\n由第二式解出 $u_o=2u_C+Ri_L-u_i$，再代入第三式：\n$$\\dot x_2=\\dfrac{u_C-u_o}{L}=-\\dfrac1L x_1-\\dfrac RL x_2+\\dfrac1L u_i.$$\n故\n$$\\dot x=\\begin{bmatrix}-1/(RC)&0\\\\-1/L&-R/L\\end{bmatrix}x+\\begin{bmatrix}1/(RC)\\\\1/L\\end{bmatrix}u_i,\\qquad\nu_o=\\begin{bmatrix}2&R\\end{bmatrix}x-u_i.$$\n该 realization 与第 1 问传递函数一致。",
+   "notes": "上方文字答案已改正；原答案图把 $x_2=i_L$ 写成了 $x_2=-i_L$，与所写矩阵及题面不符。传递函数与状态方程矩阵正确；中间 $du_i$、$1+RC$ 等笔误未传入终式。"
+  },
+  {
+   "no": 2,
+   "score": null,
+   "cats": [
+    "时域分析 / 信号流图与梅森公式",
+    "时域分析 / 二阶系统性能指标",
+    "时域分析 / 稳态误差"
+   ],
+   "stem": "如图所示控制系统。\n\n[[fig:1]]\n\n（1）求 $\\dfrac{E(s)}{R(s)}$，$\\dfrac{C(s)}{R(s)}$；\n\n（2）$\\omega_n=2$，在单位阶跃信号作用下 $e_{ss}=0.5$，求 $k$ 和 $T_d$；\n\n（3）在第二问的条件下求 $t_s$ 和 $\\sigma\\%$。",
+   "figures": [
+    "img/q2025-2-1.png"
+   ],
+   "answerImages": [
+    "img/a2025-2-1.png",
+    "img/a2025-2-2.png",
+    "img/a2025-2-3.png"
+   ],
+   "answer": "1. $\\dfrac{C(s)}{R(s)}=\\dfrac{KT_d}{s^2+(2+KT_d+T_d)s+T_d+KT_d}$，$\\dfrac{E(s)}{R(s)}=\\dfrac{s^2+(T_d+2)s+T_d}{s^2+(2+KT_d+T_d)s+T_d+KT_d}$。\n\n2. $e_{ss}=\\dfrac1{1+K}=0.5\\Rightarrow K=1$；$2T_d=\\omega_n^2=4\\Rightarrow T_d=2$（$\\zeta=1.5$，过阻尼）。\n\n3. $D(s)=s^2+6s+4$，极点 $-3\\pm\\sqrt5$；$s_1=-3+\\sqrt5$ 为主导极点，$t_s=3T=\\dfrac{3(3+\\sqrt5)}4\\approx3.93\\,\\mathrm s$，$\\sigma\\%=0$。",
+   "explanation": "三条回路 $L_1=-K\\dfrac{T_d}{s}$，$L_2=-\\dfrac{T_d}{s}$，$L_3=-\\dfrac1{s+1}$ 两两接触，$\\Delta=1+K\\dfrac{T_d}s+\\dfrac{T_d}s+\\dfrac1{s+1}$。\n\n$\\left|\\dfrac{s_1}{s_2}\\right|=\\dfrac{3-\\sqrt5}{3+\\sqrt5}<0.2$，可按一阶系统近似，$T=\\dfrac1{3-\\sqrt5}$。",
+   "notes": "按真题原图（前向 $K\\to\\dfrac1s\\to\\dfrac1{s+1}$，$T_d$ 从 $\\dfrac1{s+1}$ 的输入端引出、负反馈到 $\\dfrac1s$ 前，外环也从该点引回），经过 $K$ 的回路是 $-\\dfrac Ks$，前向通路是 $\\dfrac Ks\\cdot\\dfrac1{s+1}$；源答案写成 $-\\dfrac{KT_d}s$ 和 $K\\dfrac{T_d}s\\dfrac1{s+1}$，第 1 问传函和第 2 问的 $K$ 不可照抄。正确为 $\\dfrac{C}{R}=\\dfrac{K}{s^2+(2+K+T_d)s+K+T_d}$，$\\dfrac{E}{R}=\\dfrac{s^2+(T_d+2)s+T_d}{s^2+(2+K+T_d)s+K+T_d}$（分子源答案是对的）。第 2 问 $e_{ss}=\\dfrac{T_d}{K+T_d}=0.5\\Rightarrow K=T_d$，$\\omega_n^2=K+T_d=4\\Rightarrow K=T_d=2$（源答案 $K=1$ 错），$\\xi=1.5$ 正确。特征多项式仍为 $s^2+6s+4$，第 3 问 $t_s=\\dfrac{3(3+\\sqrt5)}4\\approx3.93\\,\\mathrm s$、$\\sigma\\%=0$ 正确。",
+   "errataLevel": "severe"
+  },
+  {
+   "no": 3,
+   "score": 18,
+   "cats": [
+    "根轨迹 / 参数根轨迹与圆",
+    "根轨迹 / 常规根轨迹绘制"
+   ],
+   "stem": "单位负反馈控制系统的闭环特征方程（18 分）\n$$D(s)=K(s+4)+s(s+2)=0$$\n\n1. 试绘制 $K$ 从 $0\\to\\infty$ 变化的根轨迹图（要有简略的步骤）；\n\n2. 确定系统稳定时的 $K$ 的取值范围；\n\n3. 已知闭环极点 $s=-4.1$，求 $K$ 值。",
+   "figures": [],
+   "answerImages": [
+    "img/a2025-3-1.png",
+    "img/a2025-3-2.png"
+   ],
+   "answer": "1. 等效开环 $G_{eq}(s)=\\dfrac{K(s+4)}{s(s+2)}$；实轴根轨迹 $(-\\infty,-4]\\cup[-2,0]$；分离/会合点 $-4\\pm2\\sqrt2$；复平面部分是以 $(-4,0)$ 为圆心、$2\\sqrt2$ 为半径的圆；与虚轴无交点（$K>0$）。\n\n2. $K>0$ 时系统稳定。\n\n3. $K=86.1$。",
+   "explanation": "分离点：$M'(s)N(s)-M(s)N'(s)=0\\Rightarrow s^2+8s+8=0\\Rightarrow s=-4\\pm2\\sqrt2$。\n\n设 $s=\\alpha\\pm\\beta j$，由韦达定理 $2\\alpha=-(K+2)$，$\\alpha^2+\\beta^2=4K$，消去 $K$ 得 $(\\alpha+4)^2+\\beta^2=8$。\n\n代入 $s=-4.1$：$D(-4.1)=-0.1K+(-4.1)(-2.1)=-0.1K+8.61=0\\Rightarrow K=86.1$。",
+   "notes": "已核对：正确。等效开环、根轨迹（圆）、稳定性及 $s=-4.1$ 时 $K=86.1$ 均对。",
+   "errataLevel": "ok"
+  },
+  {
+   "no": 4,
+   "score": 20,
+   "cats": [
+    "校正 / 串联超前校正",
+    "频域分析 / Bode 图绘制",
+    "频域分析 / 截止频率与相角裕度"
+   ],
+   "stem": "单位负反馈开环传递函数（20 分）\n$$G(s)H(s)=\\frac{K}{s(s+2)(s+100)}$$\n\n1. 静态速度误差系数 $K_v=18$，绘制对数频率特性曲线并计算开环截止频率 $\\omega_c$、相角裕量 $\\gamma$；\n\n2. 在满足以上控制精度的条件下要求相角裕量 $\\gamma=45^\\circ$，求串联校正网络 $G_c(s)$。\n\n（参考数据：$\\arctan3\\approx71.57^\\circ$，$\\arctan0.06\\approx0^\\circ$，$\\sin37^\\circ\\approx0.6$）",
+   "figures": [],
+   "answerImages": [
+    "img/a2025-4-1.png",
+    "img/a2025-4-2.png",
+    "img/a2025-4-3.png"
+   ],
+   "answer": "1. $K_v=\\dfrac K{200}=18\\Rightarrow K=3600$；$\\omega_c=6\\,\\mathrm{rad/s}$，$\\gamma\\approx15^\\circ$。\n\n2. 超前校正：$\\varphi_m=45^\\circ-15^\\circ+7^\\circ=37^\\circ$，$a=\\dfrac{1+\\sin\\varphi_m}{1-\\sin\\varphi_m}=4$，$\\omega_c'=6\\sqrt2\\,\\mathrm{rad/s}$，$T=\\dfrac1{\\omega_c'\\sqrt a}=0.06$；\n$G_c(s)=\\dfrac{0.24s+1}{0.06s+1}$，校验 $\\gamma\\approx45^\\circ$。",
+   "explanation": "1. $K_v=\\lim_{s\\to0}sG(s)=K/200=18$，故 $K=3600$，\n$$G(s)=\\dfrac{3600}{s(s+2)(s+100)}=\\dfrac{18}{s\\,(s/2+1)\\,(s/100+1)}.$$\n低频斜率 $-20\\,\\mathrm{dB/dec}$，转折频率 $2$、$100$。按 Bode 折线，在 $2<\\omega_c<100$ 段\n$$\\dfrac{18}{\\omega_c\\cdot(\\omega_c/2)}=1\\Rightarrow\\omega_c=6\\,\\mathrm{rad/s}.$$\n$$\\gamma=180^\\circ-90^\\circ-\\arctan\\dfrac{6}{2}-\\arctan\\dfrac{6}{100}=90^\\circ-\\arctan3-\\arctan0.06.$$\n题给 $\\arctan3\\approx71.57^\\circ$，取 $\\arctan0.06\\approx3.4^\\circ$（不宜直接当成 $0^\\circ$），得 $\\gamma\\approx15^\\circ$。\n\n2. 超前校正：$\\varphi_m=\\gamma_{\\text{期望}}-\\gamma_0+\\varepsilon=45^\\circ-15^\\circ+7^\\circ=37^\\circ$。由 $\\sin37^\\circ\\approx0.6$，\n$$a=\\dfrac{1+\\sin\\varphi_m}{1-\\sin\\varphi_m}=\\dfrac{1.6}{0.4}=4.$$\n新截止频率应满足 $\\lvert G(j\\omega_c')\\rvert=1/\\sqrt{a}=1/2$。折线幅值在该段为 $36/\\omega^2$，于 $\\omega=6$ 处为 $1$，故\n$$\\left(\\dfrac{\\omega_c'}{6}\\right)^2=2\\Rightarrow\\omega_c'=6\\sqrt{2}$$\n（不是等于 $4$；若比为 $4$ 则会得到 $12$，与 $6\\sqrt{2}$ 矛盾）。于是\n$$T=\\dfrac{1}{\\omega_c'\\sqrt a}=\\dfrac{1}{6\\sqrt{2}\\cdot2}=\\dfrac{1}{12\\sqrt{2}}\\approx0.06,\\qquad\nG_c(s)=\\dfrac{aTs+1}{Ts+1}=\\dfrac{0.24s+1}{0.06s+1}.$$\n代入校验，校正后相角裕度约 $45^\\circ$，满足要求。",
+   "notes": "上方文字答案已改正；原答案图中间式写成 $(\\omega_c^{\\prime 2}/6^2)=4\\Rightarrow\\omega_c'=6\\sqrt{2}$，前半与后半矛盾（应为 $(\\omega_c'/6)^2=2$）。$G_c(s)=\\dfrac{0.24s+1}{0.06s+1}$ 与 $\\gamma\\approx 45^\\circ$ 的校验正确。校正前渐近 $\\omega_c=6$、$\\gamma\\approx 15^\\circ$（精确值 $\\omega_c\\approx 5.830$、$\\gamma\\approx 15.60^\\circ$）。"
+  },
+  {
+   "no": 5,
+   "score": 20,
+   "cats": [
+    "离散系统 / 脉冲传递函数",
+    "离散系统 / 稳定性（朱利判据）",
+    "离散系统 / 稳态误差"
+   ],
+   "stem": "离散控制系统如图所示，其中采样周期 $T=0.1\\,\\mathrm s$（20 分）\n\n1. 求系统的闭环脉冲传递函数；\n\n2. 分析闭环系统的稳定性；\n\n3. 当 $r(t)=1(t)$ 时计算系统的稳态误差。\n\n其中 $e^{-T}=e^{-0.1}=0.905$，$\\dfrac1s\\leftrightarrow1(t)\\leftrightarrow\\dfrac{z}{z-1}$，$\\dfrac1{s+a}\\leftrightarrow e^{-at}\\leftrightarrow\\dfrac{z}{z-e^{-aT}}$，$\\dfrac1{s^2}\\leftrightarrow\\dfrac{zT}{(z-1)^2}$。\n\n[[fig:1]]",
+   "figures": [
+    "img/q2025-5-1.png"
+   ],
+   "answerImages": [
+    "img/a2025-5-1.png",
+    "img/a2025-5-2.png"
+   ],
+   "answer": "1. $G(z)=\\dfrac{K\\left[(e^{-0.1}-0.9)z+(1-1.1e^{-0.1})\\right]}{(z-1)(z-e^{-0.1})}$，\n$\\Phi(z)=\\dfrac{K\\left[(e^{-0.1}-0.9)z+(1-1.1e^{-0.1})\\right]}{z^2+(0.005K-1.905)z+(0.0045K+0.905)}$（已代入 $e^{-0.1}=0.905$）。\n\n2. 朱利判据：$D(1)=0.0095K>0$，$D(-1)=3.81-0.0005K>0$，$|0.0045K+0.905|<1$，综合得 $0<K<21.11$ 时稳定。\n\n3. I 型系统，单位阶跃稳态误差 $e_{ss}=0$（在稳定范围内）。",
+   "explanation": "1. 结构为采样器 + 零阶保持器与 $K/[s(s+1)]$，采样周期 $T=0.1$。\n$$\\dfrac{K}{s^2(s+1)}=K\\left(\\dfrac{1}{s^2}-\\dfrac{1}{s}+\\dfrac{1}{s+1}\\right),$$\n$$G(z)=K\\dfrac{z-1}{z}\\mathcal Z\\!\\left[\\dfrac1{s^2}-\\dfrac1s+\\dfrac1{s+1}\\right].$$\n用 $T=0.1$ 的公式整理，得\n$$G(z)=\\dfrac{K\\bigl[(e^{-0.1}-0.9)z+(1-1.1e^{-0.1})\\bigr]}{(z-1)(z-e^{-0.1})}.$$\n代入题给 $e^{-0.1}=0.905$，分子为 $K(0.005z+0.0045)$（$z$ 与后一项之间是加号）。闭环\n$$\\Phi(z)=\\dfrac{G(z)}{1+G(z)}=\\dfrac{K(0.005z+0.0045)}{z^2+(0.005K-1.905)z+(0.0045K+0.905)}.$$\n\n2. 记 $D(z)=z^2+(0.005K-1.905)z+(0.0045K+0.905)$。朱利条件：\n$$D(1)=0.0095K>0\\Rightarrow K>0,$$\n$$D(-1)=3.81-0.0005K>0\\Rightarrow K<7620,$$\n$$\\lvert 0.0045K+0.905\\rvert<1\\Rightarrow K<21.11.$$\n综合得稳定范围 $0<K<21.11$（应按题给 $0.905$ 计算，不宜改用更精确的 $e^{-0.1}$）。\n\n3. 系统为 1 型，在稳定范围内对单位阶跃有 $e_{ss}=0$。亦可由终值定理：\n$$e_{ss}=\\lim_{z\\to1}(z-1)\\bigl(1-\\Phi(z)\\bigr)\\dfrac{z}{z-1}=0.$$",
+   "notes": "上方文字答案已改正；原答案图闭环 $\\Phi(z)$ 分子中 $z$ 与后一项之间漏写加号，特征多项式仍按正确 $G(z)$ 展开。开环 $G(z)$、朱利范围 $0<K<21.11$ 与 $e_{ss}=0$ 正确。"
+  },
+  {
+   "no": 6,
+   "score": 20,
+   "cats": [
+    "非线性系统 / 描述函数法 / 自振分析"
+   ],
+   "stem": "如图所示非线性控制系统，非线性系统描述函数 $N(A)=\\dfrac{A+3}{A+1}$，其中 $A>0$（20 分）\n\n[[fig:1]]\n\n1. 求该系统稳定、不稳定、自振运动时，参数 $K$ 的取值范围；\n\n2. 发生自振运动时，绘制 $G(j\\omega)$ 与 $-1/N(A)$ 图像，画在一张图中；\n\n3. 计算发生自振时系统输出信号的振幅和频率。",
+   "figures": [
+    "img/q2025-6-1.png"
+   ],
+   "answerImages": [
+    "img/a2025-6-1.png",
+    "img/a2025-6-2.png"
+   ],
+   "answer": "1. $-\\dfrac1{N(A)}=-\\dfrac{A+1}{A+3}$ 由 $-\\dfrac13$（$A\\to0$）到 $-1$（$A\\to\\infty$）；$G(j\\omega_x)=-\\dfrac K6$，$\\omega_x=\\sqrt2$。\n$0<K<2$ 稳定；$2<K<6$ 产生稳定自振；$K>6$ 不稳定。\n\n2. 见原图解析中的 $G(j\\omega)$ 与 $-1/N(A)$ 曲线。\n\n3. 振幅 $A=\\dfrac{3K-6}{6-K}$，频率 $\\omega=\\sqrt2\\,\\mathrm{rad/s}$。",
+   "explanation": "1. $-\\dfrac1{N(A)}=-\\dfrac{A+1}{A+3}$：当 $A\\to0$ 时为 $-1/3$，当 $A\\to\\infty$ 时为 $-1$，位于负实轴区间 $(-1,-1/3)$。线性部分\n$$G(s)=\\dfrac{K}{s(s+1)(s+2)}=\\dfrac{0.5K}{s\\,(1+s)\\,(1+0.5s)}.$$\n令 $\\angle G(j\\omega_x)=-180^\\circ$，由 $T_1=1$、$T_2=1/2$ 得 $\\omega_x=1/\\sqrt{T_1T_2}=\\sqrt2$，且\n$$G(j\\sqrt2)=-\\dfrac{K}{6}.$$\n因此：$\\lvert K/6\\rvert<1/3$ 即 $0<K<2$ 时无交点、系统稳定；$1/3<K/6<1$ 即 $2<K<6$ 时与 $-1/N(A)$ 相交并产生**稳定自振**；$K>6$ 时交点在 $-1$ 左侧，系统不稳定。（由 $-1<-K/6<-1/3$ 两边乘 $-6$ 应得 $2<K<6$，不是 $\\pi<K<6$。）\n\n2. 在复平面画出 $G(j\\omega)$ 的奈氏曲线（从负实轴附近的低频出发，穿越 $(-K/6,0)$ 后进入第三象限），并在负实轴上标出 $-1/N(A)$ 由 $-1/3$ 到 $-1$ 的线段，二者相交即对应自振。具体曲线见原图解析。\n\n3. 自振时 $N(A)=-1/G(j\\omega_x)=6/K$，即\n$$\\dfrac{A+3}{A+1}=\\dfrac6K\\Rightarrow A=\\dfrac{3K-6}{6-K},$$\n频率 $\\omega=\\sqrt2\\,\\mathrm{rad/s}$。",
+   "notes": "上方文字答案已改正；原答案图第 1 问把稳定自振范围误印为 $\\pi<K<6$，应为 $2<K<6$。另有一条与本题无关的幅频式 $A(\\omega)=15/\\cdots$，后文未使用。第 3 问振幅 $A=(3K-6)/(6-K)$、频率 $\\omega=\\sqrt{2}$ 正确。"
+  },
+  {
+   "no": 7,
+   "score": 18,
+   "cats": [
+    "状态空间 / 传递函数矩阵",
+    "状态空间 / 能控性与能观性",
+    "状态空间 / 能控/能观标准型"
+   ],
+   "stem": "已知系统状态空间表达式（18 分）\n$$\\dot x=\\begin{bmatrix}1&2&3\\\\0&1&1\\\\0&1&1\\end{bmatrix}x+\\begin{bmatrix}0\\\\0\\\\1\\end{bmatrix}u,\\quad y=\\begin{bmatrix}1&0&0\\end{bmatrix}x$$\n\n1. 求传递函数；\n\n2. 判断能控能观；\n\n3. 求可控标准型，可观标准型。",
+   "figures": [],
+   "answerImages": [
+    "img/a2025-7-1.png",
+    "img/a2025-7-2.png"
+   ],
+   "answer": "1. $G(s)=\\dfrac{3s-1}{s(s-1)(s-2)}=\\dfrac{3s-1}{s^3-3s^2+2s}$。\n\n2. $Q_c=\\begin{bmatrix}0&3&8\\\\0&1&2\\\\1&1&2\\end{bmatrix}$，$\\det Q_c=-2$，**完全能控**；$Q_o=\\begin{bmatrix}1&0&0\\\\1&2&3\\\\1&7&8\\end{bmatrix}$，$\\det Q_o=-5$，**完全能观**。\n\n3. 能控标准型：$\\dot x=\\begin{bmatrix}0&1&0\\\\0&0&1\\\\0&-2&3\\end{bmatrix}x+\\begin{bmatrix}0\\\\0\\\\1\\end{bmatrix}u$，$y=\\begin{bmatrix}-1&3&0\\end{bmatrix}x$；\n能观标准型：$\\dot x=\\begin{bmatrix}0&0&0\\\\1&0&-2\\\\0&1&3\\end{bmatrix}x+\\begin{bmatrix}-1\\\\3\\\\0\\end{bmatrix}u$，$y=\\begin{bmatrix}0&0&1\\end{bmatrix}x$。",
+   "explanation": "1. $sI-A=\\begin{bmatrix}s-1&-2&-3\\\\0&s-1&-1\\\\0&-1&s-1\\end{bmatrix}$（注意 $(2,3)$ 元是 $-1$，不是 $+1$）。按第二、三行展开，\n$$\\lvert sI-A\\rvert=(s-1)\\bigl[(s-1)^2-1\\bigr]=s(s-1)(s-2)=s^3-3s^2+2s.$$\n$B=[0\\ 0\\ 1]^\\mathrm T$、$C=[1\\ 0\\ 0]$，故 $G(s)$ 只取决于伴随矩阵第 1 行第 3 列，该元为 $3s-1$，因而\n$$G(s)=\\dfrac{3s-1}{s(s-1)(s-2)}=\\dfrac{3s-1}{s^3-3s^2+2s}.$$\n\n2. 能控、能观判别阵\n$$Q_c=[B\\ AB\\ A^2B]=\\begin{bmatrix}0&3&8\\\\0&1&2\\\\1&1&2\\end{bmatrix},\\quad\\det Q_c=-2\\neq0,$$\n$$Q_o=\\begin{bmatrix}C\\\\CA\\\\CA^2\\end{bmatrix}=\\begin{bmatrix}1&0&0\\\\1&2&3\\\\1&7&8\\end{bmatrix},\\quad\\det Q_o=-5\\neq0,$$\n故系统**完全能控、完全能观**。\n\n3. 由 $G(s)=(b_0+b_1s+b_2s^2)/(s^3+a_2s^2+a_1s+a_0)$，系数 $a_0=0$、$a_1=2$、$a_2=-3$，$b_0=-1$、$b_1=3$、$b_2=0$。能控标准型\n$$A_c=\\begin{bmatrix}0&1&0\\\\0&0&1\\\\-a_0&-a_1&-a_2\\end{bmatrix}=\\begin{bmatrix}0&1&0\\\\0&0&1\\\\0&-2&3\\end{bmatrix},\\ \nB_c=\\begin{bmatrix}0\\\\0\\\\1\\end{bmatrix},\\ \nC_c=\\begin{bmatrix}b_0&b_1&b_2\\end{bmatrix}=\\begin{bmatrix}-1&3&0\\end{bmatrix};$$\n能观标准型为其对偶\n$$A_o=\\begin{bmatrix}0&0&-a_0\\\\1&0&-a_1\\\\0&1&-a_2\\end{bmatrix}=\\begin{bmatrix}0&0&0\\\\1&0&-2\\\\0&1&3\\end{bmatrix},\\ \nB_o=\\begin{bmatrix}-1\\\\3\\\\0\\end{bmatrix},\\ \nC_o=\\begin{bmatrix}0&0&1\\end{bmatrix}.$$",
+   "notes": "上方文字答案与终式正确。原答案图把 $sI-A$ 的 $(2,3)$ 元写成了 $+1$，应为 $-1$；行列式和伴随矩阵用的是正确的 $-1$，$G(s)$、能控能观与两种标准型均正确。"
+  },
+  {
+   "no": 8,
+   "score": 17,
+   "cats": [
+    "状态空间 / 状态反馈极点配置"
+   ],
+   "stem": "已知系统的状态方程为（17 分）\n$$\\dot x=\\begin{bmatrix}0&1&0\\\\0&0&1\\\\-1&-2&-3\\end{bmatrix}x+\\begin{bmatrix}0\\\\0\\\\1\\end{bmatrix}u$$\n\n1. 说明上述系统是否可以用状态反馈任意配置闭环极点；\n\n2. 设计状态反馈矩阵 $K$ 使极点位于 $-3$，$-1+j$，$-1-j$。",
+   "figures": [],
+   "answerImages": [
+    "img/a2025-8-1.png",
+    "img/a2025-8-2.png"
+   ],
+   "answer": "1. 系统为能控标准型，一定完全能控，**可以**任意配置闭环极点。\n\n2. $K=\\begin{bmatrix}5&6&2\\end{bmatrix}$（$u=-Kx+v$）。",
+   "explanation": "$f(s)=\\det(sI-A+bK)=s^3+(3+k_3)s^2+(2+k_2)s+1+k_1$。\n\n期望 $f^*(s)=(s+3)(s+1+j)(s+1-j)=s^3+5s^2+8s+6$，比较系数得 $k_3=2,\\ k_2=6,\\ k_1=5$。",
+   "notes": "已核对：正确。$K=\\begin{bmatrix}5&6&2\\end{bmatrix}$，闭环极点为 $-3$、$-1\\pm j$。",
+   "errataLevel": "ok"
+  }
+ ]
+}
