@@ -116,7 +116,7 @@ async function downloadAll() {
   collectFrom(lib, urls);
   lib.questions.forEach(q => urls.add(`data/questions/${q.id}.json`));
   const list = [...urls];
-  let done = 0, failed = 0, extraDone = false;
+  let done = 0, failed = 0;
   const totalGuess = list.length;
   const tick = (total) => {
     const n = total || totalGuess;
@@ -142,7 +142,6 @@ async function downloadAll() {
     } catch { failed++; }
     done++; tick();
   });
-  extraDone = true;
   const extra = addExtra.slice();
   const total = list.length + extra.length;
   tick(total);
@@ -197,7 +196,7 @@ function bindUI() {
 
 function registerSW() {
   if (!('serviceWorker' in navigator)) return;
-  const onInstalled = (w, isUpdate) => {
+  const onInstalled = w => {
     if (!w) return;
     w.addEventListener('statechange', () => {
       if (w.state !== 'installed') return;

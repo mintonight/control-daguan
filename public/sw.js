@@ -3,7 +3,7 @@
 
 // PRECACHE 由 tools/build_precache.py 在构建时写入，请勿手改
 const PRECACHE = {
-  "version": "03d8927519c9",
+  "version": "e643121578d2",
   "files": [
     "./",
     "./index.html",
@@ -19,6 +19,7 @@ const PRECACHE = {
     "./src/core/merge.js",
     "./src/core/record.js",
     "./src/core/studyday.js",
+    "./src/core/timers.js",
     "./src/main.js",
     "./src/srs/fsrs.js",
     "./src/store/kv.js",
@@ -26,6 +27,7 @@ const PRECACHE = {
     "./src/store/records.js",
     "./src/sync/gist.js",
     "./src/ui/dom.js",
+    "./src/ui/html.js",
     "./src/ui/icons.js",
     "./src/ui/markdown.js",
     "./src/ui/note-markdown.js",

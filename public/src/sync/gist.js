@@ -1,11 +1,12 @@
 /* GitHub Gist 同步：令牌与状态存 kv，合并规则见 core/merge.js。不碰 DOM。 */
 import { mergeRecords, canon, syncPart } from '../core/merge.js';
+import { after } from '../core/timers.js';
 
 export const FILE = 'control-daguan-progress.json', API = 'https://api.github.com';
 export class SyncError extends Error { constructor(msg, kind) { super(msg); this.kind = kind; } }
 export class GistSync {
   /** opts: kv（保存令牌与状态的存储）；getLocal() → rec；applyMerged(rec)；onStatus(cfg, busy, pending)；fetch、isOnline（由 store 注入浏览器实现，测试可替换） */
-  constructor(opts) { Object.assign(this, { fetch: (...a) => fetch(...a), isOnline: () => true }, opts); this.cfg = null; this.busy = null; this.timer = null; this.pending = false; }
+  constructor(opts) { Object.assign(this, { fetch: (...a) => fetch(...a), isOnline: () => true }, opts); this.cfg = null; this.busy = null; this.cancelScheduled = null; this.pending = false; }
   async init() { this.cfg = (await this.kv.get('gist')) || null; this.emit(); return this.cfg; }
   get connected() { return !!this.cfg?.token; }
   async saveCfg(p) { this.cfg = { ...(this.cfg || {}), ...p }; await this.kv.set('gist', this.cfg); this.emit(); }
@@ -51,10 +52,10 @@ export class GistSync {
     await this.saveCfg({ token, gistId: null, lastSync: null, lastError: null });
     try { return await this.sync(); } catch (e) { if (e.kind === 'auth') await this.disconnect(); throw e; }
   }
-  async disconnect() { clearTimeout(this.timer); this.cfg = null; this.pending = false; await this.kv.del('gist'); this.emit(); }
+  async disconnect() { this.cancelScheduled?.(); this.cfg = null; this.pending = false; await this.kv.del('gist'); this.emit(); }
   schedule(ms = 3000) {
     if (!this.connected) return;
-    this.pending = true; clearTimeout(this.timer); this.timer = setTimeout(() => this.sync().catch(() => {}), ms); this.emit();
+    this.pending = true; this.cancelScheduled?.(); this.cancelScheduled = after(ms, () => this.sync().catch(() => {})); this.emit();
   }
   sync() {
     if (!this.connected) return Promise.resolve(null);
@@ -63,7 +64,7 @@ export class GistSync {
     this.emit(); return this.busy;
   }
   async _sync() {
-    clearTimeout(this.timer);
+    this.cancelScheduled?.();
     if (!this.isOnline()) { this.pending = true; await this.saveCfg({ lastError: '当前离线，联网后自动同步。', errorKind: 'offline' }); throw new SyncError('当前离线，联网后自动同步。', 'offline'); }
     try {
       if (!this.cfg.gistId) await this.saveCfg({ gistId: await this.findOrCreate() });

@@ -3,10 +3,12 @@ import * as store from '../store/records.js';
 import { lib, byId, details, loadDetail } from '../store/library.js';
 import { dayStart, dayDiff as dayDiffAt, DAY_MS } from '../core/studyday.js';
 import { errataPlacement } from '../core/errata.js';
-import { $, esc, isMobile, toast, closePops } from './dom.js';
+import { $, isMobile, toast, closePops } from './dom.js';
+import { html, setHTML } from './html.js';
+import { debounce } from '../core/timers.js';
 import { IC, MARK_IC } from './icons.js';
 import { md } from './markdown.js';
-import { noteHTMLFor, commitNote, clearNote, flushNotes, afterNoteSaved, onNoteInput, focusNote } from './notes-editor.js';
+import { noteHTMLFor, confirmClear, commitNote, clearNote, flushNotes, afterNoteSaved, onNoteInput, focusNote } from './notes-editor.js';
 
 const MARKS = { shaky: '不熟练', unknown: '不会', mastered: '掌握' };
 const dayDiff = d => dayDiffAt(d, new Date());
@@ -15,6 +17,7 @@ const fmtDue = d => { const n = dayDiff(d), dt = dayStart(d); const md = `${dt.g
 
 const st = { tab: 'bank', listId: 'complete', node: null, qid: null, q: '', page: 0, show: {}, rv: 'due', noteMode: {} };
 const DUE_NODE = '今日待复习';
+const SEARCH_MS = 150; // 搜索框输入防抖
 
 // ---------- 题目集合 ----------
 const curList = () => lib.lists.find(l => l.id === st.listId) || lib.lists[0];
@@ -61,7 +64,6 @@ function sectionIds(tree) {
   const n = flatNodes(tree).find(x => x.path === st.node);
   return n ? n.ids : [];
 }
-function topSections(tree) { return tree.list.map(n => n.path); }
 
 // ---------- 主渲染 ----------
 let tree;
@@ -111,13 +113,13 @@ export function renderTree() {
     const cnt = st.tab === 'bank' ? `已标记 ${markedCount(n.ids)} / ${n.ids.length}` : `${n.ids.length} 题`;
     const selMark = n.path === st.node ? IC.check : '';
     const nn = n.ids.filter(id => store.hasNote(id)).length;
-    const noteMark = nn ? `<span class="tn" title="${nn} 题有笔记" aria-label="${nn} 题有笔记">${IC.pen}${nn}</span>` : '';
-    return `<div class="node ${depth === 0 ? 'top' : ''} ${open && hasKids ? 'open' : ''} ${n.path === st.node ? 'sel' : ''}" data-path="${esc(n.path)}">
-      <button type="button" class="tw ${hasKids ? '' : 'leaf'}" aria-label="${open ? '收起' : '展开'}${esc(n.name)}" data-act="toggle">${IC.chev}</button>
-      <button type="button" class="nm" data-act="select"><span class="t" title="${esc(n.name)}">${esc(n.name)}</span><span class="c">${noteMark}${selMark}${cnt}</span></button></div>
-      ${hasKids && open ? `<div class="kids">${n.list.map(k => nodeHTML(k, depth + 1)).join('')}</div>` : ''}`;
+    const noteMark = nn ? html`<span class="tn" title="${nn} 题有笔记" aria-label="${nn} 题有笔记">${IC.pen}${nn}</span>` : '';
+    return html`<div class="node ${depth === 0 ? 'top' : ''} ${open && hasKids ? 'open' : ''} ${n.path === st.node ? 'sel' : ''}" data-path="${n.path}">
+      <button type="button" class="tw ${hasKids ? '' : 'leaf'}" aria-label="${open ? '收起' : '展开'}${n.name}" data-act="toggle">${IC.chev}</button>
+      <button type="button" class="nm" data-act="select"><span class="t" title="${n.name}">${n.name}</span><span class="c">${noteMark}${selMark}${cnt}</span></button></div>
+      ${hasKids && open ? html`<div class="kids">${n.list.map(k => nodeHTML(k, depth + 1))}</div>` : ''}`;
   };
-  el.innerHTML = tree.list.length ? tree.list.map(n => nodeHTML(n, 0)).join('') : `<div class="empty" style="padding:30px 0">${st.q ? '没有匹配的题目' : st.tab === 'fav' ? '暂无收藏题目' : st.tab === 'retest' ? (st.rv === 'due' ? '今日没有待复习的题目' : '暂无复测题目') : '暂无章节'}</div>`;
+  setHTML(el, tree.list.length ? html`${tree.list.map(n => nodeHTML(n, 0))}` : html`<div class="empty" style="padding:30px 0">${st.q ? '没有匹配的题目' : st.tab === 'fav' ? '暂无收藏题目' : st.tab === 'retest' ? (st.rv === 'due' ? '今日没有待复习的题目' : '暂无复测题目') : '暂无章节'}</div>`);
 }
 
 
@@ -127,7 +129,7 @@ function errataHTML(d) {
   const title = lv === 'ok' ? '已核对' : '勘误';
   const badge = lv === 'severe' ? '严重，原答案不可照抄' : lv === 'conflict' ? '题目矛盾，原答案不可照抄' : '';
   const sev = lv === 'ok' ? 'ok' : (lv === 'severe' || lv === 'conflict') ? 'severe' : 'warn';
-  return `<aside class="note errata" data-sev="${sev}"><div class="errata-hd"><span class="errata-tag">${title}</span>${badge ? `<span class="errata-badge">${badge}</span>` : ''}</div><div class="errata-bd">${md(d.notes)}</div></aside>`;
+  return html`<aside class="note errata" data-sev="${sev}"><div class="errata-hd"><span class="errata-tag">${title}</span>${badge ? html`<span class="errata-badge">${badge}</span>` : ''}</div><div class="errata-bd">${md(d.notes)}</div></aside>`;
 }
 function errataIn(kind, sh, d, hasImgs) {
   const at = errataPlacement({ hasNotes: !!d.notes, level: d.errataLevel, hasAnswer: !!d.answer, hasExplanation: !!d.explanation, hasImages: hasImgs,
@@ -136,7 +138,7 @@ function errataIn(kind, sh, d, hasImgs) {
 }
 function origHTML(d) {
   if (!d || !d.originalImages.length) return '';
-  return `<div class="orig"><div class="lab">原图解析（源文件顺序，PDF 第 ${d.answerPdfPages} 页）</div>${d.originalImages.map(o => `<img src="${o.src}" style="width:${o.w}px" alt="原图解析" loading="lazy" data-zoom title="单击放大图片">`).join('')}</div>`;
+  return html`<div class="orig"><div class="lab">原图解析（源文件顺序，PDF 第 ${d.answerPdfPages} 页）</div>${d.originalImages.map(o => html`<img src="${o.src}" style="width:${o.w}px" alt="原图解析" loading="lazy" data-zoom title="单击放大图片">`)}</div>`;
 }
 function srcTabsHTML(kind, view) {
   const textLab = kind === 'exp' ? '文字解析' : '文字答案';
@@ -144,15 +146,15 @@ function srcTabsHTML(kind, view) {
   const act = kind === 'exp' ? 'expview' : 'ansview';
   const label = kind === 'exp' ? '解析视图' : '答案视图';
   const textOn = view !== 'orig';
-  return `<div class="seg small src-tabs" role="tablist" aria-label="${label}" data-kind="${kind}">
+  return html`<div class="seg small src-tabs" role="tablist" aria-label="${label}" data-kind="${kind}">
     <button type="button" role="tab" data-act="${act}" data-view="text" aria-selected="${textOn}" tabindex="${textOn ? 0 : -1}" class="${textOn ? 'on' : ''}">${textLab}</button>
     <button type="button" role="tab" data-act="${act}" data-view="orig" aria-selected="${!textOn}" tabindex="${textOn ? -1 : 0}" class="${textOn ? '' : 'on'}">${imgLab}</button>
   </div>`;
 }
 function boxHTML(title, kind, id, body, tabs) {
   const hid = `src-panel-${kind}-${id}`;
-  const hd = tabs ? `<div class="box-hd"><h4>${title}</h4>${tabs}</div>` : `<h4>${title}</h4>`;
-  return `<section class="box" data-kind="${kind}">${hd}<div class="body" role="tabpanel" id="${hid}">${body}</div></section>`;
+  const hd = tabs ? html`<div class="box-hd"><h4>${title}</h4>${tabs}</div>` : html`<h4>${title}</h4>`;
+  return html`<section class="box" data-kind="${kind}">${hd}<div class="body" role="tabpanel" id="${hid}">${body}</div></section>`;
 }
 function focusSrcTab(id, act, view) {
   const el = document.querySelector(`.card[data-id="${id}"] button[data-act="${act}"][data-view="${view}"]`);
@@ -164,7 +166,7 @@ function cardHTML(id, idx) {
   const leaf = (paths.find(p => !p.startsWith('历年真题')) || paths[0]).split(' / ').pop();
   const sh = st.show[id] || {}; const mk = store.rec.marks[id]?.state; const fav = store.rec.favorites.includes(id);
   const hl = st.q && st.q.length > 0 ? st.q : null;
-  let ans = '';
+  const ans = [];
   const hasImgs = !!(d && d.originalImages.length);
   if (sh.answer) {
     let body = '加载中', tabs = '';
@@ -173,14 +175,14 @@ function cardHTML(id, idx) {
       if (d.answer && hasImgs) {
         const view = sh.ansSrc === 'orig' ? 'orig' : 'text';
         tabs = srcTabsHTML('answer', view);
-        body = (view === 'orig' ? origHTML(d) : md(d.answer)) + noteHTML;
+        body = html`${view === 'orig' ? origHTML(d) : md(d.answer)}${noteHTML}`;
       } else if (d.answer) {
-        body = md(d.answer) + noteHTML;
+        body = html`${md(d.answer)}${noteHTML}`;
       } else {
-        body = (sh.exp ? '<p class="muted">本题答案见下方「解析」中的原图。</p>' : origHTML(d)) + noteHTML;
+        body = html`${sh.exp ? html`<p class="muted">本题答案见下方「解析」中的原图。</p>` : origHTML(d)}${noteHTML}`;
       }
     }
-    ans += boxHTML('答案', 'answer', id, body, tabs);
+    ans.push(boxHTML('答案', 'answer', id, body, tabs));
   }
   if (sh.exp) {
     let body = '加载中', tabs = '';
@@ -189,42 +191,42 @@ function cardHTML(id, idx) {
       if (d.explanation && hasImgs) {
         const view = sh.expSrc === 'orig' ? 'orig' : 'text';
         tabs = srcTabsHTML('exp', view);
-        body = (view === 'orig' ? origHTML(d) : md(d.explanation)) + noteHTML;
+        body = html`${view === 'orig' ? origHTML(d) : md(d.explanation)}${noteHTML}`;
       } else {
-        body = (d.explanation ? md(d.explanation) : '') + origHTML(d) + noteHTML;
+        body = html`${d.explanation ? md(d.explanation) : ''}${origHTML(d)}${noteHTML}`;
       }
     }
-    ans += boxHTML('解析', 'exp', id, body, tabs);
+    ans.push(boxHTML('解析', 'exp', id, body, tabs));
   }
   const hist = store.rec.history.filter(h => h.id === id);
   const srs = store.rec.srs[id], pv = store.previewMarks(id);
-  const dueHTML = srs ? `<span class="due ${dayDiff(srs.card.due) <= 0 ? 'now' : ''}" title="FSRS 调度 · 已复习 ${srs.card.reps} 次">${fmtDue(srs.card.due)}</span>` : '<span class="due">未复习</span>';
+  const dueHTML = srs ? html`<span class="due ${dayDiff(srs.card.due) <= 0 ? 'now' : ''}" title="FSRS 调度 · 已复习 ${srs.card.reps} 次">${fmtDue(srs.card.due)}</span>` : html`<span class="due">未复习</span>`;
   const hasNote = store.hasNote(id), noteOpen = !!sh.note;
-  return `<article class="card" data-id="${id}">
-    <div class="meta"><span class="qno">第 ${idx + 1} 题</span><span class="src">${esc(q.source)}</span>
-      <span class="pop-wrap"><button type="button" class="cat-btn" data-act="cats" aria-expanded="false" aria-label="查看完整分类路径，共 ${paths.length} 处">${esc(leaf)}</button>
-      <div class="popover catpop" hidden><b>分类路径</b>${paths.map(p => `<button type="button" data-act="gocat" data-path="${esc(p)}" title="查看本分类全部题目">${esc(p)}</button>`).join('')}</div></span>${hasNote ? `<span class="note-flag" title="本题有笔记">${IC.pen}有笔记</span>` : ''}${dueHTML}</div>
+  return html`<article class="card" data-id="${id}">
+    <div class="meta"><span class="qno">第 ${idx + 1} 题</span><span class="src">${q.source}</span>
+      <span class="pop-wrap"><button type="button" class="cat-btn" data-act="cats" aria-expanded="false" aria-label="查看完整分类路径，共 ${paths.length} 处">${leaf}</button>
+      <div class="popover catpop" hidden><b>分类路径</b>${paths.map(p => html`<button type="button" data-act="gocat" data-path="${p}" title="查看本分类全部题目">${p}</button>`)}</div></span>${hasNote ? html`<span class="note-flag" title="本题有笔记">${IC.pen}有笔记</span>` : ''}${dueHTML}</div>
     <div class="stem">${md(q.stem, hl)}</div>
     <div class="actions">
       <button type="button" class="tog" data-act="answer" aria-pressed="${!!sh.answer}" aria-label="答案">${IC.eye}答案</button>
       <button type="button" class="tog" data-act="exp" aria-pressed="${!!sh.exp}" aria-label="解析">${IC.book}解析</button>
-      <button type="button" class="tog" data-act="note" aria-pressed="${noteOpen}" aria-expanded="${noteOpen}" aria-label="${hasNote ? '笔记（已有笔记）' : '笔记'}">${IC.pen}笔记${hasNote ? '<i class="dot" aria-hidden="true"></i>' : ''}</button>
+      <button type="button" class="tog" data-act="note" aria-pressed="${noteOpen}" aria-expanded="${noteOpen}" aria-label="${hasNote ? '笔记（已有笔记）' : '笔记'}">${IC.pen}笔记${hasNote ? html`<i class="dot" aria-hidden="true"></i>` : ''}</button>
       <div class="marks">
         <button type="button" class="mk fav" data-act="fav" aria-pressed="${fav}" aria-label="${fav ? '取消收藏' : '收藏'}">${IC.star}${fav ? '已收藏' : '收藏'}</button>
-        ${Object.entries(MARKS).map(([k, v]) => `<button type="button" class="mk" data-act="mark" data-mark="${k}" aria-pressed="${mk === k}" title="标记为${v}，下次复习 ${new Date(pv[k]).toLocaleDateString('zh-CN')}" aria-label="标记为${v}">${MARK_IC[k]}${v}<span class="iv">${ivl(pv[k])}</span></button>`).join('')}
+        ${Object.entries(MARKS).map(([k, v]) => html`<button type="button" class="mk" data-act="mark" data-mark="${k}" aria-pressed="${mk === k}" title="标记为${v}，下次复习 ${new Date(pv[k]).toLocaleDateString('zh-CN')}" aria-label="标记为${v}">${MARK_IC[k]}${v}<span class="iv">${ivl(pv[k])}</span></button>`)}
       </div></div>
-    ${mk ? `<button type="button" class="unmark" data-act="unmark">取消标记</button>` : ''}
-    ${st.tab === 'retest' && hist.length ? `<details class="history"><summary>查看复测历史（${hist.length}）</summary><ul>${hist.slice().reverse().map(h => `<li>${new Date(h.at).toLocaleString('zh-CN')} · ${h.state ? MARKS[h.state] : '取消标记'}</li>`).join('')}</ul></details>` : ''}
+    ${mk ? html`<button type="button" class="unmark" data-act="unmark">取消标记</button>` : ''}
+    ${st.tab === 'retest' && hist.length ? html`<details class="history"><summary>查看复测历史（${hist.length}）</summary><ul>${hist.slice().reverse().map(h => html`<li>${new Date(h.at).toLocaleString('zh-CN')} · ${h.state ? MARKS[h.state] : '取消标记'}</li>`)}</ul></details>` : ''}
     ${ans}${noteOpen ? noteHTMLFor(id, st.noteMode[id]) : ''}</article>`;
 }
 
 function renderCards(sec) {
   const el = $('#cards');
-  if (!sec.length) { el.innerHTML = `<div class="empty">${st.q ? '没有匹配的题目' : st.tab === 'fav' ? '暂无收藏题目。点题目下方的「收藏」即可加入。' : st.tab === 'retest' ? (st.rv === 'due' ? '今日没有待复习的题目。评分后的题目会在到期当天出现在这里。' : '暂无复测题目。把题目标记为「不熟练」或「不会」后会出现在这里。') : '暂无题目'}</div>`; return; }
+  if (!sec.length) { setHTML(el, html`<div class="empty">${st.q ? '没有匹配的题目' : st.tab === 'fav' ? '暂无收藏题目。点题目下方的「收藏」即可加入。' : st.tab === 'retest' ? (st.rv === 'due' ? '今日没有待复习的题目。评分后的题目会在到期当天出现在这里。' : '暂无复测题目。把题目标记为「不熟练」或「不会」后会出现在这里。') : '暂无题目'}</div>`); return; }
   const ids = store.rec.mode === 'multiple' ? sec : [st.qid];
   ids.forEach(id => { if ((st.show[id]?.answer || st.show[id]?.exp) && !details.has(id)) showDetail(id); });
   const a = document.activeElement, keep = a?.matches?.('textarea.note-input') ? { id: a.dataset.noteInput, s: a.selectionStart, e: a.selectionEnd, top: a.scrollTop } : null;
-  el.innerHTML = ids.map(id => cardHTML(id, sec.indexOf(id))).join('');
+  setHTML(el, html`${ids.map(id => cardHTML(id, sec.indexOf(id)))}`);
   const ta = keep && el.querySelector(`textarea[data-note-input="${keep.id}"]`);
   if (ta) { ta.focus({ preventScroll: true }); ta.setSelectionRange(keep.s, keep.e); ta.scrollTop = keep.top; }
 }
@@ -306,11 +308,12 @@ export function bind() {
   $('#scrim').addEventListener('click', () => { $('#app').classList.remove('drawer-open'); render(); });
   $('#listBtn').addEventListener('click', e => {
     e.stopPropagation(); const p = $('#listPop'); const open = p.hidden; closePops(); p.hidden = !open; $('#listBtn').setAttribute('aria-expanded', open);
-    p.innerHTML = lib.lists.map(l => `<button type="button" role="option" data-list="${l.id}" aria-selected="${l.id === st.listId}"><span>${esc(l.name)} · ${l.questionIds.length} 题</span>${l.id === st.listId ? IC.check : ''}</button>`).join('');
+    setHTML(p, html`${lib.lists.map(l => html`<button type="button" role="option" data-list="${l.id}" aria-selected="${l.id === st.listId}"><span>${l.name} · ${l.questionIds.length} 题</span>${l.id === st.listId ? IC.check : ''}</button>`)}`);
   });
   $('#listPop').addEventListener('click', e => { const b = e.target.closest('button[data-list]'); if (!b) return; st.listId = b.dataset.list; st.node = null; st.qid = null; closePops(); render(); $('#main').scrollTo(0, 0); });
   $('#rvSeg').addEventListener('click', e => { const b = e.target.closest('button[data-rv]'); if (!b) return; st.rv = b.dataset.rv; st.node = null; st.qid = null; render(); });
-  let sT; $('#search').addEventListener('input', e => { clearTimeout(sT); sT = setTimeout(() => { st.q = e.target.value.trim(); st.node = null; render(); }, 150); });
+  const search = debounce(v => { st.q = v.trim(); st.node = null; render(); }, SEARCH_MS);
+  $('#search').addEventListener('input', e => search(e.target.value));
   $('#tree').addEventListener('click', e => {
     const b = e.target.closest('button[data-act]'); if (!b) return; const path = b.closest('.node').dataset.path;
     if (b.dataset.act === 'toggle') { const n = b.closest('.node'); store.setOpen(path, !n.classList.contains('open')); renderTree(); return; }
@@ -329,7 +332,7 @@ export function bind() {
       case 'nedit': st.noteMode[id] = 'edit'; render(); focusNote(id); return;
       case 'nprev': st.noteMode[id] = 'preview'; break;
       case 'nclear': {
-        if (!b.classList.contains('confirm')) { b.classList.add('confirm'); b.textContent = '再点一次确认清空'; setTimeout(() => { if (b.isConnected) { b.classList.remove('confirm'); b.textContent = '清空笔记'; } }, 3000); return; }
+        if (!confirmClear(id)) return;
         clearNote(id); st.noteMode[id] = 'edit'; toast('已清空本题笔记'); break; }
       case 'fav': { const was = store.toggleFavorite(id); toast(was ? '已取消收藏' : '已收藏'); if (st.tab === 'fav' && was) { const sec = sectionIds(tree); const k = sec.indexOf(id); st.qid = sec[k + 1] ?? sec[k - 1] ?? null; } break; }
       case 'mark': return setMark(id, b.dataset.mark);

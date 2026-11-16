@@ -25,6 +25,8 @@ jobs:
           cache: npm
       - name: Unit and property tests (node --test)
         run: npm ci && npm test
+      - name: Lint (eslint flat config)
+        run: npm run lint
       - name: Install Playwright (uses the runner's Google Chrome) and Pillow
         run: pip install playwright pillow
       - name: Validate data-src and rebuild public/data

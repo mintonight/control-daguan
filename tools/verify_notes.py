@@ -204,7 +204,11 @@ async def main():
     ok('Gist 同步: 本地编辑笔记后自动上传', gh.content(gid)['notes']['202301']['text'] == '本地再改', [gh.content(gid)['notes']['202301'], (await rec())['notes']['202301'], await t('#syncStatus').inner_text(), await t('.card').get_attribute('data-id')])
     # 清空：两步确认
     await t('.nb-clear').click()
-    ok('「清空笔记」需再次确认', 'X' and (await t('.nb-clear').inner_text()).startswith('再点一次') and (await rec())['notes']['202301']['text'] == '本地再改')
+    ok('「清空笔记」需再次确认', (await t('.nb-clear').inner_text()).startswith('再点一次') and (await rec())['notes']['202301']['text'] == '本地再改')
+    await pg.wait_for_function("document.querySelector('.nb-clear')?.textContent === '清空笔记'", timeout=5000)
+    ok('「再点一次确认清空」3 秒后自动复位', not await t('.nb-clear').evaluate("b => b.classList.contains('confirm')") and (await rec())['notes']['202301']['text'] == '本地再改')
+    await t('.nb-clear').click(); await pg.evaluate("dispatchEvent(new Event('resize'))")
+    ok('确认状态是显式状态：卡片重绘后仍保留', (await t('.nb-clear').inner_text()).startswith('再点一次') and await t('.nb-clear').evaluate("b => b.classList.contains('confirm')"))
     await t('.nb-clear').click(); r = await rec()
     ok('清空后：留删除时间戳、标识消失', r['notes']['202301']['text'] == '' and r['notes']['202301']['at'] > 0 and await t('.card .note-flag').count() == 0 and await t('button[data-act="note"] .dot').count() == 0)
     await pg.wait_for_timeout(3600)

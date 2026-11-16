@@ -8,6 +8,7 @@ import { bindSettings, syncUI } from './ui/settings.js';
 import { setNoteHooks, flushNotes } from './ui/notes-editor.js';
 import { startPWA } from './ui/pwa.js';
 import { $, toast } from './ui/dom.js';
+import { html, setHTML } from './ui/html.js';
 
 // 测试入口（Playwright 用例读取本地存储、调用纯函数）；应用代码不使用
 window.__cdg = { kv, mergeRecords, canon, syncPart, normalizeNotes };
@@ -21,4 +22,4 @@ Promise.all([loadLibrary(), store.init()]).then(async () => {
   if (store.migrated) toast('学习记录已迁移到 IndexedDB');
   await store.initSync();
   startPWA({ getLib: () => lib, flush: async () => { flushNotes(); await store.persist(); } });
-}).catch(() => { $('#cards').innerHTML = '<div class="empty">静态文件读取失败，请刷新重试。</div>'; });
+}).catch(() => { setHTML($('#cards'), html`<div class="empty">静态文件读取失败，请刷新重试。</div>`); });

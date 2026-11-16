@@ -1,4 +1,5 @@
 /* 笔记 Markdown 渲染：marked（GFM）+ KaTeX 公式 + DOMPurify 清洗。 */
+import { trusted } from './html.js';
 const { katex, marked, DOMPurify } = globalThis;
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const tex = (src, display) => {
@@ -31,10 +32,10 @@ purify.addHook('afterSanitizeAttributes', n => {
   if (n.tagName === 'IMG') { n.setAttribute('loading', 'lazy'); n.setAttribute('referrerpolicy', 'no-referrer'); }
 });
 const SAFE = { USE_PROFILES: { html: true, svg: true, mathMl: true }, ADD_ATTR: ['target'], FORBID_TAGS: ['style', 'form', 'input', 'button', 'textarea', 'select', 'iframe'], FORBID_ATTR: ['id', 'name'] };
-/** Markdown → 已清洗的 HTML */
+/** Markdown → 已清洗的 Html；空笔记返回 null */
 export function renderNote(text) {
-  if (!text || !text.trim()) return '';
+  if (!text || !text.trim()) return null;
   let html;
   try { html = md.parse(text); } catch { html = `<pre>${esc(text)}</pre>`; }
-  return purify.sanitize(html, SAFE);
+  return trusted(purify.sanitize(html, SAFE));
 }

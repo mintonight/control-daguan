@@ -1,5 +1,6 @@
 /* 题干、答案、解析的轻量 Markdown：段落、**粗体**、$公式$、![图|宽](src)；可高亮搜索词。 */
 import { esc } from './dom.js';
+import { trusted } from './html.js';
 const { katex } = globalThis;
 
 function tex(src, display) {
@@ -21,8 +22,9 @@ function inline(s, hl) {
   out.push(txt(s.slice(i)));
   return out.join('');
 }
-export const md = (s, hl) => s.split(/\n\s*\n/).map(p => p.trim()).filter(Boolean).map(p => {
+/** 返回 Html（KaTeX 输出与转义后的文本拼成，可直接放进 html``） */
+export const md = (s, hl) => trusted(s.split(/\n\s*\n/).map(p => p.trim()).filter(Boolean).map(p => {
   const h = inline(p.replace(/\n/g, ' '), hl);
   return /^<span class="fig">[^]*<\/span>$/.test(h) ? `<div class="fig">${h.replace(/^<span class="fig">|<\/span>$/g, '')}</div>` : `<p>${h}</p>`;
-}).join('');
+}).join(''));
 
