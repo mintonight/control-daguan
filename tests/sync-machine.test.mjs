@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fc from 'fast-check';
+import { SYNC_DEBOUNCE_MS, SYNC_AGAIN_MS } from '../public/src/sync/gist.js';
 import { machine, projection } from './helpers/sync-machine.mjs';
 
 test('two devices with same-time retention edits converge instead of alternately overwriting the Gist', async t => {
@@ -82,7 +83,7 @@ const editArb = fc.tuple(deviceArb, fc.constantFrom('question', 'note', 'retenti
 const startArb = deviceArb.map(d => command(`sync(${d})`, async (_model, real) => real.start(d)));
 const deliveryArb = fc.tuple(fc.nat({ max: 5 }), fc.constantFrom('ok', 'ok', 'offline', 'http', 'lostAck'))
   .map(([index, outcome]) => command(`network(${index},${outcome})`, async (_model, real) => real.deliver(index, outcome)));
-const clockArb = fc.constantFrom(499, 500, 3000).map(ms => command(`advance(${ms})`, async (_model, real) => real.advance(ms)));
+const clockArb = fc.constantFrom(SYNC_AGAIN_MS - 1, SYNC_AGAIN_MS, SYNC_DEBOUNCE_MS).map(ms => command(`advance(${ms})`, async (_model, real) => real.advance(ms)));
 
 for (const seed of [12012026, 13012026]) {
   test(`two-device sync state machine seed=${seed}: edits, busy/again, reordered failures and fair retry converge`, { timeout: 60000 }, async t => {
@@ -158,5 +159,21 @@ test('a future-dated note tombstone intentionally defeats an older-clock edit', 
     for (const device of real.devices) device.persist();
     await real.agree();
     assert.deepEqual(real.server.rec.notes['1'], { text: '', at: 2000 });
+  } finally { await real.close(); }
+});
+
+test('production debounce and busy/again delays keep their exact observable boundaries', async t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const real = await machine(t.mock.timers);
+  try {
+    real.devices[0].sync.schedule();
+    await real.advance(SYNC_DEBOUNCE_MS - 1); assert.equal(real.server.queue.length, 0);
+    await real.advance(1); assert.equal(real.server.queue.length, 1);
+    await real.start(0); assert.equal(real.devices[0].sync.again, true);
+    await real.deliver(); assert.equal(real.server.queue.length, 0);
+    await real.advance(SYNC_AGAIN_MS - 1); assert.equal(real.server.queue.length, 0);
+    await real.advance(1); assert.equal(real.server.queue.length, 1);
+    await real.deliver(); assert.equal(real.devices[0].sync.busy, null);
+    assert.equal(real.server.reads, 2);
   } finally { await real.close(); }
 });

@@ -3,7 +3,7 @@
 
 // PRECACHE 由 tools/build_precache.py 在构建时写入，请勿手改
 const PRECACHE = {
-  "version": "e853f045287f",
+  "version": "7b38037f956e",
   "files": [
     "./",
     "./index.html",
@@ -136,7 +136,7 @@ const PRECACHE = {
     "./src/store/kv.js": "sha256-VoI4k/uIBfijOfXhWAVPpnQQYyB7uoj/pzXu+1Z/jtQ=",
     "./src/store/library.js": "sha256-3M3bcOEePF2LpvpQEstv+CpPEw0T7/zz7hdWa1V+HzU=",
     "./src/store/records.js": "sha256-W1OhYX9vTjth/SKHIypQ3Ka5EL3AgTEShUuvGy5JBcg=",
-    "./src/sync/gist.js": "sha256-tWqVe7vaSr0Eaj53q5h/dyvcZYzPhOlciyahUMvz0qI=",
+    "./src/sync/gist.js": "sha256-QVi8OZ5j9zzf2ZQ9wCs9tURD+0K9FC7yFM28M1FdP6w=",
     "./src/ui/dom.js": "sha256-3QRu+++AkqGTW2jXCupSN1M5w37IecQ38JbRTxZUBSI=",
     "./src/ui/html.js": "sha256-sxzgeI9nTk/eWS+fvMLy4rGVmxOxcQvhBm9i4o/AEHA=",
     "./src/ui/icons.js": "sha256-eD27zFW+KSGjYY0VbzKXefs61R/dVQQC7UDdMksbwJM=",

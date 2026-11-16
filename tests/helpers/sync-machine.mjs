@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { setImmediate as turn } from 'node:timers/promises';
-import { GistSync, FILE } from '../../public/src/sync/gist.js';
+import { GistSync, FILE, SYNC_DEBOUNCE_MS, SYNC_AGAIN_MS } from '../../public/src/sync/gist.js';
 import { canon, syncPart } from '../../public/src/core/merge.js';
 import { normRec } from '../../public/src/core/record.js';
 import { activity } from '../../public/src/core/activity.js';
@@ -10,7 +10,7 @@ const copy = value => structuredClone(value);
 export const projection = value => canon(syncPart(value));
 
 export async function machine(clock) {
-  const server = { rec: empty(), queue: [], reads: 0, writes: 0, failures: 0, httpFailures: 0, offlineFailures: 0, lostAcks: 0 };
+  const server = { rec: { app: 'control-daguan', kind: 'progress', version: 3, ...empty() }, queue: [], reads: 0, writes: 0, failures: 0, httpFailures: 0, offlineFailures: 0, lostAcks: 0 };
   const devices = [];
   for (let index = 0; index < 2; index++) {
     const durable = new Map([['gist', { token: 'synthetic-test-token', gistId: 'shared' }]]);
@@ -62,7 +62,7 @@ export async function machine(clock) {
       for (let step = 0; step < 300; step++) {
         if (server.queue.length) await real.deliver();
         else if (devices.some(d => d.sync.busy)) await turn();
-        else if (activity.pending.size) await real.advance(3000);
+        else if (activity.pending.size) await real.advance(Math.max(SYNC_DEBOUNCE_MS, SYNC_AGAIN_MS));
         else return;
       }
       assert.fail('sync work failed to quiesce within the deterministic bound');

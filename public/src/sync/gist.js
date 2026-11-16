@@ -3,6 +3,7 @@ import { mergeRecords, canon, syncPart } from '../core/merge.js';
 import { track } from '../core/activity.js';
 import { after } from '../core/timers.js';
 
+export const SYNC_DEBOUNCE_MS = 3000, SYNC_AGAIN_MS = 500;
 export const FILE = 'control-daguan-progress.json', API = 'https://api.github.com';
 export class SyncError extends Error { constructor(msg, kind) { super(msg); this.kind = kind; } }
 export class GistSync {
@@ -54,14 +55,14 @@ export class GistSync {
     try { return await this.sync(); } catch (e) { if (e.kind === 'auth') await this.disconnect(); throw e; }
   }
   async disconnect() { this.cancelScheduled?.(); this.cfg = null; this.pending = false; await this.kv.del('gist'); this.emit(); }
-  schedule(ms = 3000) {
+  schedule(ms = SYNC_DEBOUNCE_MS) {
     if (!this.connected) return;
     this.pending = true; this.cancelScheduled?.(); this.cancelScheduled = after(ms, () => this.sync().catch(() => {})); this.emit();
   }
   sync() {
     if (!this.connected) return Promise.resolve(null);
     if (this.busy) { this.again = true; return this.busy; }
-    this.busy = track(this._sync().finally(() => { this.busy = null; this.emit(); if (this.again) { this.again = false; this.schedule(500); } }), 'gist-sync');
+    this.busy = track(this._sync().finally(() => { this.busy = null; this.emit(); if (this.again) { this.again = false; this.schedule(SYNC_AGAIN_MS); } }), 'gist-sync');
     this.emit(); return this.busy;
   }
   async _sync() {
