@@ -80,7 +80,7 @@ function questionIds(...recs) {
  * policy 'sync'（Gist 同步 / 迁移）：逐题取最后更新的一方（收藏、标记、FSRS 卡片整体），较新的删除/重置同样生效。
  * policy 'import'（导入文件 / 记录码）：只增不删，导入文件没有删除记录——收藏取并集，标记取较新的 at，卡片取较新的 last_review。
  * 两种策略共用：复习日志按 id 取并集；笔记逐题按 at 取较新（删除同样按时间生效）；记录历史取并集；
- * 同一时刻的冲突按内容决出，与参数顺序无关。记忆率按 retentionAt 取较新；时间相同保留 a（本机）的设置。
+ * 同一时刻的冲突按内容决出，与参数顺序无关。记忆率按 retentionAt 取较新；时间相同按规范化内容稳定决胜。
  */
 /** @param {Partial<import('./types.js').Progress> | null | undefined} a
  * @param {Partial<import('./types.js').Progress> | null | undefined} b
@@ -111,7 +111,7 @@ function mergeRecords(a, b, policy = 'sync') {
   out.notes = mergeNotes(a.notes, b.notes);
   out.history = unionHistory(a.history, b.history);
   const ra = Number(a.retentionAt) || 0, rb = Number(b.retentionAt) || 0;
-  out.retention = rb > ra ? b.retention : (a.retention ?? b.retention); out.retentionAt = Math.max(ra, rb);
+  out.retention = ra === rb ? pick(a.retention, b.retention) : rb > ra ? b.retention : (a.retention ?? b.retention); out.retentionAt = Math.max(ra, rb);
   return out;
 }
 

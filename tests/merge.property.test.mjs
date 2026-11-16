@@ -29,8 +29,6 @@ const record = fc.record({
 });
 const same = (x, y, msg) => assert.equal(canon(x), canon(y), msg);
 const ts = (r, id) => Math.max(+(r.updated?.[id]) || 0, +(r.marks?.[id]?.at) || 0, Date.parse(r.srs?.[id]?.card?.last_review || '') || 0);
-// 记忆率时间相同时保留第一个参数（本机）的设置，是有意的不对称，比较交换律时去掉
-const noTieRetention = (m, a, b) => (+a.retentionAt === +b.retentionAt ? { ...m, retention: null } : m);
 // 某题的“删除方”：提到了这题、却没有卡片的一方（重置复习进度或从未复习）
 const cardless = (r, id) => ts(r, id) > 0 && !r.srs?.[id];
 
@@ -38,7 +36,7 @@ for (const policy of POLICIES) {
   const M = (a, b) => mergeRecords(a, b, policy);
 
   test(`[${policy}] 交换律`, () => fc.assert(fc.property(record, record, (a, b) => {
-    same(noTieRetention(M(a, b), a, b), noTieRetention(M(b, a), a, b));
+    same(M(a, b), M(b, a));
   }), RUNS));
 
   test(`[${policy}] 幂等与吸收：再合并任一输入或结果本身不改变结果`, () => fc.assert(fc.property(record, record, (a, b) => {
@@ -48,7 +46,7 @@ for (const policy of POLICIES) {
 
   test(`[${policy}] 结合律`, () => fc.assert(fc.property(record, record, record, (a, b, c) => {
     const l = M(M(a, b), c), r = M(a, M(b, c));
-    const strip = x => ({ ...x, retention: null, srs: Object.fromEntries(Object.entries(x.srs).map(([k, v]) => [k, v.card])) });
+    const strip = x => ({ ...x, srs: Object.fromEntries(Object.entries(x.srs).map(([k, v]) => [k, v.card])) });
     same(strip(l), strip(r), '除复习日志外');
     // 同步策略下，若某题有一方“没有卡片”（重置），先合并的组合会先丢掉那一侧以前的日志，所以日志只在没有这种情况时满足结合律
     const ids = Object.keys(l.srs).filter(id => policy === 'import' || ![a, b, c].some(x => cardless(x, id)));
@@ -108,3 +106,7 @@ test('与空记录合并等于自身规范化后的结果；不修改入参', ()
   for (const p of POLICIES) { same(mergeRecords(a, {}, p), mergeRecords({}, a, p)); mergeRecords(a, b, p); }
   assert.equal(canon(a), ca); assert.equal(canon(b), cb);
 }), RUNS));
+
+test('旧缺失记忆率字段保留非冲突分支的回退行为', () => {
+  assert.equal(mergeRecords({ retentionAt: 42 }, { retention: 0.85, retentionAt: 1 }).retention, 0.85);
+});
