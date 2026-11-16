@@ -2,6 +2,7 @@
 用法: python3 tools/verify_notes.py [base_url]"""
 import asyncio, sys, json, re
 from playwright.async_api import async_playwright
+from verify_support import idle
 BASE = sys.argv[1] if len(sys.argv) > 1 else 'http://localhost:8765/'
 R = []
 async def open_sec(p, key):
@@ -71,11 +72,12 @@ async def main():
         await ctx.grant_permissions(['clipboard-read', 'clipboard-write'])
         await ctx.route('https://api.github.com/**', gh.handle)
         pg = await ctx.new_page(); pg.errs = []
+        await pg.clock.install()
         pg.on('pageerror', lambda e: pg.errs.append(str(e))); pg.on('dialog', lambda d: (setattr(pg, 'dlg', True), asyncio.ensure_future(d.dismiss())))
         return ctx, pg
     ctx, pg = await newpage(); t = pg.locator
     async def rec(page=None):
-        await (page or pg).wait_for_timeout(150); return await (page or pg).evaluate("__cdg.kv.get('rec').then(r=>r||{})")
+        await idle(page or pg); return await (page or pg).evaluate("__cdg.kv.get('rec').then(r=>r||{})")
     QURL = BASE + '?list=complete&question=202301'
     await pg.goto(QURL, wait_until='networkidle')
     nbtn = t('.card button[data-act="note"]')
@@ -84,7 +86,16 @@ async def main():
     ta = t('textarea.note-input')
     ok('点「笔记」打开编辑器并聚焦', await ta.is_visible() and await pg.evaluate("document.activeElement.matches('textarea.note-input')"))
     ok('空状态是邀请而非报错', '实时预览' in await t('.nb-live').inner_text() and 'Markdown' in (await ta.get_attribute('placeholder')) and await t('.notebox .err').count() == 0)
+    # Intentional time scenario: idle observes the 700 ms autosave debounce, never flushes it.
+    await pg.clock.pause_at((await pg.evaluate('Date.now()')) / 1000 + 1)
     await ta.fill(NOTE)
+    await pg.evaluate("() => { window.noteIdleObserved = false; window.__cdg.idle().then(() => { window.noteIdleObserved = true; }); }")
+    await pg.clock.run_for(699)
+    probe = await pg.evaluate("async () => ({ready: window.noteIdleObserved, rec: await window.__cdg.kv.get('rec')})")
+    ok('idle 不提前触发自动保存：699 ms 时仍在等待', not probe['ready'] and not (probe['rec'] or {}).get('notes', {}).get('202301'), probe)
+    await pg.clock.run_for(1); await pg.clock.resume()
+    await idle(pg)
+    ok('自动保存、预览及落库完成后 idle 才返回', await pg.evaluate('window.noteIdleObserved'))
     await pg.wait_for_function("document.querySelector('.nb-status').textContent.includes('已保存')", timeout=5000)
     r = await rec()
     ok('自动保存（防抖）写入 IndexedDB', r.get('notes', {}).get('202301', {}).get('text') == NOTE and r['notes']['202301']['at'] > 0)
@@ -110,12 +121,12 @@ async def main():
     await t('.nb-tabs button[data-act="nedit"]').click()
     ok('「编辑」切回编辑器并聚焦', await pg.evaluate("document.activeElement.matches('textarea.note-input')"))
     await pg.keyboard.press('End'); await pg.keyboard.type('\n追加一行')
-    await t('#nextBtn').click(); await pg.wait_for_timeout(100)
+    await t('#nextBtn').click(); await idle(pg)
     r = await rec()
     ok('输入后立刻点「下一题」也不丢字', r['notes']['202301']['text'].endswith('追加一行'), r['notes']['202301']['text'][-20:])
     # 另一题写短笔记
     await t('.card button[data-act="note"]').click(); qid2 = await t('.card').get_attribute('data-id')
-    await t('textarea.note-input').type('第二题：**注意** 采样周期'); await pg.wait_for_timeout(900)
+    await t('textarea.note-input').type('第二题：**注意** 采样周期'); await idle(pg)
     ok('每题独立保存', (await rec())['notes'][qid2]['text'] == '第二题：**注意** 采样周期' and (await rec())['notes']['202301']['text'].startswith('# 劳斯'))
     await pg.keyboard.type('X'); await pg.reload(wait_until='networkidle')
     r = await rec()
@@ -138,9 +149,9 @@ async def main():
     await t('.card button[data-act="answer"]').click(); await t('.card button[data-act="exp"]').click()
     ok('答案/解析与笔记可同时展开', await t('.box h4:has-text("答案")').count() == 1 and await t('.box h4:has-text("解析")').count() == 1 and await t('.notebox').count() == 1)
     # 搜索笔记内容
-    await t('#search').fill('劳斯判据要点'); await pg.wait_for_timeout(400)
+    await t('#search').fill('劳斯判据要点'); await idle(pg)
     ok('搜索能找到笔记内容', await t('.card[data-id="202301"]').count() == 1)
-    await t('#search').fill(''); await pg.wait_for_timeout(400)
+    await t('#search').fill(''); await idle(pg)
     # 多题模式
     await t('#gearBtn').click(); await open_sec(pg, 'read'); await t('#modeSeg button[data-mode="multiple"]').click(); await pg.mouse.click(400, 400)
     ok('多题模式: 每张卡片各自有笔记按钮，有笔记的题显示标识', await t('.card button[data-act="note"]').count() > 1 and await t('.card[data-id="202301"] .note-flag').count() == 1)
@@ -152,20 +163,20 @@ async def main():
     ok('导出 JSON 包含 notes，版本保持 v2（向后兼容）', exp['version'] == 2 and exp['notes']['202301']['text'].startswith('# 劳斯') and qid2 in exp['notes'])
     await t('#genCodeBtn').click(); code = await t('#codeInput').input_value()
     ctx2, pg2 = await newpage(); await pg2.goto(QURL, wait_until='networkidle')
-    await pg2.locator('#gearBtn').click(); await open_sec(pg2, 'records'); await pg2.locator('#codeInput').fill(code); await pg2.locator('#importCodeBtn').click(); await pg2.wait_for_timeout(300)
+    await pg2.locator('#gearBtn').click(); await open_sec(pg2, 'records'); await pg2.locator('#codeInput').fill(code); await pg2.locator('#importCodeBtn').click(); await idle(pg2)
     r2 = await rec(pg2)
     ok('记录码往返包含笔记', r2.get('notes', {}).get('202301', {}).get('text') == exp['notes']['202301']['text'] and await pg2.locator('.note-flag').count() == 1)
     # 新设备导入 JSON；旧 v2（无 notes）文件导入不清空笔记；较旧的笔记不覆盖较新的
     ctx3, pg3 = await newpage(); await pg3.goto(QURL, wait_until='networkidle')
     imp = '/tmp/cdg-notes-import.json'
     json.dump(exp, open(imp, 'w'), ensure_ascii=False)
-    await pg3.locator('#gearBtn').click(); await pg3.locator('#importFile').set_input_files(imp); await pg3.wait_for_timeout(300)
+    await pg3.locator('#gearBtn').click(); await pg3.locator('#importFile').set_input_files(imp); await idle(pg3)
     ok('导入 JSON 恢复笔记并标识、默认收起', (await rec(pg3))['notes']['202301']['text'] == exp['notes']['202301']['text'] and await pg3.locator('.note-flag').count() == 1 and await pg3.locator('.notebox').count() == 0)
     old = {k: v for k, v in exp.items() if k != 'notes'}; json.dump(old, open(imp, 'w'))
-    await pg3.locator('#importFile').set_input_files(imp); await pg3.wait_for_timeout(300)
+    await pg3.locator('#importFile').set_input_files(imp); await idle(pg3)
     ok('导入不含 notes 的旧 v2 文件：成功且不清空笔记', '已导入' in await pg3.locator('#setMsg').inner_text() and (await rec(pg3))['notes']['202301']['text'] == exp['notes']['202301']['text'])
     stale = {**exp, 'notes': {'202301': {'text': '旧内容', 'at': 1000}, '209999': {'text': '不存在的题', 'at': 9e12}}}; json.dump(stale, open(imp, 'w'), ensure_ascii=False)
-    await pg3.locator('#importFile').set_input_files(imp); await pg3.wait_for_timeout(300); r3 = await rec(pg3)
+    await pg3.locator('#importFile').set_input_files(imp); await idle(pg3); r3 = await rec(pg3)
     ok('导入时较新的本地笔记不被旧笔记覆盖，未知题号忽略', r3['notes']['202301']['text'] == exp['notes']['202301']['text'] and '209999' not in r3['notes'])
     await ctx2.close(); await ctx3.close()
     # ---------- 合并规则（纯函数） ----------
@@ -200,23 +211,29 @@ async def main():
     ok('Gist 同步: 拉取远端较新的笔记并刷新界面', r['notes']['202301']['text'].startswith('## 远端更新') and await t('.card[data-id="202301"] .md-body h2').count() == 1 and r['notes'].get('202302', {}).get('text') == '远端新增')
     await pg.mouse.click(400, 400)
     if await t('textarea.note-input').count() == 0: await t('.nb-tabs button[data-act="nedit"]').click()
-    await t('textarea.note-input').fill('本地再改'); await pg.wait_for_timeout(900 + 3500)
+    await t('textarea.note-input').fill('本地再改'); await idle(pg)
     ok('Gist 同步: 本地编辑笔记后自动上传', gh.content(gid)['notes']['202301']['text'] == '本地再改', [gh.content(gid)['notes']['202301'], (await rec())['notes']['202301'], await t('#syncStatus').inner_text(), await t('.card').get_attribute('data-id')])
     # 清空：两步确认
+    # Intentional time scenario: confirmation lasts 3 seconds; idle must not dismiss it.
+    await pg.clock.pause_at((await pg.evaluate('Date.now()')) / 1000 + 1)
     await t('.nb-clear').click()
     ok('「清空笔记」需再次确认', (await t('.nb-clear').inner_text()).startswith('再点一次') and (await rec())['notes']['202301']['text'] == '本地再改')
+    await pg.clock.run_for(2999)
+    ok('确认在 2999 ms 时仍有效', (await t('.nb-clear').inner_text()).startswith('再点一次'))
+    await pg.clock.run_for(1)
     await pg.wait_for_function("document.querySelector('.nb-clear')?.textContent === '清空笔记'", timeout=5000)
+    await pg.clock.resume()
     ok('「再点一次确认清空」3 秒后自动复位', not await t('.nb-clear').evaluate("b => b.classList.contains('confirm')") and (await rec())['notes']['202301']['text'] == '本地再改')
     await t('.nb-clear').click(); await pg.evaluate("dispatchEvent(new Event('resize'))")
     ok('确认状态是显式状态：卡片重绘后仍保留', (await t('.nb-clear').inner_text()).startswith('再点一次') and await t('.nb-clear').evaluate("b => b.classList.contains('confirm')"))
     await t('.nb-clear').click(); r = await rec()
     ok('清空后：留删除时间戳、标识消失', r['notes']['202301']['text'] == '' and r['notes']['202301']['at'] > 0 and await t('.card .note-flag').count() == 0 and await t('button[data-act="note"] .dot').count() == 0)
-    await pg.wait_for_timeout(3600)
+    await idle(pg)
     ok('Gist 同步: 删除同步到远端', gh.content(gid)['notes']['202301']['text'] == '')
     await t('#syncOffBtn').click() if await t('#syncOffBtn').is_visible() else None
     # ---------- 手机宽度 ----------
     ctx4, pg4 = await newpage(390, 844); await pg4.goto(QURL, wait_until='networkidle')
-    await pg4.locator('.card button[data-act="note"]').click(); await pg4.locator('textarea.note-input').fill('手机 **笔记** $x^2$'); await pg4.wait_for_timeout(900)
+    await pg4.locator('.card button[data-act="note"]').click(); await pg4.locator('textarea.note-input').fill('手机 **笔记** $x^2$'); await idle(pg4)
     ok('手机宽度: 编辑器可用（实时预览隐藏，可切到预览）', await pg4.locator('textarea.note-input').is_visible() and not await pg4.locator('.nb-live').is_visible())
     await pg4.locator('.nb-tabs button[data-act="nprev"]').click()
     ok('手机宽度: 预览渲染', await pg4.locator('.nb-view strong').count() == 1 and await pg4.locator('.nb-view .katex').count() == 1)

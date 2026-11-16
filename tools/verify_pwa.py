@@ -9,6 +9,7 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from playwright.async_api import async_playwright
 
+from verify_support import idle
 ROOT = Path(__file__).resolve().parents[1]
 PREFIX = '/control-daguan'
 R = []
@@ -103,7 +104,7 @@ async def main():
             if m.type != 'error': return
             # 故意离线且未缓存时，SW 返回 503，Chromium 会打一条资源错误，不是应用脚本异常
             if '503' in m.text or '(offline)' in m.text: return
-            errs.append(m.text)
+            errs.append(f"{m.text} url={m.location.get('url', '')}")
         pg.on('console', on_console)
         await pg.goto(BASE + '?list=complete&question=202501', wait_until='networkidle')
         await wait_sw(pg)
@@ -148,7 +149,11 @@ async def main():
         await pg.locator('button[aria-label="答案"]').click()
         await pg.wait_for_selector('.box')
         await pg.wait_for_function("""() => [...document.querySelectorAll('.fig img, .box img, .orig img')].every(i => i.complete && i.naturalWidth > 0)""", timeout=15000)
-        await pg.wait_for_timeout(400)
+        # Response rendering is not evidence that SW cache writes have completed.
+        await pg.wait_for_function("""async () => {
+          const urls = ['data/questions/202501.json', ...[...document.querySelectorAll('.fig img, .box img, .orig img')].map(i => i.src)];
+          return (await Promise.all(urls.map(u => caches.match(new URL(u, location.href).href)))).every(Boolean);
+        }""")
         await ctx.set_offline(True)
         await pg.goto(BASE + '?list=complete&question=202501', wait_until='domcontentloaded')
         await pg.wait_for_selector('.card')
@@ -196,7 +201,7 @@ async def main():
         await open_offline_sec(pg)
         await pg.locator('#offlineClearBtn').click()
         await pg.locator('#offlineClearYes').click()
-        await pg.wait_for_timeout(400)
+        await pg.wait_for_function("document.querySelector('#offlineSize').textContent.includes('未下载')")
         n_after = await runtime_count(pg)
         size_after = await pg.locator('#offlineSize').inner_text()
         ok('清除离线缓存后运行时缓存为空', n_after == 0 and '未下载' in size_after, f"keys={n_after} {size_after}")
@@ -209,7 +214,8 @@ async def main():
         await pg.goto(BASE + '?list=complete&question=201602', wait_until='domcontentloaded')
         await pg.wait_for_selector('.card')
         await pg.locator('button[aria-label="答案"]').click()
-        await pg.wait_for_timeout(1200)
+        await pg.wait_for_function("document.querySelector('#toast').textContent.includes('失败')")
+        await idle(pg, allow_failure=True)
         box_imgs = await pg.evaluate("""() => {
           const imgs = [...document.querySelectorAll('.box img, .orig img')];
           return { boxes: document.querySelectorAll('.box').length, okImgs: imgs.filter(i => i.complete && i.naturalWidth > 0).length };
@@ -219,8 +225,8 @@ async def main():
         await ctx.set_offline(False)
 
         # --- 不缓存 GitHub API ---
-        await pg.evaluate("""() => fetch('https://api.github.com/zen').catch(() => {})""")
-        await pg.wait_for_timeout(500)
+        await ctx.route('https://api.github.com/zen', lambda route: route.fulfill(status=200, body='mock public response'))
+        await pg.evaluate("""() => fetch('https://api.github.com/zen').then(r => r.text())""")
         urls = await cached_urls(pg)
         leak = [u for u in urls if 'api.github.com' in u or 'githubusercontent.com' in u]
         ok('api.github.com / Gist 请求不被缓存', not leak, leak[:5])
@@ -246,7 +252,7 @@ async def main():
         await wait_sw(pg)
         cdp = await ctx.new_cdp_session(pg)
         await cdp.send('Page.enable')
-        await pg.wait_for_timeout(500)
+        await idle(pg)
         inst = await cdp.send('Page.getInstallabilityErrors')
         inst_errs = inst.get('installabilityErrors') or inst.get('errors') or inst.get('installability_errors') or []
         # 过滤已知无害项（如果有）
@@ -257,7 +263,7 @@ async def main():
           ev.userChoice = Promise.resolve({ outcome: 'accepted' });
           window.dispatchEvent(ev);
         }""")
-        await pg.wait_for_timeout(200)
+        await pg.wait_for_selector('#installTopBtn:visible')
         top_vis = await pg.locator('#installTopBtn').is_visible()
         ok('beforeinstallprompt 后顶栏出现「安装应用」', top_vis)
         await open_offline_sec(pg)
@@ -282,8 +288,8 @@ async def main():
             }""")
             standalone = await pg.evaluate("() => matchMedia('(display-mode: standalone)').matches")
         await pg.evaluate("() => window.dispatchEvent(new Event('appinstalled'))")
-        await pg.wait_for_timeout(200)
         await open_offline_sec(pg)
+        await pg.wait_for_selector('#installedHint:visible')
         already = await pg.locator('#installedHint').is_visible()
         install_hidden = not await pg.locator('#installBtn').is_visible() and not await pg.locator('#installTopBtn').is_visible()
         ok('standalone 下隐藏安装按钮并显示已安装提示', standalone and already and install_hidden,

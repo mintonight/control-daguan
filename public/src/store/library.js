@@ -1,5 +1,6 @@
 // @ts-check
 /* 题库（只读）：data/library.json 与按需加载的 data/questions/<id>.json。 */
+import { track } from '../core/activity.js';
 import { parseLibrary, parseQuestionDetail } from '../core/question.js';
 /** @type {import('../core/types.js').Library | null} */
 export let lib = null;
@@ -18,7 +19,9 @@ export async function loadLibrary() {
 }
 /** 加载一题的答案与解析；已加载时直接返回 */
 /** @param {number} id @returns {Promise<import('../core/types.js').QuestionDetail>} */
-export async function loadDetail(id) {
+export const loadDetail = id => track(fetchDetail(id), 'question-detail');
+/** @param {number} id @returns {Promise<import('../core/types.js').QuestionDetail>} */
+async function fetchDetail(id) {
   const cached = details.get(id); if (cached) return cached;
   const r = await fetch(`data/questions/${id}.json`); if (!r.ok) throw new Error(`question ${id} ${r.status}`);
   /** @type {unknown} */

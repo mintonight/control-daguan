@@ -1,6 +1,7 @@
 """逐个点击控制大观的每个交互控件并断言效果。用法: python3 tools/verify.py [base_url]"""
 import asyncio, sys, json, os
 from playwright.async_api import async_playwright
+from verify_support import idle
 BASE = sys.argv[1] if len(sys.argv) > 1 else 'http://localhost:8765/'
 R = []
 async def open_sec(p, key):
@@ -114,11 +115,11 @@ async def main():
     await t('button[data-mark="mastered"]').click(); ok('复测: 标记掌握后移出复测', await t('.empty').count() > 0)
     await t('#tabs button[data-tab="bank"]').click(); ok('题库 tab 返回', await t('.card').count() == 1)
     # 搜索
-    await t('#search').fill('李雅普诺夫'); await pg.wait_for_timeout(400)
+    await t('#search').fill('李雅普诺夫'); await idle(pg)
     ok('搜索: 按关键词过滤', '搜索' in await txt('#sectionLabel') and await t('.card mark').count() >= 0, await txt('#sectionLabel'))
-    await t('#search').fill('2025'); await pg.wait_for_timeout(400); ok('搜索: 按年份', '2025' in await txt('.src'), await txt('#sectionLabel'))
-    await t('#search').fill('不存在的词xyz'); await pg.wait_for_timeout(400); ok('搜索: 无结果提示', '没有匹配的题目' in await txt('#cards'))
-    await t('#search').fill(''); await pg.wait_for_timeout(400); ok('搜索: 清空恢复', '24 题' in await txt('#sectionLabel') or await t('.card').count() == 1, await txt('#sectionLabel'))
+    await t('#search').fill('2025'); await idle(pg); ok('搜索: 按年份', '2025' in await txt('.src'), await txt('#sectionLabel'))
+    await t('#search').fill('不存在的词xyz'); await idle(pg); ok('搜索: 无结果提示', '没有匹配的题目' in await txt('#cards'))
+    await t('#search').fill(''); await idle(pg); ok('搜索: 清空恢复', '24 题' in await txt('#sectionLabel') or await t('.card').count() == 1, await txt('#sectionLabel'))
     # 目录按钮
     await t('#tocBtn').click(); ok('目录按钮: 收起侧栏', not await t('#sidebar').is_visible())
     await t('#tocBtn').click(); ok('目录按钮: 展开侧栏', await t('#sidebar').is_visible())
@@ -140,9 +141,9 @@ async def main():
     await t('#genCodeBtn').click(); code = await t('#codeInput').input_value(); ok('生成记录码', code.startswith('CG1-'), code[:40] + '…')
     await t('#importCodeBtn').click(); msg = await txt('#setMsg'); ok('校验并导入记录码', '已导入' in msg, msg)
     await t('#codeInput').fill(code[:-3] + 'zzz'); await t('#importCodeBtn').click(); ok('记录码校验失败提示', '校验失败' in await txt('#setMsg'), await txt('#setMsg'))
-    await t('#importFile').set_input_files(path); await pg.wait_for_timeout(300); ok('导入记录 JSON', '已导入' in await txt('#setMsg'), await txt('#setMsg'))
+    await t('#importFile').set_input_files(path); await idle(pg); ok('导入记录 JSON', '已导入' in await txt('#setMsg'), await txt('#setMsg'))
     stored = await pg.evaluate("__cdg.kv.get('rec')"); ok('导入后数据写回(IndexedDB)', stored and len(stored['marks']) >= 1, json.dumps(stored['marks'])[:80])
-    bad = '/tmp/bad.json'; open(bad, 'w').write('{"x":1}'); await t('#importFile').set_input_files(bad); await pg.wait_for_timeout(300)
+    bad = '/tmp/bad.json'; open(bad, 'w').write('{"x":1}'); await t('#importFile').set_input_files(bad); await idle(pg)
     ok('导入无效 JSON 提示', '不是有效' in await txt('#setMsg'), await txt('#setMsg'))
     await pg.mouse.click(400, 400); ok('点击外部关闭设置', not await t('#settings').is_visible())
     # 品牌链接
@@ -156,7 +157,10 @@ async def main():
         if await t('.src-tabs button[data-view="orig"]').count():
             await t('.src-tabs button[data-view="orig"]').first.click()
         await pg.wait_for_selector('.orig img')
-        errs_k = await t('.katex-error').count(); imgs_ok = await pg.evaluate("""async()=>{const ims=[...document.querySelectorAll('.card img')];for(const i of ims){i.loading='eager';i.scrollIntoView();if(!(i.complete&&i.naturalWidth))await new Promise(r=>{i.onload=i.onerror=r;setTimeout(r,8000)});}return ims.every(i=>i.complete&&i.naturalWidth>0)}""")
+        errs_k = await t('.katex-error').count()
+        await t('.card img').evaluate_all("imgs => imgs.forEach(img => { img.loading = 'eager'; })")
+        await pg.wait_for_function("[...document.querySelectorAll('.card img')].every(img => img.complete)", timeout=8000)
+        imgs_ok = await pg.evaluate("[...document.querySelectorAll('.card img')].every(img => img.complete && img.naturalWidth > 0)")
         if errs_k or not imgs_ok: bad_tex.append((q['id'], errs_k, imgs_ok))
     ok(f'全部 {len(lib["questions"])} 题: 题干/答案/解析 KaTeX 无报错、图片全部加载', not bad_tex, str(bad_tex))
     await pg.goto(BASE + '?list=complete&question=201602', wait_until='networkidle'); await t('button[aria-label="答案"]').click(); await pg.wait_for_selector('.box .orig img')

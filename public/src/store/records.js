@@ -1,4 +1,5 @@
 /* 学习记录：唯一的可写状态。界面只通过这里的函数读写记录；保存、跨标签页通知、云同步排队都在这里完成。 */
+import { track } from '../core/activity.js';
 import { kv } from './kv.js';
 import { byId } from './library.js';
 import { normRec, normSrs, MARK_STATES } from '../core/record.js';
@@ -22,14 +23,15 @@ const hooks = { changed: () => {}, saveFailed: () => {}, syncStatus: () => {} };
 export const setHooks = h => Object.assign(hooks, h);
 
 const bc = 'BroadcastChannel' in globalThis ? new BroadcastChannel(CHANNEL) : null;
-if (bc) bc.onmessage = async () => { rec = await loadRec(); hooks.changed(); };
+if (bc) bc.onmessage = () => track((async () => { rec = await loadRec(); hooks.changed(); })(), 'cross-tab-reload');
 
-export async function persist() {
+export const persist = () => track(persistRecord(), 'persist');
+async function persistRecord() {
   if (useLS) { localStorage.setItem(LEGACY_KEY, JSON.stringify(rec)); return; }
   await kv.set('rec', rec);
 }
 /** 保存到本地；sync=true 时通知其他标签页并排队云同步 */
-export const save = (sync = true) => persist().then(() => { if (sync) { bc?.postMessage('rec'); gist?.schedule(); } }).catch(() => hooks.saveFailed());
+export const save = (sync = true) => track(persist().then(() => { if (sync) { bc?.postMessage('rec'); gist?.schedule(); } }), 'save').catch(() => hooks.saveFailed());
 const touch = id => { rec.updated[id] = Date.now(); };
 
 export async function loadRec() {
@@ -87,7 +89,7 @@ export function saveNote(id, text) {
   // 本机编辑总是晚于它所基于的版本（防止设备间时钟偏差让刚写的内容被同步覆盖）
   const at = Math.max(Date.now(), (rec.notes[id]?.at || 0) + 1);
   rec.notes[id] = { text: text.trim() ? text : '', at };
-  save().then(() => { if (rec.notes[id]?.at === at) dropDraft(id); });
+  return track(save().then(() => { if (rec.notes[id]?.at === at) dropDraft(id); }), 'save-note');
 }
 // 草稿同步备份到 localStorage：关页/崩溃时 IndexedDB 异步写入可能来不及完成，下次打开时恢复
 export const backupDraft = (id, text) => { try { localStorage.setItem(DRAFT_KEY + id, JSON.stringify({ text, at: Math.max(Date.now(), (rec.notes[id]?.at || 0) + 1) })); } catch {} };
@@ -144,6 +146,6 @@ export async function initSync() {
   addEventListener('online', () => { if (gist.connected) gist.sync().catch(() => {}); });
   addEventListener('offline', () => { if (gist.connected) gist.saveCfg({ lastError: '当前离线，联网后自动同步。', errorKind: 'offline' }); });
 }
-export const connectSync = token => gist.connect(token);
+export const connectSync = token => track(gist.connect(token), 'gist-connect');
 export const syncNow = () => gist.sync();
-export const disconnectSync = () => gist.disconnect();
+export const disconnectSync = () => track(gist.disconnect(), 'gist-disconnect');

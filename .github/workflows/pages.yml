@@ -29,6 +29,8 @@ jobs:
         run: npm run lint
       - name: Strict JS domain and boundary types (no emit)
         run: npm run types
+      - name: Ban fixed browser sleeps
+        run: npm run check:waits
       - name: Install Playwright (uses the runner's Google Chrome) and Pillow
         run: pip install playwright pillow
       - name: Validate data-src and rebuild public/data
@@ -46,7 +48,7 @@ jobs:
         run: |
           mkdir -p shots
           python3 -m http.server 8765 -d public > /tmp/http.log 2>&1 &
-          sleep 1
+          curl --fail --silent --show-error --retry 30 --retry-connrefused --retry-delay 1 --retry-max-time 30 http://localhost:8765/ > /dev/null
           for t in verify verify_fsrs verify_sync verify_notes verify_settings verify_pwa; do
             echo "::group::$t"; python3 tools/$t.py http://localhost:8765/; echo "::endgroup::"
           done

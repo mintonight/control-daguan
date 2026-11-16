@@ -2,6 +2,7 @@
 用法: python3 tools/verify_sync.py [base_url]"""
 import asyncio, sys, json, re, time
 from playwright.async_api import async_playwright
+from verify_support import idle
 BASE = sys.argv[1] if len(sys.argv) > 1 else 'http://localhost:8765/'
 R = []
 async def open_sec(p, key):
@@ -18,7 +19,7 @@ CORS = {'access-control-allow-origin': '*', 'access-control-allow-headers': 'aut
 
 class FakeGitHub:
     """内存中的 Gist API。mode 可设为 'ok' / '401' / '500' / 'abort' / 'ratelimit'。"""
-    def __init__(self): self.gists = {}; self.log = []; self.mode = 'ok'; self.n = 0; self.scopes = 'gist'
+    def __init__(self): self.gists = {}; self.log = []; self.mode = 'ok'; self.n = 0; self.scopes = 'gist'; self.patch_gate = None; self.patch_entered = None
     def content(self, gid): return json.loads(self.gists[gid]['files'][FILE]['content'])
     async def handle(self, route):
         req = route.request; m = req.method; path = re.sub(r'^https://api\.github\.com', '', req.url)
@@ -40,6 +41,8 @@ class FakeGitHub:
         if mm and mm.group(1) not in self.gists: return await route.fulfill(status=404, headers=h, json={'message': 'Not Found'})
         if mm and m == 'GET': return await route.fulfill(headers=h, json=self.gists[mm.group(1)])
         if mm and m == 'PATCH':
+            if self.patch_gate is not None:
+                self.patch_entered.set(); await self.patch_gate.wait()
             body = json.loads(req.post_data)
             for k, v in body['files'].items(): self.gists[mm.group(1)]['files'][k] = {'content': v['content']}
             return await route.fulfill(headers=h, json=self.gists[mm.group(1)])
@@ -53,12 +56,13 @@ async def main():
         ctx = await b.new_context(viewport={'width': 1440, 'height': 900})
         await ctx.route('https://api.github.com/**', gh.handle)
         pg = await ctx.new_page(); pg.errs = []
+        await pg.clock.install()
         pg.on('pageerror', lambda e: pg.errs.append(str(e)))
         return ctx, pg
     ctx, pg = await newpage(); t = lambda s: pg.locator(s)
     async def txt(s, page=None): return (await (page or pg).locator(s).first.inner_text()).strip()
-    async def rec(page=None):
-        await (page or pg).wait_for_timeout(150); return await (page or pg).evaluate("__cdg.kv.get('rec').then(r=>r||null)")
+    async def rec(page=None, *, allow_failure=False):
+        await idle(page or pg, allow_failure=allow_failure); return await (page or pg).evaluate("__cdg.kv.get('rec').then(r=>r||null)")
     # ---------- 1. 迁移 ----------
     await pg.goto(BASE + '?list=complete&question=202301', wait_until='networkidle')
     legacy = {'favorites': [202301], 'marks': {'202301': {'state': 'unknown', 'at': 1700000000000}, '202302': {'state': 'shaky', 'at': 1700000000000}},
@@ -66,7 +70,7 @@ async def main():
               'srs': {'202301': {'card': {'due': '2023-11-15T00:00:00.000Z', 'stability': 0.2, 'difficulty': 6.4, 'scheduled_days': 1, 'reps': 1, 'lapses': 0, 'learning_steps': 0, 'state': 2, 'last_review': '2023-11-14T22:13:20.000Z'},
                                  'logs': [{'id': '202301-1700000000000', 'rating': 1, 'mark': 'unknown', 'state': 0, 'due': '2023-11-14T22:13:20.000Z', 'stability': 0, 'difficulty': 0, 'scheduled_days': 0, 'review': '2023-11-14T22:13:20.000Z'}]}}}
     await pg.evaluate("l => { localStorage.setItem('control-daguan:v1', JSON.stringify(l)); }", legacy)
-    await pg.reload(wait_until='networkidle'); await pg.wait_for_timeout(300)
+    await pg.reload(wait_until='networkidle'); await idle(pg)
     r = await rec()
     ok('迁移: localStorage 记录写入 IndexedDB', r and r['marks']['202301']['state'] == 'unknown' and r['favorites'] == [202301] and r['srs']['202301']['card']['reps'] == 1 and r['fontScale'] == 115 and r['retention'] == 0.85, json.dumps(r, ensure_ascii=False)[:200] if r else None)
     ok('迁移: 删除 localStorage 旧键', await pg.evaluate("localStorage.getItem('control-daguan:v1')") is None)
@@ -125,11 +129,23 @@ async def main():
     ok('令牌不写入 localStorage / 记录 / 导出', await pg.evaluate("JSON.stringify(localStorage).includes('ghp_')") is False and TOKEN not in json.dumps(await rec()))
     ok('显示同步状态与最近同步时间', '已同步' in await txt('#syncStatus') and '最近成功同步' in await txt('#syncMeta'), await txt('#syncStatus'))
     # 改动 → 防抖上传
+    await idle(pg)
+    # Intentional time scenario: upload must not happen before the 3-second debounce.
+    await pg.clock.pause_at((await pg.evaluate('Date.now()')) / 1000 + 1)
+    gh.patch_gate = asyncio.Event(); gh.patch_entered = asyncio.Event()
     n0 = len(gh.log); await pg.mouse.click(400, 400)
     await t('#nextBtn').click(); q2 = int(re.search(r'question=(\d+)', pg.url).group(1))
     await t('button[data-mark="shaky"]').click(); await t('.mk.fav').click()
-    await pg.wait_for_timeout(1000); early = [l for l in gh.log[n0:] if l[0] == 'PATCH']
-    await pg.wait_for_timeout(3500); patches = [l for l in gh.log[n0:] if l[0] == 'PATCH']
+    await pg.wait_for_function("document.querySelector('#syncStatus').textContent.includes('有改动待同步')")
+    await pg.clock.run_for(1000); early = [l for l in gh.log[n0:] if l[0] == 'PATCH']
+    await pg.clock.run_for(3500); await pg.clock.resume()
+    await asyncio.wait_for(gh.patch_entered.wait(), timeout=8)
+    await pg.evaluate("() => { window.syncIdleObserved = false; window.__cdg.idle().then(() => { window.syncIdleObserved = true; }); }")
+    ok('idle 包含在途同步，不只等待防抖计时器', not await pg.evaluate('window.syncIdleObserved') and str(q2) not in gh.content(gid)['marks'])
+    gh.patch_gate.set(); gh.patch_gate = None
+    await idle(pg)
+    ok('远端响应和同步状态写入后 idle 才返回', await pg.evaluate('window.syncIdleObserved'))
+    patches = [l for l in gh.log[n0:] if l[0] == 'PATCH']
     ok('改动后防抖同步（多次改动合并为一次上传）', not early and len(patches) == 1 and gh.content(gid)['marks'][str(q2)]['state'] == 'shaky' and q2 in gh.content(gid)['favorites'], f'{len(early)} early, {len(patches)} patches')
     # 远端改动 → 立即同步拉取
     c = gh.content(gid); now = int(time.time() * 1000); c['marks']['202305'] = {'state': 'unknown', 'at': now}; c['updated']['202305'] = now
@@ -138,7 +154,7 @@ async def main():
     r = await rec(); ok('立即同步: 拉取远端改动', r['marks'].get('202305', {}).get('state') == 'unknown', await txt('#setMsg'))
     # 加载时同步
     c = gh.content(gid); c['favorites'].append(202306); c['updated']['202306'] = int(time.time() * 1000); gh.gists[gid]['files'][FILE]['content'] = json.dumps(c)
-    await pg.goto(BASE + '?list=complete&question=202306', wait_until='networkidle'); await pg.wait_for_timeout(600)
+    await pg.goto(BASE + '?list=complete&question=202306', wait_until='networkidle'); await idle(pg)
     ok('打开页面时自动同步', await t('.mk.fav').get_attribute('aria-pressed') == 'true')
     # 第二台设备：找到已有 Gist
     ctx2, pg2 = await newpage(); posts = sum(1 for l in gh.log if l[0] == 'POST')
@@ -147,35 +163,40 @@ async def main():
     ok('第二台设备: 找到已有 Gist（不重复创建）并拉取进度', sum(1 for l in gh.log if l[0] == 'POST') == posts and (await pg2.evaluate("__cdg.kv.get('gist')"))['gistId'] == gid and await pg2.locator('button[data-mark="unknown"]').get_attribute('aria-pressed') == 'true')
     # 两台设备各自改同一题 → 后改的胜出
     await pg2.locator('#syncOffBtn').evaluate('b=>b.closest(".popover").hidden=true')
-    await pg2.locator('button[data-mark="mastered"]').click(); await pg2.wait_for_timeout(4000)
+    await pg2.locator('button[data-mark="mastered"]').click(); await idle(pg2)
     await t('#gearBtn').click(); await open_sec(pg, 'sync'); await t('#syncNowBtn').click(); await pg.wait_for_function("document.querySelector('#setMsg').textContent.includes('同步完成')")
     r = await rec(); ok('两台设备: 同一题后改的一方胜出，复习日志合并', r['marks']['202305']['state'] == 'mastered' and len(r['srs']['202305']['logs']) >= 1)
     await ctx2.close()
     # 错误处理
+    idle_failures = []
     for mode, word, name in (('401', '令牌无效', '401'), ('500', '500', '服务器错误'), ('ratelimit', '次数已用完', '限流'), ('abort', '网络连接失败', '网络中断')):
-        gh.mode = mode; await t('#syncNowBtn').click(); await pg.wait_for_timeout(500)
+        gh.mode = mode; await t('#syncNowBtn').click(); failure = await idle(pg, allow_failure=True)
+        idle_failures.append(bool(failure))
         ok(f'API 错误显示: {name}', word in await txt('#syncStatus') and t('#syncStatus.err'), await txt('#syncStatus'))
-    gh.mode = 'ok'; await t('#syncNowBtn').click(); await pg.wait_for_timeout(500)
+    ok('idle 会报告同步拒绝，而不是提前返回成功或永久挂住', all(idle_failures), idle_failures)
+    gh.mode = 'ok'; await t('#syncNowBtn').click(); await idle(pg)
     ok('错误恢复后同步成功', '已同步' in await txt('#syncStatus'), await txt('#syncStatus'))
     # 离线
-    await ctx.set_offline(True); await pg.wait_for_timeout(200); n0 = len(gh.log)
-    await pg.mouse.click(400, 400); await t('button[data-mark="unknown"]').click(); await pg.wait_for_timeout(3600)
+    await ctx.set_offline(True); await pg.wait_for_function('!navigator.onLine'); await idle(pg); n0 = len(gh.log)
+    await pg.mouse.click(400, 400); await t('button[data-mark="unknown"]').click(); await idle(pg, allow_failure=True)
     await t('#gearBtn').click(); await open_sec(pg, 'sync')
-    ok('离线: 改动保存在本地并提示离线', '离线' in await txt('#syncStatus') and len(gh.log) == n0 and (await rec())['marks']['202306']['state'] == 'unknown', await txt('#syncStatus'))
-    await ctx.set_offline(False); await pg.wait_for_timeout(1500)
+    ok('离线: 改动保存在本地并提示离线', '离线' in await txt('#syncStatus') and len(gh.log) == n0 and (await rec(allow_failure=True))['marks']['202306']['state'] == 'unknown', await txt('#syncStatus'))
+    await ctx.set_offline(False); await pg.wait_for_function('navigator.onLine'); await pg.wait_for_function("document.querySelector('#syncStatus').textContent.includes('已同步')"); await idle(pg)
     ok('恢复联网: 自动补同步', gh.content(gid)['marks']['202306']['state'] == 'unknown' and '已同步' in await txt('#syncStatus'), await txt('#syncStatus'))
     # Gist 被删 → 重新创建
-    del gh.gists[gid]; await t('#syncNowBtn').click(); await pg.wait_for_function("document.querySelector('#setMsg').textContent.includes('同步完成')"); await pg.wait_for_timeout(200)
+    del gh.gists[gid]; await t('#syncNowBtn').click(); await pg.wait_for_function("document.querySelector('#setMsg').textContent.includes('同步完成')"); await idle(pg)
     gid2 = (await pg.evaluate("__cdg.kv.get('gist')"))['gistId']
     ok('Gist 被删除: 自动重建并上传', gid2 != gid and gid2 in gh.gists and gh.content(gid2)['marks']['202306']['state'] == 'unknown', gid2)
     # 权限提醒
-    gh.scopes = 'gist, repo'; await t('#syncNowBtn').click(); await pg.wait_for_timeout(500)
+    gh.scopes = 'gist, repo'; await t('#syncNowBtn').click(); await idle(pg)
     ok('令牌权限超出 gist 时提醒', await t('#syncWarn').is_visible() and 'repo' in await txt('#syncWarn'), await txt('#syncWarn'))
     await t('#syncOn').scroll_into_view_if_needed(); await pg.screenshot(path='shots/sync-connected.png')
     # 断开
-    await t('#syncOffBtn').click(); await pg.wait_for_timeout(200)
+    await t('#syncOffBtn').click(); await idle(pg)
     ok('断开同步: 删除本机令牌、恢复连接表单、本地记录保留', await pg.evaluate("__cdg.kv.get('gist')") is None and await t('#syncOff').is_visible() and (await rec())['marks']['202306']['state'] == 'unknown')
-    n0 = len(gh.log); await pg.mouse.click(400, 400); await t('button[data-mark="shaky"]').click(); await pg.wait_for_timeout(3600)
+    n0 = len(gh.log); await pg.mouse.click(400, 400); await t('button[data-mark="shaky"]').click(); await idle(pg)
+    # Advance beyond the former sync delay to prove no delayed request remains.
+    await pg.clock.run_for(3600); await idle(pg)
     ok('断开后不再请求 GitHub', len(gh.log) == n0)
     # 导出 / 记录码仍可用
     await t('#gearBtn').click(); await open_sec(pg, 'records'); await t('#genCodeBtn').click(); code = await t('#codeInput').input_value()

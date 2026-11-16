@@ -2,6 +2,7 @@
 用法: python3 tools/verify_fsrs.py [base_url]"""
 import asyncio, sys, json, re, datetime as dt
 from playwright.async_api import async_playwright
+from verify_support import idle
 BASE = sys.argv[1] if len(sys.argv) > 1 else 'http://localhost:8765/'
 R = []
 async def open_sec(p, key):
@@ -26,15 +27,31 @@ async def main():
         await pg.evaluate("document.querySelector('#setMsg').textContent=''"); await t('#importFile').set_input_files(f)
         await pg.wait_for_function("document.querySelector('#setMsg').textContent.length>0")
     async def store():
-        await pg.wait_for_timeout(150)  # 等待异步写入 IndexedDB
+        await idle(pg)  # 等待异步写入 IndexedDB
         return await pg.evaluate("__cdg.kv.get('rec').then(r=>r||{})")
     await pg.goto(BASE + '?list=complete&question=202301', wait_until='networkidle'); await pg.evaluate('localStorage.clear()'); await pg.reload(wait_until='networkidle')
     iv = {k: await txt(f'button[data-mark="{k}"] .iv') for k in ('unknown', 'shaky', 'mastered')}
     ok('新题: 按钮显示间隔预览', all(re.match(r'\d+天', v) for v in iv.values()), str(iv))
     ok('新题: 显示「未复习」', '未复习' in await txt('.card .due'))
     ok('复测 tab 无角标', await t('#dueBadge').is_hidden())
+    # Hold a real application write at the storage adapter boundary. idle must not flush it.
+    await idle(pg)
+    await pg.evaluate("""() => {
+      const kv = window.__cdg.kv, original = kv.set;
+      let release;
+      const gate = new Promise(resolve => { release = resolve; });
+      window.writeGate = {release, restore: () => { kv.set = original; }};
+      kv.set = (key, value) => key === 'rec' ? gate.then(() => original(key, value)) : original(key, value);
+      window.idleObserved = false;
+    }""")
     # 评分：掌握
     await t('button[data-mark="mastered"]').click()
+    await pg.evaluate("() => { window.__cdg.idle().then(() => { window.idleObserved = true; }); }")
+    held = await pg.evaluate("async () => ({ready: window.idleObserved, stored: await window.__cdg.kv.get('rec'), frozen: Object.isFrozen(window.__cdg)})")
+    ok('idle 是只读观察：挂起的写入尚未落库，也未被提前完成', not held['ready'] and not (held['stored'] or {}).get('srs') and held['frozen'], held)
+    await pg.evaluate("() => { window.writeGate.restore(); window.writeGate.release(); }")
+    await idle(pg)
+    ok('idle 在真实写入完成后才返回', await pg.evaluate('window.idleObserved'))
     s = await store(); c = s['srs']['202301']['card']; due0 = c['due']
     ok('评分 掌握 → 存储 FSRS 卡片与日志', c['reps'] == 1 and len(s['srs']['202301']['logs']) == 1 and s['srs']['202301']['logs'][0]['rating'] == 3, json.dumps(c, ensure_ascii=False)[:160])
     days = round((dt.datetime.fromisoformat(due0.replace('Z', '+00:00')) - T0).total_seconds() / 86400)
@@ -110,7 +127,7 @@ async def main():
     J = dt.timezone(dt.timedelta(hours=9)); N0 = dt.datetime(2026, 11, 12, 23, 0, tzinfo=J)
     await p2.clock.install(time=N0)
     await p2.goto(BASE + '?list=complete&question=202301', wait_until='networkidle'); await p2.evaluate('localStorage.clear()'); await p2.reload(wait_until='networkidle')
-    await p2.locator('button[data-mark="unknown"]').click(); await p2.wait_for_timeout(200)
+    await p2.locator('button[data-mark="unknown"]').click(); await idle(p2)
     async def badge():
         await p2.goto(BASE + '?tab=retest', wait_until='networkidle'); bd = p2.locator('#dueBadge')
         return '' if await bd.is_hidden() else (await bd.inner_text()).strip()
@@ -126,6 +143,15 @@ async def main():
     d2 = (await p2.locator('.card .due').first.inner_text()).strip()
     ok('学习日: 11-14 01:00 仍算 13 日，显示今日待复习', '今日待复习' in d2, d2)
     await ctx2.close()
+    # A failed storage write must reject idle even though the application displays its normal toast.
+    await idle(pg)
+    await pg.evaluate("() => { window.originalSet = window.__cdg.kv.set; window.__cdg.kv.set = () => Promise.reject(new Error('injected write failure')); }")
+    await t('.mk.fav').click()
+    failure = await idle(pg, allow_failure=True)
+    ok('idle 不把失败的保存当成成功完成', failure and any('injected write failure' in cause for cause in failure['causes']) and '未能保存' in await txt('#toast'), failure)
+    await pg.evaluate("() => { window.__cdg.kv.set = window.originalSet; }")
+    await t('.mk.fav').click(); await idle(pg)
+    ok('后续成功保存形成新的 idle 周期，失败不会永久挂住', await pg.evaluate("window.__cdg.kv.get('rec').then(r => !!r)"))
     ok('无页面错误', not errs, str(errs))
     await b.close()
   print(f'{sum(1 for r in R if r[1])}/{len(R)} passed')

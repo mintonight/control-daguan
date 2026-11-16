@@ -1,5 +1,6 @@
 /* GitHub Gist 同步：令牌与状态存 kv，合并规则见 core/merge.js。不碰 DOM。 */
 import { mergeRecords, canon, syncPart } from '../core/merge.js';
+import { track } from '../core/activity.js';
 import { after } from '../core/timers.js';
 
 export const FILE = 'control-daguan-progress.json', API = 'https://api.github.com';
@@ -60,7 +61,7 @@ export class GistSync {
   sync() {
     if (!this.connected) return Promise.resolve(null);
     if (this.busy) { this.again = true; return this.busy; }
-    this.busy = this._sync().finally(() => { this.busy = null; this.emit(); if (this.again) { this.again = false; this.schedule(500); } });
+    this.busy = track(this._sync().finally(() => { this.busy = null; this.emit(); if (this.again) { this.again = false; this.schedule(500); } }), 'gist-sync');
     this.emit(); return this.busy;
   }
   async _sync() {

@@ -1,5 +1,6 @@
 /* 入口：把题库、学习记录、界面接起来。 */
 import * as store from './store/records.js';
+import { idle, track } from './core/activity.js';
 import { kv } from './store/kv.js';
 import { lib, loadLibrary } from './store/library.js';
 import { mergeRecords, canon, syncPart, normalizeNotes } from './core/merge.js';
@@ -11,15 +12,15 @@ import { $, toast } from './ui/dom.js';
 import { html, setHTML } from './ui/html.js';
 
 // 测试入口（Playwright 用例读取本地存储、调用纯函数）；应用代码不使用
-window.__cdg = { kv, mergeRecords, canon, syncPart, normalizeNotes };
+window.__cdg = Object.freeze({ kv, mergeRecords, canon, syncPart, normalizeNotes, idle });
 
 store.setHooks({ changed: render, saveFailed: () => toast('浏览器未能保存进度，本次更改未保存，请重试。'), syncStatus: syncUI });
 setNoteHooks({ noteSaved: renderTree });
 
-Promise.all([loadLibrary(), store.init()]).then(async () => {
+track(Promise.all([loadLibrary(), store.init()]).then(async () => {
   store.restoreDrafts();
   readURL(); bind(); bindSettings({ render }); render();
   if (store.migrated) toast('学习记录已迁移到 IndexedDB');
   await store.initSync();
   startPWA({ getLib: () => lib, flush: async () => { flushNotes(); await store.persist(); } });
-}).catch(() => { setHTML($('#cards'), html`<div class="empty">静态文件读取失败，请刷新重试。</div>`); });
+}), 'boot').catch(() => { setHTML($('#cards'), html`<div class="empty">静态文件读取失败，请刷新重试。</div>`); });

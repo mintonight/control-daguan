@@ -2,6 +2,7 @@
 用法: python3 tools/verify_settings.py [base_url]"""
 import asyncio, sys, json
 from playwright.async_api import async_playwright
+from verify_support import idle
 BASE = sys.argv[1] if len(sys.argv) > 1 else 'http://localhost:8765/'
 R = []
 SECS = ['read', 'review', 'records', 'sync', 'offline', 'about']
@@ -94,7 +95,7 @@ async def main():
     # 记住上次分组（本机偏好，不进同步）
     await pg.mouse.click(400, 400); ok('点击外部关闭设置', not await t('#settings').is_visible())
     await t('#gearBtn').click(); ok('再次打开: 展开上次的分组', only(await state(pg), 'review'))
-    await pg.wait_for_timeout(300); await pg.reload(wait_until='networkidle'); await t('#gearBtn').click()
+    await idle(pg); await pg.reload(wait_until='networkidle'); await t('#gearBtn').click()
     ok('刷新后: 仍展开上次的分组', only(await state(pg), 'review'))
     sp = await pg.evaluate("__cdg.kv.get('rec').then(r => ({ saved: r.setSec, synced: 'setSec' in __cdg.syncPart(r) }))")
     ok('分组偏好存本机、不参与云同步', sp == {'saved': 'review', 'synced': False}, sp)
@@ -112,7 +113,7 @@ async def main():
         await m.locator(f'#acc-{k}-btn').click() if k != 'read' else None
         L = await layout(m); c = await m.locator(CTRL[k]).bounding_box()
         ok(f'手机: 「{k}」展开后控件可见且在面板宽度内', only(await state(m), k) and c and c['x'] >= L['left'] and c['x'] + c['width'] <= L['right'] + 1 and L['bottom'] <= L['vh'] and not L['hOverflow'], L)
-    await m.wait_for_timeout(250); await m.screenshot(path='shots/settings-sync-mobile.png')
+    await idle(m); await m.screenshot(path='shots/settings-sync-mobile.png')
     ok('手机无页面错误', not merrs, str(merrs[:3]))
     await b.close()
   print(f'{sum(1 for r in R if r[1])}/{len(R)} passed')

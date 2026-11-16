@@ -1,3 +1,4 @@
+import { track } from '../core/activity.js';
 /* 设置面板：阅读偏好、复习、学习记录导入导出与记录码、云同步、关于。 */
 import * as store from '../store/records.js';
 import { $, closePops } from './dom.js';
@@ -89,9 +90,9 @@ export function bindSettings(h) {
   $('#codeInput').addEventListener('input', e => $('#importCodeBtn').disabled = !e.target.value.trim());
   $('#importCodeBtn').addEventListener('click', importCode);
   $('#importJsonBtn').addEventListener('click', () => $('#importFile').click());
-  $('#importFile').addEventListener('change', async e => {
+  $('#importFile').addEventListener('change', e => track((async () => {
     const f = e.target.files[0]; e.target.value = ''; if (!f) return;
     if (f.size > 10 * 1024 * 1024) return setMsg('记录文件超过 10 MB，请选择导出的学习记录 JSON。', true);
     try { applyImport(JSON.parse(await f.text())); setMsg('已导入学习记录 JSON。'); } catch (err) { setMsg(err instanceof SyntaxError ? '无法读取 JSON，请重新选择完整的学习记录文件。' : err.message, true); }
-  });
+  })(), 'import-file'));
 }

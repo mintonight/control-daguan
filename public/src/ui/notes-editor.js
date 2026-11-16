@@ -25,7 +25,7 @@ const paintClear = id => { const b = document.querySelector(`.notebox[data-note=
 /** 返回 true 表示应当清空（已在确认状态）；否则进入确认状态并返回 false */
 export function confirmClear(id) {
   if (clearArmed.has(id)) { clearArmed.get(id)(); clearArmed.delete(id); return true; }
-  clearArmed.set(id, after(CLEAR_CONFIRM_MS, () => { clearArmed.delete(id); paintClear(id); }));
+  clearArmed.set(id, after(CLEAR_CONFIRM_MS, () => { clearArmed.delete(id); paintClear(id); }, { idle: false }));
   paintClear(id); return false;
 }
 /** 笔记框；mode 未指定时有内容显示预览、没有内容显示编辑器 */
