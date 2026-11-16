@@ -3,7 +3,7 @@
 
 // PRECACHE 由 tools/build_precache.py 在构建时写入，请勿手改
 const PRECACHE = {
-  "version": "7b38037f956e",
+  "version": "74a5e2dbaacc",
   "files": [
     "./",
     "./index.html",
@@ -116,7 +116,7 @@ const PRECACHE = {
     "./index.html": "sha256-eAPFtsfKSMTQVGI/JCvnB+3xcvQvqZQQYwZ68g+zkCo=",
     "./app.css": "sha256-QG9Zf1bZtTz2QiLoBAfbst//S37zyoTZz0KnuFLNCNM=",
     "./manifest.webmanifest": "sha256-ZrcDxEM2u72u5QMKdyBVo4SHynb9/lcn4RctC2GcBco=",
-    "./data/library.json": "sha256-7iq4VzhuGOx2udt/u0I9hHQ62qtpOkwiIF6IVSUq50c=",
+    "./data/library.json": "sha256-VhTyiPok0OKILoSq7Rqu1zjz6WqvZVAJWybyxJ/e43A=",
     "./icons/apple-touch-icon.png": "sha256-4RVXCKLZWslYZ3BlffqZQEVSL6FXFfp4snZcrJCkYMI=",
     "./icons/favicon-32.png": "sha256-ihfMIceAr1krwXcf8x3ftBlHGJF5tjMD44z6FFz7dx4=",
     "./icons/icon-192.png": "sha256-Nhm9XvqVwGpI7IrWpAHAz/c4FPxVf3tNiKW5ikPQXrk=",

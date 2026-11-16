@@ -10,16 +10,16 @@
     "建模 / 机械系统 / 微分方程与传递函数",
     "状态空间 / 建立状态空间表达式"
    ],
-   "stem": "系统如下图所示（弹簧 $K$、阻尼器 $C$、质量 $m$，输入力 $g(t)$），求：\n\n[[fig:1]]\n\n1、该系统的微分方程；\n\n2、传递函数；\n\n3、状态空间方程表达式。",
+   "stem": "系统如下图所示（弹簧刚度 $K$、黏性阻尼系数 $C$、质量 $m$）。为明确符号，以下按 $g(t)$ 为向下外加力、$f(t)$ 为质量块向下位移来建模，以静平衡位置为位移零点。求：\n\n[[fig:1]]\n\n1、该系统的微分方程；\n\n2、由外力到位移的传递函数；\n\n3、状态空间方程表达式。",
    "figures": [
     "img/q2023-1-1.png"
    ],
    "answerImages": [
     "img/a2023-1-1.png"
    ],
-   "answer": "1. 微分方程：$m\\ddot x_0+f\\dot x_0+kx_0=g(t)$，即 $\\ddot x_0+\\dfrac{f}{m}\\dot x_0+\\dfrac{k}{m}x_0=\\dfrac1m g(t)$（$f$ 为阻尼系数，$k$ 为弹簧刚度）。\n\n2. 传递函数：$\\Phi(s)=\\dfrac{X_0(s)}{G(s)}=\\dfrac{\\frac1m}{s^2+\\frac fm s+\\frac km}$。\n\n3. 取 $x_1=x_0,\\ x_2=\\dot x_0$，$y=x_0$：$A=\\begin{bmatrix}0&1\\\\-\\frac km&-\\frac fm\\end{bmatrix},\\ B=\\begin{bmatrix}0\\\\\\frac1m\\end{bmatrix},\\ C=\\begin{bmatrix}1&0\\end{bmatrix}$。",
-   "explanation": "1. 对质量 $m$ 做受力分析：输入力 $g(t)$，弹簧力 $-kx_0$，阻尼力 $-f\\dot x_0$（题面弹簧、阻尼器记为 $K$、$C$，此处用 $k$、$f$ 表示相应系数）。由牛顿第二定律\n$$g(t)-kx_0-f\\dot x_0=m\\ddot x_0,$$\n整理得微分方程 $m\\ddot x_0+f\\dot x_0+kx_0=g(t)$，或\n$$\\ddot x_0+\\dfrac{f}{m}\\dot x_0+\\dfrac{k}{m}x_0=\\dfrac1m g(t).$$\n\n2. 零初始条件下对上式做拉氏变换：\n$$\\left(s^2+\\dfrac fm s+\\dfrac km\\right)X_0(s)=\\dfrac1m G(s),$$\n故\n$$\\Phi(s)=\\dfrac{X_0(s)}{G(s)}=\\dfrac{1/m}{s^2+(f/m)s+(k/m)}.$$\n\n3. 取 $x_1=x_0$、$x_2=\\dot x_0$，输出 $y=x_0$，则 $\\dot x_1=x_2$，且\n$$\\dot x_2=-\\dfrac km x_1-\\dfrac fm x_2+\\dfrac1m g(t).$$\n注意 $g(t)$ 前必须带 $1/m$，因此\n$$A=\\begin{bmatrix}0&1\\\\-k/m&-f/m\\end{bmatrix},\\quad\nB=\\begin{bmatrix}0\\\\1/m\\end{bmatrix},\\quad\nC=\\begin{bmatrix}1&0\\end{bmatrix}.$$\n（若把 $1/m$ 放到 $C$ 而 $B=[0\\ 1]^\\mathrm T$，则 $y\\neq x_0$，与传递函数也不一致。）",
-   "notes": "上方文字答案已改正；原答案图中状态矩阵 $A_{12}$ 写成了 $0$，且把 $1/m$ 放在 $C$ 而非 $B$，按该书状态方程算出的传递函数为 $0$。微分方程与 $\\Phi(s)$ 正确。"
+   "answer": "1. 微分方程：$m\\ddot f(t)+C\\dot f(t)+Kf(t)=g(t)$。\n\n2. 零初始条件下，$\\Phi(s)=\\dfrac{F(s)}{G(s)}=\\dfrac{1}{ms^2+Cs+K}$。\n\n3. 取 $x_1=f(t),\\ x_2=\\dot f(t)$，输入 $u=g(t)$，输出 $y=f(t)$：\n$$\\dot{\\boldsymbol{x}}=A\\boldsymbol{x}+Bu,\\qquad y=C_y\\boldsymbol{x}+Du,$$\n$$A=\\begin{bmatrix}0&1\\\\-K/m&-C/m\\end{bmatrix},\\quad B=\\begin{bmatrix}0\\\\1/m\\end{bmatrix},\\quad C_y=\\begin{bmatrix}1&0\\end{bmatrix},\\quad D=0.$$\n这里 $C_y$ 为输出矩阵，区别于阻尼系数 $C$。",
+   "explanation": "1. 统一使用题图中的符号 $K,C,m,f(t),g(t)$：按题干明确的建模约定，$f(t)$ 为向下位移，$g(t)$ 为向下外加力。以静平衡位置为位移零点，重力与静态弹簧力已平衡，增量弹簧力为 $-Kf(t)$，阻尼力为 $-C\\dot f(t)$。牛顿第二定律给出\n$$g(t)-C\\dot f(t)-Kf(t)=m\\ddot f(t),$$\n故 $m\\ddot f(t)+C\\dot f(t)+Kf(t)=g(t)$。\n\n2. 令 $F(s)=\\mathcal L\\{f(t)\\}$、$G(s)=\\mathcal L\\{g(t)\\}$。在零初始条件下，\n$$(ms^2+Cs+K)F(s)=G(s),$$\n所以 $\\Phi(s)=F(s)/G(s)=1/(ms^2+Cs+K)$。\n\n3. 采用位移、速度作为物理状态：$x_1=f(t)$、$x_2=\\dot f(t)$，$u=g(t)$、$y=f(t)$，则\n$$\\dot x_1=x_2,\\qquad \\dot x_2=-\\frac Km x_1-\\frac Cm x_2+\\frac1m u,\\qquad y=x_1.$$\n这得到答案中的 $A,B,C_y,D$，并有 $C_y(sI-A)^{-1}B=1/(ms^2+Cs+K)$。\n\n也可采用缩放状态 $z_1=mf(t)$、$z_2=m\\dot f(t)$。此时 $A$ 不变，但\n$$B_z=\\begin{bmatrix}0\\\\1\\end{bmatrix},\\qquad C_{y,z}=\\begin{bmatrix}1/m&0\\end{bmatrix},\\qquad D=0,$$\n所得传递函数仍为 $1/(ms^2+Cs+K)$。因此 $1/m$ 放在输出矩阵并非必然错误，关键是状态变量的定义必须一致。原图印出的 $A_{12}=0$ 则与 $\\dot x_1=x_2$ 矛盾：在该图的 $B,C_y$ 下，零初始条件时输入无法影响第一个状态，输出恒为零。",
+   "notes": "文字答案与解析已统一符号并补全状态定义。原答案图未说明其位移符号与题图 $f(t)$ 的对应关系，又另用字母 $f$ 表示阻尼系数，与图中 $C$ 不一致；状态变量也未定义清楚。其标量式写 $\\dot x_1=x_2$，矩阵却印为 $A_{12}=0$（应为 $1$），照印出的矩阵计算传递函数为零。不能仅凭 $B=[0,1]^{\\mathrm T}$、输出矩阵 $[1/m,0]$ 判错：采用解析所述缩放状态时，这种写法正确。原图的微分方程及传递函数在相应符号对应下成立。"
   },
   {
    "no": 2,
