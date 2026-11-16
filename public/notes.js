@@ -1,7 +1,7 @@
-/* 控制大观 · 题目笔记：Markdown（marked，GFM）+ KaTeX 公式 + DOMPurify 清洗；纯函数 normalize/merge 供同步与测试调用。 */
+/* 控制大观 · 题目笔记：Markdown（marked，GFM）+ KaTeX 公式 + DOMPurify 清洗；笔记数据的规范化与合并见 merge.js。 */
 (() => {
 'use strict';
-const MAX = 50000; // 单题笔记上限（字符）
+const MAX = window.CDGMerge.NOTE_MAX; // 单题笔记上限（字符）
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const tex = (src, display) => {
   try { return katex.renderToString(src, { displayMode: display, throwOnError: false, strict: false, trust: false, maxExpand: 500 }); }
@@ -40,28 +40,6 @@ function render(text) {
   try { html = md.parse(text); } catch { html = `<pre>${esc(text)}</pre>`; }
   return purify.sanitize(html, SAFE);
 }
-// ---------- 数据 ----------
-// notes: { [题号]: { text, at } }；text 为空表示已删除（保留时间戳，让删除也能同步到其他设备）
-function normalize(n) {
-  const out = {};
-  if (!n || typeof n !== 'object') return out;
-  for (const [k, v] of Object.entries(n)) {
-    if (!/^\d+$/.test(k) || !v || typeof v.text !== 'string') continue;
-    const at = +v.at; if (!(at > 0)) continue;
-    out[k] = { text: v.text.slice(0, MAX), at };
-  }
-  return out;
-}
-/** 逐题取 at 较新的一方；时间相同按内容决出，保证交换律。返回新对象。 */
-function merge(a, b) {
-  a = normalize(a); b = normalize(b);
-  const out = {};
-  for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) {
-    const x = a[k], y = b[k];
-    out[k] = !x ? y : !y ? x : y.at > x.at || (y.at === x.at && y.text > x.text) ? y : x;
-  }
-  return out;
-}
 const has = (notes, id) => !!notes?.[id]?.text?.trim();
-window.CDGNotes = { render, normalize, merge, has, MAX };
+window.CDGNotes = { render, has, MAX };
 })();

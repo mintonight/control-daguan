@@ -22,7 +22,7 @@ const F = window.FSRS;
 const GRADE = { unknown: F.Rating.Again, shaky: F.Rating.Hard, mastered: F.Rating.Good };
 
 // ---------- 存储：IndexedDB（idb-keyval），首次加载自动从 localStorage 迁移 ----------
-const { CDGStore, CDGSync, CDGNotes } = window;
+const { CDGStore, CDGSync, CDGNotes, CDGMerge } = window;
 // 设置面板折叠分组；最近展开的一组记在本机偏好（不导出、不同步）
 const SET_SECS = ['read', 'review', 'records', 'sync', 'offline', 'about'];
 function normRec(r) {
@@ -32,7 +32,7 @@ function normRec(r) {
     updated: r.updated && typeof r.updated === 'object' ? r.updated : {},
     history: Array.isArray(r.history) ? r.history : [], mode: r.mode === 'multiple' ? 'multiple' : 'single',
     fontScale: FONT.includes(r.fontScale) ? r.fontScale : 100, collapsed: !!r.collapsed, setSec: SET_SECS.includes(r.setSec) ? r.setSec : 'read', open: r.open && typeof r.open === 'object' ? r.open : {},
-    notes: CDGNotes.normalize(r.notes) };
+    notes: CDGMerge.normalizeNotes(r.notes) };
 }
 // srs: { [题号]: { card: FSRS 卡片（日期存 ISO 字符串）, logs: [复习日志] } }
 function normSrs(s) {
@@ -59,10 +59,10 @@ async function loadRec() {
   try { stored = await CDGStore.get('rec'); } catch { useLS = true; return legacy || normRec({}); }
   if (!legacy) return normRec(stored || {});
   // 迁移：localStorage 里的旧记录并入 IndexedDB（逐题取较新的一方），写入并读回确认后再删除旧键
-  const merged = stored ? normRec({ ...normRec(stored), ...CDGSync.merge(normRec(stored), legacy) }) : legacy;
+  const merged = stored ? normRec({ ...normRec(stored), ...CDGMerge.mergeRecords(normRec(stored), legacy) }) : legacy;
   await CDGStore.set('rec', merged);
   const back = await CDGStore.get('rec');
-  if (back && CDGSync.canon(CDGSync.syncPart(back)) === CDGSync.canon(CDGSync.syncPart(merged))) { localStorage.removeItem(STORE); migrated = true; }
+  if (back && CDGMerge.canon(CDGMerge.syncPart(back)) === CDGMerge.canon(CDGMerge.syncPart(merged))) { localStorage.removeItem(STORE); migrated = true; }
   return merged;
 }
 let migrated = false, gist = null;
@@ -504,30 +504,20 @@ function exportJSON() {
 function applyImport(d) {
   if (!d || d.app !== 'control-daguan' || !Array.isArray(d.favorites) || typeof d.marks !== 'object') throw new Error('不是有效的控制大观记录文件，请重新导出 JSON。');
   const known = id => byId.has(Number(id));
-  const before = CDGSync.canon({ f: rec.favorites, m: rec.marks, s: rec.srs });
-  const snap = id => CDGSync.canon([rec.favorites.includes(+id), rec.marks[id] || null, rec.srs[id] || null]);
-  const prevSnap = Object.fromEntries([...byId.keys()].map(id => [id, snap(id)]));
-  rec.favorites = [...new Set([...rec.favorites, ...d.favorites.map(Number).filter(known)])];
-  for (const [k, v] of Object.entries(d.marks)) if (known(k) && v && MARKS[v.state] && (!rec.marks[k] || (v.at || 0) >= (rec.marks[k].at || 0))) rec.marks[k] = v;
-  mergeSrs(rec.srs, normSrs(d.srs), known);
+  const onlyKnown = o => Object.fromEntries(Object.entries(o).filter(([k]) => known(k)));
   flushNotes();
-  if (d.notes) rec.notes = CDGNotes.merge(rec.notes, Object.fromEntries(Object.entries(CDGNotes.normalize(d.notes)).filter(([k]) => known(k))));
-  if (CDGSync.canon({ f: rec.favorites, m: rec.marks, s: rec.srs }) !== before) for (const id of byId.keys()) if (snap(id) !== prevSnap[id]) touch(id);
-  if (Array.isArray(d.history)) { const seen = new Set(rec.history.map(h => h.id + ':' + h.at)); d.history.forEach(h => { if (known(h.id) && !seen.has(h.id + ':' + h.at)) rec.history.push(h); }); rec.history.sort((a, b) => a.at - b.at); }
+  const incoming = {
+    favorites: d.favorites.map(Number).filter(known),
+    marks: Object.fromEntries(Object.entries(d.marks || {}).filter(([k, v]) => known(k) && v && MARKS[v.state])),
+    srs: onlyKnown(normSrs(d.srs)), notes: onlyKnown(CDGMerge.normalizeNotes(d.notes)),
+    history: Array.isArray(d.history) ? d.history.filter(h => h && known(h.id)) : [],
+  };
+  const snap = id => CDGMerge.canon([rec.favorites.includes(+id), rec.marks[id] || null, rec.srs[id] || null]);
+  const before = new Map([...byId.keys()].map(id => [id, snap(id)]));
+  rec = normRec({ ...rec, ...CDGMerge.mergeRecords(rec, incoming, 'import') });
+  // 导入的改动算作本机此刻的编辑，下次同步时覆盖云端较旧的状态
+  for (const id of byId.keys()) if (snap(id) !== before.get(id)) touch(id);
   save(); render();
-}
-// 每题取最近一次复习的卡片；复习日志按 id 去重合并（v1 记录没有 srs，原样跳过）
-function mergeSrs(into, from, known = () => true) {
-  for (const [k, v] of Object.entries(from)) {
-    if (!known(k)) continue;
-    const cur = into[k];
-    if (!cur) { into[k] = { card: v.card, logs: [...v.logs] }; continue; }
-    const t = c => Date.parse(c.last_review || 0) || 0;
-    if (t(v.card) > t(cur.card)) cur.card = v.card;
-    const ids = new Set(cur.logs.map(l => l.id)); v.logs.forEach(l => { if (!ids.has(l.id)) cur.logs.push(l); });
-    cur.logs.sort((a, b) => Date.parse(a.review) - Date.parse(b.review));
-  }
-  return into;
 }
 // 记录码：CG1-<分段序号>/<总段数>-<base64url>-<校验>，校验为 FNV-1a 32 位
 const fnv = s => { let h = 0x811c9dc5; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; } return h.toString(36); };

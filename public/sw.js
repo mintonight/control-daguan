@@ -3,12 +3,13 @@
 
 // PRECACHE 由 tools/build_precache.py 在构建时写入，请勿手改
 const PRECACHE = {
-  "version": "efce031df91f",
+  "version": "977a9c596a86",
   "files": [
     "./",
     "./index.html",
     "./app.js",
     "./app.css",
+    "./merge.js",
     "./notes.js",
     "./sync.js",
     "./pwa.js",

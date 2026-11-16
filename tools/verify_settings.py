@@ -86,7 +86,7 @@ async def main():
     await t('#gearBtn').click(); ok('再次打开: 展开上次的分组', only(await state(pg), 'review'))
     await pg.wait_for_timeout(300); await pg.reload(wait_until='networkidle'); await t('#gearBtn').click()
     ok('刷新后: 仍展开上次的分组', only(await state(pg), 'review'))
-    sp = await pg.evaluate("CDGStore.get('rec').then(r => ({ saved: r.setSec, synced: 'setSec' in CDGSync.syncPart(r) }))")
+    sp = await pg.evaluate("CDGStore.get('rec').then(r => ({ saved: r.setSec, synced: 'setSec' in CDGMerge.syncPart(r) }))")
     ok('分组偏好存本机、不参与云同步', sp == {'saved': 'review', 'synced': False}, sp)
     ok('桌面无页面错误', not errs, str(errs[:3]))
     await ctx.close()

@@ -9,6 +9,7 @@ SHELL = [
     "index.html",
     "app.js",
     "app.css",
+    "merge.js",
     "notes.js",
     "sync.js",
     "pwa.js",

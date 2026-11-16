@@ -81,14 +81,14 @@ async def main():
     ok('新改动只写 IndexedDB', r['marks']['202301']['state'] == 'mastered' and r['updated']['202301'] > 1700000000000 and await pg.evaluate("localStorage.length") == 0)
     # ---------- 2. 合并逻辑（纯函数） ----------
     res = await pg.evaluate("""() => {
-      const M = CDGSync.merge, card = (t, reps) => ({ due: new Date(t + 864e5).toISOString(), last_review: new Date(t).toISOString(), reps, stability: 1, difficulty: 5, state: 2, scheduled_days: 1, lapses: 0, learning_steps: 0 });
+      const M = CDGMerge.mergeRecords, card = (t, reps) => ({ due: new Date(t + 864e5).toISOString(), last_review: new Date(t).toISOString(), reps, stability: 1, difficulty: 5, state: 2, scheduled_days: 1, lapses: 0, learning_steps: 0 });
       const log = (q, t) => ({ id: `${q}-${t}`, rating: 3, review: new Date(t).toISOString() });
       const A = { favorites: [1, 2], marks: { 1: { state: 'shaky', at: 100 }, 3: { state: 'unknown', at: 500 } }, srs: { 1: { card: card(100, 1), logs: [log(1, 100)] }, 4: { card: card(50, 1), logs: [log(4, 50)] } },
                   updated: { 1: 100, 2: 900, 3: 500, 4: 950 }, history: [{ id: 1, state: 'shaky', at: 100 }], retention: 0.9, retentionAt: 10, mode: 'multiple' };
       const B = { favorites: [1], marks: { 1: { state: 'mastered', at: 300 }, 2: { state: 'unknown', at: 200 } }, srs: { 1: { card: card(300, 2), logs: [log(1, 100), log(1, 300)] }, 4: { card: card(60, 2), logs: [log(4, 50), log(4, 60)] } },
                   updated: { 1: 300, 2: 200, 4: 60 }, history: [{ id: 1, state: 'shaky', at: 100 }, { id: 1, state: 'mastered', at: 300 }], retention: 0.85, retentionAt: 20, mode: 'single' };
       const m = M(A, B), m2 = M(B, A), mm = M(m, m);
-      const C = CDGSync.canon, sp = CDGSync.syncPart;
+      const C = CDGMerge.canon, sp = CDGMerge.syncPart;
       return { m, commut: C(sp(m)) === C(sp(m2)), idem: C(sp(mm)) === C(sp(m)), empty: C(sp(M({}, A))) === C(sp(M(A, {}))) };
     }""")
     m = res['m']
@@ -97,12 +97,19 @@ async def main():
     ok('合并: 本地较新的删除生效（题2 本地取消标记/收藏较新 → 不带远端标记）', '2' not in m['marks'] and 2 in m['favorites'])
     ok('合并: 本地独有的题保留', m['marks']['3']['state'] == 'unknown')
     ok('合并: 题4 本地较新但远端日志也并入', m['srs']['4']['card']['reps'] == 1 and len(m['srs']['4']['logs']) == 2)
-    ok('合并: 记录历史并集、记忆率取较新设置、界面偏好保持本地', len(m['history']) == 2 and m['retention'] == 0.85 and m['mode'] == 'multiple')
+    ok('合并: 记录历史并集、记忆率取较新设置、结果只含同步字段（界面偏好不参与合并）', len(m['history']) == 2 and m['retention'] == 0.85 and 'mode' not in m)
     ok('合并: 交换律 / 幂等 / 与空记录合并', res['commut'] and res['idem'] and res['empty'], json.dumps({k: res[k] for k in ('commut', 'idem', 'empty')}))
     tomb = await pg.evaluate("""() => { const c = { due: '2026-01-02T00:00:00Z', last_review: '2026-01-01T00:00:00Z', reps: 3 };
       const L = { srs: {}, updated: { 7: Date.parse('2026-02-01') } }, Rm = { srs: { 7: { card: c, logs: [{ id: 'x', review: '2026-01-01T00:00:00Z' }] } }, updated: { 7: Date.parse('2026-01-01') } };
-      return CDGSync.merge(L, Rm).srs; }""")
+      return CDGMerge.mergeRecords(L, Rm).srs; }""")
     ok('合并: 本地较新的「重置复习进度」不被远端旧卡片恢复', tomb == {})
+    imp = await pg.evaluate("""() => { const M = CDGMerge.mergeRecords, c = t => ({ due: new Date(t + 864e5).toISOString(), last_review: new Date(t).toISOString(), reps: 1 });
+      const local = { favorites: [9], marks: {}, srs: {}, updated: { 7: 5000 } }, file = { favorites: [8], marks: { 7: { state: 'shaky', at: 100 } }, srs: { 7: { card: c(100), logs: [{ id: 'a', review: new Date(100).toISOString() }] } } };
+      const legacyFav = M({ favorites: [], marks: {}, srs: {} }, { favorites: [3], marks: {}, srs: {} });
+      return { imp: M(local, file, 'import'), sync: M(local, file), legacyFav }; }""")
+    ok('合并(导入): 只增不删——重置后导入备份能恢复卡片与标记，收藏取并集', imp['imp']['srs'].get('7', {}).get('card', {}).get('reps') == 1 and imp['imp']['marks']['7']['state'] == 'shaky' and sorted(imp['imp']['favorites']) == [8, 9], json.dumps(imp['imp'])[:200])
+    ok('合并(同步): 同一份数据按时间生效——本机较新的重置不被恢复', imp['sync']['srs'] == {} and '7' not in imp['sync']['marks'])
+    ok('合并: 没有时间戳的旧收藏（双方都为 0）不会丢', imp['legacyFav']['favorites'] == [3])
     # ---------- 3. Gist 同步 ----------
     await t('#gearBtn').click(); await open_sec(pg, 'sync')
     ok('设置: 显示令牌说明与创建链接', await t('#syncOff a[href*="settings/tokens/new?scopes=gist"]').count() == 1 and await t('#syncOff a[href*="personal-access-tokens/new"]').count() == 1)

@@ -1,4 +1,4 @@
-/* 控制大观 · 本地存储（IndexedDB）与 GitHub Gist 同步。纯函数部分（merge）供测试直接调用。 */
+/* 控制大观 · 本地存储（IndexedDB）与 GitHub Gist 同步。合并规则见 merge.js。 */
 (() => {
 'use strict';
 // ---------- IndexedDB ----------
@@ -8,43 +8,7 @@ const CDGStore = {
   get: k => idb.get(k, kv), set: (k, v) => idb.set(k, v, kv), del: k => idb.del(k, kv), keys: () => idb.keys(kv),
 };
 
-// ---------- 合并 ----------
-// 每题的「最后更新时间」：rec.updated[id]；旧数据没有时用标记时间/最近复习时间推算
-const ts = (r, id) => Math.max(+(r.updated?.[id]) || 0, +(r.marks?.[id]?.at) || 0, Date.parse(r.srs?.[id]?.card?.last_review || '') || 0);
-const sortObj = v => Array.isArray(v) ? v.map(sortObj) : v && typeof v === 'object' ? Object.fromEntries(Object.keys(v).sort().map(k => [k, sortObj(v[k])])) : v;
-const canon = v => JSON.stringify(sortObj(v));
-const unionLogs = (...lists) => {
-  const m = new Map(); lists.flat().forEach(l => { if (l && l.id && !m.has(l.id)) m.set(l.id, l); });
-  return [...m.values()].sort((x, y) => Date.parse(x.review) - Date.parse(y.review) || (x.id < y.id ? -1 : 1));
-};
-/** 合并本地与远端记录：逐题取最后更新的一方（收藏、标记、FSRS 卡片），复习日志按 id 取并集；
- *  笔记有自己的更新时间（notes[id].at），逐题独立取较新的一方，删除（空笔记）同样按时间生效；
- *  胜出方已删除复习卡片（重置）时结果也不含卡片。返回新对象，不修改入参。界面偏好（模式、字号等）沿用 local。 */
-function merge(local, remote) {
-  const a = local || {}, b = remote || {};
-  const ids = new Set();
-  for (const r of [a, b]) {
-    Object.keys(r.updated || {}).forEach(k => ids.add(String(k))); Object.keys(r.marks || {}).forEach(k => ids.add(String(k)));
-    Object.keys(r.srs || {}).forEach(k => ids.add(String(k))); (r.favorites || []).forEach(k => ids.add(String(k)));
-  }
-  const out = { ...a, favorites: [], marks: {}, srs: {}, updated: {} };
-  for (const id of [...ids].sort()) {
-    const ta = ts(a, id), tb = ts(b, id), w = tb > ta ? b : a;
-    if ((w.favorites || []).map(String).includes(id)) out.favorites.push(Number(id));
-    if (w.marks?.[id]) out.marks[id] = w.marks[id];
-    if (w.srs?.[id]) out.srs[id] = { card: w.srs[id].card, logs: unionLogs(a.srs?.[id]?.logs || [], b.srs?.[id]?.logs || []) };
-    const t = Math.max(ta, tb); if (t) out.updated[id] = t;
-  }
-  out.notes = window.CDGNotes ? CDGNotes.merge(a.notes, b.notes) : { ...(b.notes || {}), ...(a.notes || {}) };
-  const hk = h => `${h.id}:${h.at}:${h.state}`; const hm = new Map();
-  [...(a.history || []), ...(b.history || [])].forEach(h => { if (h && !hm.has(hk(h))) hm.set(hk(h), h); });
-  out.history = [...hm.values()].sort((x, y) => x.at - y.at);
-  const ra = +a.retentionAt || 0, rb = +b.retentionAt || 0;
-  out.retention = rb > ra ? b.retention : (a.retention ?? b.retention); out.retentionAt = Math.max(ra, rb);
-  return out;
-}
-const SYNC_KEYS = ['favorites', 'marks', 'srs', 'history', 'updated', 'retention', 'retentionAt', 'notes'];
-const syncPart = r => Object.fromEntries(SYNC_KEYS.map(k => [k, r[k]]));
+const { mergeRecords, canon, syncPart } = window.CDGMerge;
 
 // ---------- GitHub Gist ----------
 const FILE = 'control-daguan-progress.json', API = 'https://api.github.com';
@@ -116,9 +80,9 @@ class GistSync {
       let remote;
       try { remote = await this.readRemote(); }
       catch (e) { if (e.kind !== 'notfound') throw e; await this.saveCfg({ gistId: await this.findOrCreate() }); remote = await this.readRemote(); }
-      const local = this.getLocal(), merged = merge(local, remote);
+      const local = this.getLocal(), merged = mergeRecords(local, remote);
       const localChanged = canon(syncPart(merged)) !== canon(syncPart(local));
-      const remoteChanged = canon(syncPart(merged)) !== canon(syncPart(merge({}, remote)));
+      const remoteChanged = canon(syncPart(merged)) !== canon(syncPart(mergeRecords({}, remote)));
       if (localChanged) await this.applyMerged(merged);
       if (remoteChanged) await this.api(`/gists/${this.cfg.gistId}`, { method: 'PATCH', body: JSON.stringify({ files: { [FILE]: { content: JSON.stringify(this.payload(merged), null, 1) } } }) });
       this.pending = false;
@@ -132,5 +96,5 @@ class GistSync {
   }
 }
 window.CDGStore = CDGStore;
-window.CDGSync = { merge, canon, syncPart, GistSync, SyncError, FILE };
+window.CDGSync = { GistSync, SyncError, FILE };
 })();
