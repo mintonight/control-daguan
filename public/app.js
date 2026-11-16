@@ -80,12 +80,10 @@ function review(id, mark) {
   e.logs.push({ id: `${id}-${now.getTime()}`, rating: r.log.rating, mark, state: r.log.state, due: new Date(r.log.due).toISOString(), stability: r.log.stability,
     difficulty: r.log.difficulty, scheduled_days: r.log.scheduled_days, review: now.toISOString() });
 }
-// 复习按「学习日」计：凌晨 2 点前仍算前一天（熬夜复习不会提前把明天的题算进今天）
-const DAY_CUT_H = 2;
-const dayStart = d => { const x = new Date(+new Date(d) - DAY_CUT_H * 36e5); x.setHours(0, 0, 0, 0); return x; };
-const endOfToday = () => { const d = dayStart(new Date()); d.setDate(d.getDate() + 1); d.setHours(DAY_CUT_H, 0, 0, 0); return new Date(d - 1); };
-const dueIds = () => { const lim = endOfToday().getTime(); return Object.entries(rec.srs).filter(([k, v]) => byId.has(+k) && Date.parse(v.card.due) <= lim).sort((a, b) => Date.parse(a[1].card.due) - Date.parse(b[1].card.due) || a[0] - b[0]).map(([k]) => +k); };
-const dayDiff = d => Math.round((dayStart(d) - dayStart(new Date())) / 864e5);
+const { dayStart } = window.CDGDay;
+const endOfToday = () => window.CDGDay.endOfStudyDay(new Date());
+const dueIds = () => window.CDGDay.dueIds(rec.srs, new Date(), id => byId.has(id));
+const dayDiff = d => window.CDGDay.dayDiff(d, new Date());
 const ivl = d => { const n = Math.max(0, Math.round((new Date(d) - new Date()) / 864e5)); return n < 1 ? '今天' : n < 30 ? `${n}天` : n < 365 ? `${Math.round(n / 3) / 10}月` : `${Math.round(n / 36.5) / 10}年`; };
 const fmtDue = d => { const n = dayDiff(d), dt = dayStart(d); const md = `${dt.getMonth() + 1}月${dt.getDate()}日`; return n < 0 ? `已到期 ${-n} 天（${md}）` : n === 0 ? `今日待复习（${md}）` : `下次复习：${md}（${n} 天后）`; };
 bc && (bc.onmessage = async () => { rec = await loadRec(); render(); });
