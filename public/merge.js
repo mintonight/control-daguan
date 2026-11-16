@@ -38,7 +38,7 @@ function mergeNotes(a, b) {
   return out;
 }
 function unionLogs(...lists) {
-  const m = new Map(); lists.flat().forEach(l => { if (l && l.id && !m.has(l.id)) m.set(l.id, l); });
+  const m = new Map(); lists.flat().forEach(l => { if (l && l.id) m.set(l.id, pick(m.get(l.id), l)); });
   return [...m.values()].sort((x, y) => Date.parse(x.review) - Date.parse(y.review) || (x.id < y.id ? -1 : 1));
 }
 function unionHistory(a, b) {

@@ -19,6 +19,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Unit and property tests (node --test)
+        run: npm ci && npm test
       - name: Install Playwright (uses the runner's Google Chrome) and Pillow
         run: pip install playwright pillow
       - name: Validate data-src and rebuild public/data

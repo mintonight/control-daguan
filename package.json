@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "vendor": "mkdir -p public/vendor/ts-fsrs && cp node_modules/ts-fsrs/dist/index.umd.js public/vendor/ts-fsrs/ts-fsrs.umd.js && cp node_modules/ts-fsrs/LICENSE public/vendor/ts-fsrs/ && mkdir -p public/vendor/idb-keyval && cp node_modules/idb-keyval/dist/umd.js public/vendor/idb-keyval/idb-keyval.umd.js && mkdir -p public/vendor/marked public/vendor/dompurify && cp node_modules/marked/lib/marked.umd.js public/vendor/marked/ && cp node_modules/marked/LICENSE.md public/vendor/marked/ && cp node_modules/dompurify/dist/purify.min.js public/vendor/dompurify/ && cp node_modules/dompurify/LICENSE public/vendor/dompurify/"
+    "vendor": "mkdir -p public/vendor/ts-fsrs && cp node_modules/ts-fsrs/dist/index.umd.js public/vendor/ts-fsrs/ts-fsrs.umd.js && cp node_modules/ts-fsrs/LICENSE public/vendor/ts-fsrs/ && mkdir -p public/vendor/idb-keyval && cp node_modules/idb-keyval/dist/umd.js public/vendor/idb-keyval/idb-keyval.umd.js && mkdir -p public/vendor/marked public/vendor/dompurify && cp node_modules/marked/lib/marked.umd.js public/vendor/marked/ && cp node_modules/marked/LICENSE.md public/vendor/marked/ && cp node_modules/dompurify/dist/purify.min.js public/vendor/dompurify/ && cp node_modules/dompurify/LICENSE public/vendor/dompurify/",
+    "test": "node --test \"tests/**/*.test.mjs\""
   },
   "keywords": [],
   "author": "",
@@ -17,5 +18,8 @@
     "marked": "^15.0.12",
     "ts-fsrs": "^6.0.0"
   },
-  "private": true
+  "private": true,
+  "devDependencies": {
+    "fast-check": "4.10.2"
+  }
 }
