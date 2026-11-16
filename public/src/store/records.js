@@ -5,6 +5,7 @@ import { normRec, normSrs, MARK_STATES } from '../core/record.js';
 import { mergeRecords, canon, syncPart, normalizeNotes, NOTE_MAX } from '../core/merge.js';
 import { endOfStudyDay, dueIds } from '../core/studyday.js';
 import * as fsrs from '../srs/fsrs.js';
+import * as prefs from '../core/preferences.js';
 import { GistSync } from '../sync/gist.js';
 
 // 持久化格式（不要改名）：IndexedDB kv['rec']；IndexedDB 不可用时退回 localStorage[LEGACY_KEY]；笔记草稿备份 localStorage[DRAFT_KEY + 题号]
@@ -12,6 +13,7 @@ const LEGACY_KEY = 'control-daguan:v1';
 const DRAFT_KEY = 'control-daguan:note-draft:';
 const CHANNEL = 'control-daguan';
 
+/** 当前学习记录（只读视图；修改一律通过下面的 setter） */
 export let rec = normRec({});
 export let migrated = false;
 let useLS = false, gist = null;
@@ -69,8 +71,16 @@ export function resetSrs() { Object.keys(rec.srs).forEach(touch); rec.srs = {}; 
 /** 拖动滑块时只改内存（实时显示）；松手时 commitRetention 记下时间并保存 */
 export const previewRetention = v => { rec.retention = Math.round(v * 100) / 100; };
 export const commitRetention = () => { rec.retentionAt = Date.now(); save(); };
-/** 本机界面偏好：mode / fontScale / collapsed / setSec；setSec 不通知同步 */
-export function setPref(key, value) { rec[key] = value; save(key !== 'setSec'); }
+// 界面偏好：每个字段一个带类型的 setter，非法值直接拒绝（不会写进记录）
+/** @param {import('../core/record.js').ViewMode} mode */
+export function setMode(mode) { prefs.setMode(rec, mode); save(); }
+/** @param {import('../core/record.js').FontScale} scale */
+export function setFontScale(scale) { prefs.setFontScale(rec, scale); save(); }
+/** @param {boolean} collapsed */
+export function setCollapsed(collapsed) { prefs.setCollapsed(rec, collapsed); save(); }
+/** 最近展开的设置分组：只存本机，不触发同步
+ * @param {import('../core/record.js').SettingSection} sec */
+export function setSettingsSection(sec) { prefs.setSettingsSection(rec, sec); save(false); }
 export function setOpen(path, open) { rec.open[path] = open; save(); }
 /** 写入一题笔记（空串 = 删除）；保存成功后删除该题的草稿备份 */
 export function saveNote(id, text) {

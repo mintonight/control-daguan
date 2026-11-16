@@ -304,7 +304,7 @@ function setMark(id, state) {
 export function bind() {
   $('#tabs').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; st.tab = b.dataset.tab; st.node = null; render(); });
   $('#brand').addEventListener('click', e => { e.preventDefault(); Object.assign(st, { tab: 'bank', listId: 'complete', node: null, qid: null, q: '' }); $('#search').value = ''; render(); $('#main').scrollTo(0, 0); });
-  $('#tocBtn').addEventListener('click', () => { if (isMobile()) $('#app').classList.toggle('drawer-open'); else store.setPref('collapsed', !store.rec.collapsed); render(); });
+  $('#tocBtn').addEventListener('click', () => { if (isMobile()) $('#app').classList.toggle('drawer-open'); else store.setCollapsed(!store.rec.collapsed); render(); });
   $('#scrim').addEventListener('click', () => { $('#app').classList.remove('drawer-open'); render(); });
   $('#listBtn').addEventListener('click', e => {
     e.stopPropagation(); const p = $('#listPop'); const open = p.hidden; closePops(); p.hidden = !open; $('#listBtn').setAttribute('aria-expanded', open);

@@ -60,7 +60,7 @@ export function bindSettings(h) {
   Object.assign(hooks, h);
   $('#gearBtn').addEventListener('click', e => { e.stopPropagation(); const p = $('#settings'); const open = p.hidden; closePops(); p.hidden = !open; $('#gearBtn').setAttribute('aria-expanded', open); setMsg(''); if (open) openSec(store.rec.setSec); });
   // 折叠分组：同一时间只展开一组；再点已展开的标题可收起；↑↓/Home/End 在标题间移动
-  $('#setBody').addEventListener('click', e => { const b = e.target.closest('.acc-btn'); if (!b) return; const on = b.getAttribute('aria-expanded') === 'true'; openSec(on ? null : b.dataset.acc); if (!on) store.setPref('setSec', b.dataset.acc); });
+  $('#setBody').addEventListener('click', e => { const b = e.target.closest('.acc-btn'); if (!b) return; const on = b.getAttribute('aria-expanded') === 'true'; openSec(on ? null : b.dataset.acc); if (!on) store.setSettingsSection(/** @type {import('../core/record.js').SettingSection} */ (b.dataset.acc)); });
   $('#setBody').addEventListener('keydown', e => {
     const b = e.target.closest('.acc-btn'); if (!b) return; const all = [...document.querySelectorAll('.acc-btn')], i = all.indexOf(b);
     const j = { ArrowDown: i + 1, ArrowUp: i - 1, Home: 0, End: all.length - 1 }[e.key]; if (j === undefined) return;
@@ -68,8 +68,8 @@ export function bindSettings(h) {
   });
   $('#settings').addEventListener('click', e => {
     e.stopPropagation(); const b = e.target.closest('button'); if (!b) return;
-    if (b.dataset.mode) { store.setPref('mode', b.dataset.mode); hooks.render(); }
-    if (b.dataset.font) { store.setPref('fontScale', +b.dataset.font); hooks.render(); }
+    if (b.dataset.mode) { store.setMode(/** @type {import('../core/record.js').ViewMode} */ (b.dataset.mode)); hooks.render(); }
+    if (b.dataset.font) { store.setFontScale(/** @type {import('../core/record.js').FontScale} */ (+b.dataset.font)); hooks.render(); }
   });
   $('#exportBtn').addEventListener('click', exportJSON);
   $('#syncConnectBtn').addEventListener('click', async () => {

@@ -1,3 +1,4 @@
+// @ts-check
 /* 控制大观 · 勘误放在哪个框里显示（纯函数，无 DOM）。 */
 const UNSAFE = new Set(['severe', 'conflict']);
 /**
@@ -12,7 +13,8 @@ function errataPlacement(q) {
   if (!q.hasNotes) return null;
   const answerShowsImages = q.hasAnswer ? q.hasImages && q.answerView === 'orig' : q.hasImages && !q.expOpen;
   const expShowsImages = q.hasExplanation ? q.hasImages && q.expView === 'orig' : q.hasImages;
-  const unsafeText = (hasText, view) => UNSAFE.has(q.level) && hasText && (!q.hasImages || view !== 'orig');
+  /** @param {boolean} hasText @param {'text'|'orig'} view */
+  const unsafeText = (hasText, view) => UNSAFE.has(q.level || '') && hasText && (!q.hasImages || view !== 'orig');
   if (q.expOpen && (expShowsImages || unsafeText(q.hasExplanation, q.expView))) return 'exp';
   if (q.answerOpen && (answerShowsImages || unsafeText(q.hasAnswer, q.answerView))) return 'answer';
   return null;
