@@ -7,7 +7,7 @@ ERRATA_LEVELS = ('severe', 'conflict', 'ok')  # 普通勘误：不写 errataLeve
 TOP_REQUIRED = {'year': int, 'questionPages': str, 'answerPages': str, 'questions': list}
 TOP_OPTIONAL = {'contributor': str}
 Q_REQUIRED = {'no': int, 'cats': list, 'stem': str, 'figures': list, 'answerImages': list}
-Q_OPTIONAL = {'score': (int, type(None)), 'answer': str, 'explanation': str, 'notes': str, 'errataLevel': (str, type(None))}  # errataLevel 取值由下方单独检查
+Q_OPTIONAL = {'score': (int, type(None)), 'figureWidths': list, 'answer': str, 'explanation': str, 'notes': str, 'errataLevel': (str, type(None))}  # errataLevel 取值由下方单独检查
 MAX_NO = 10  # 题号转“第一…第十题”
 
 
@@ -102,6 +102,13 @@ def validate_file(path, seen_ids, seen_imgs):
                     errs.append(f'{where}: 图片名 {name} 与 {seen_imgs[name]} 重名，构建复制到 public/img/ 时会互相覆盖')
                 seen_imgs[name] = where
         figs = q.get('figures') if isinstance(q.get('figures'), list) else []
+        widths = q.get('figureWidths')
+        if isinstance(widths, list):
+            if len(widths) != len(figs):
+                errs.append(f'{where}: figureWidths 长度应与 figures 一致（共 {len(figs)} 张）')
+            for k, width in enumerate(widths):
+                if not _type_ok(width, int) or width <= 0:
+                    errs.append(f'{where}: figureWidths[{k}] 应为正整数 CSS 像素宽度')
         if isinstance(q.get('stem'), str):
             ph = [int(m) for m in re.findall(r'\[\[fig:(\d+)\]\]', q['stem'])]
             bad = sorted({p for p in ph if not 1 <= p <= len(figs)})

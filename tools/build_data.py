@@ -23,7 +23,8 @@ for qf in SRC_FILES:
     stem=d['stem']; used=set()
     def rep(mo):
       i=int(mo.group(1)); used.add(i); w=Image.open(os.path.join(ROOT,'public',figs[i-1])).width
-      return f'![图{i}|{round(w*0.55)}]({figs[i-1]})'
+      width=d['figureWidths'][i-1] if 'figureWidths' in d else round(w*0.55)
+      return f'![图{i}|{width}]({figs[i-1]})'
     stem=re.sub(r'\[\[fig:(\d+)\]\]',rep,stem)
     assert len(used)==len(figs),(qid,used,figs)
     # 统一不同录入者的分类命名（不改源数据）

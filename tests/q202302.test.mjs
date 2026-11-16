@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
 const source = JSON.parse(readFileSync(new URL('../data-src/2023/questions.json', import.meta.url)));
 const q = source.questions.find(q => q.no === 2);
@@ -109,4 +111,27 @@ test('202302 zero STEP feedback error needs only DC compensation; full cancellat
   close(1 - kd * (1 + gc0 / (0 + 1)) / (kt + kd), 0);
   assert.ok(q.explanation.includes('并不唯一'));
   assert.ok(q.explanation.includes('理想微分'));
+});
+
+test('202302 uses a 560px logical figure width without reducing its high-resolution image', () => {
+  const library = JSON.parse(readFileSync(new URL('../public/data/library.json', import.meta.url)));
+  const row = library.questions.find(q => q.id === 202302);
+  assert.deepEqual(q.figureWidths, [560]);
+  assert.match(row.stem, /!\[图1\|560\]\(img\/q2023-2-1\.png\)/);
+  const image = readFileSync(new URL('../data-src/2023/img/q2023-2-1.png', import.meta.url));
+  const w = image.readUInt32BE(16), h = image.readUInt32BE(20);
+  assert.equal(w, 1600); assert.equal(h, 640);
+  assert.equal(560 * h / w, 224);
+  // The redraw uses a 1000-unit viewBox and 27-unit labels: 15.12 CSS px,
+  // comparable to the app's 15px question prose rather than the old 23.76px labels.
+  const labelSize = 27 * q.figureWidths[0] / 1000;
+  assert.ok(labelSize >= 15 && labelSize <= 16);
+});
+
+
+test('per-figure logical widths are optional and invalid source widths fail validation', () => {
+  const result = spawnSync('python3', ['tests/test_figure_widths.py'], {
+    cwd: fileURLToPath(new URL('../', import.meta.url)), encoding: 'utf8'
+  });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
 });
