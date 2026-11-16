@@ -102,7 +102,7 @@ async def main():
     await t('button[data-mark="mastered"]').click(); ok('标记 掌握', await t('button[data-mark="mastered"]').get_attribute('aria-pressed') == 'true')
     await t('#nextBtn').click(); await t('button[data-mark="shaky"]').click(); shaky_src = await txt('.src')
     # 等 IndexedDB 异步写入完成再刷新，避免 CI 上刷新打断写入造成偶发失败
-    await pg.wait_for_function("CDGStore.get('rec').then(r => Object.values(r?.marks || {}).some(m => m.state === 'shaky'))", timeout=5000)
+    await pg.wait_for_function("__cdg.kv.get('rec').then(r => Object.values(r?.marks || {}).some(m => m.state === 'shaky'))", timeout=5000)
     await pg.reload(wait_until='networkidle'); ok('刷新后记录保留(IndexedDB)', await t('button[data-mark="shaky"]').get_attribute('aria-pressed') == 'true')
     # 收藏 tab
     await t('#tabs button[data-tab="fav"]').click(); ok('收藏 tab: 只显示收藏题', '1 题' in await txt('#sectionLabel') and '第二题' in await txt('.src'), await txt('#sectionLabel'))
@@ -141,7 +141,7 @@ async def main():
     await t('#importCodeBtn').click(); msg = await txt('#setMsg'); ok('校验并导入记录码', '已导入' in msg, msg)
     await t('#codeInput').fill(code[:-3] + 'zzz'); await t('#importCodeBtn').click(); ok('记录码校验失败提示', '校验失败' in await txt('#setMsg'), await txt('#setMsg'))
     await t('#importFile').set_input_files(path); await pg.wait_for_timeout(300); ok('导入记录 JSON', '已导入' in await txt('#setMsg'), await txt('#setMsg'))
-    stored = await pg.evaluate("CDGStore.get('rec')"); ok('导入后数据写回(IndexedDB)', stored and len(stored['marks']) >= 1, json.dumps(stored['marks'])[:80])
+    stored = await pg.evaluate("__cdg.kv.get('rec')"); ok('导入后数据写回(IndexedDB)', stored and len(stored['marks']) >= 1, json.dumps(stored['marks'])[:80])
     bad = '/tmp/bad.json'; open(bad, 'w').write('{"x":1}'); await t('#importFile').set_input_files(bad); await pg.wait_for_timeout(300)
     ok('导入无效 JSON 提示', '不是有效' in await txt('#setMsg'), await txt('#setMsg'))
     await pg.mouse.click(400, 400); ok('点击外部关闭设置', not await t('#settings').is_visible())

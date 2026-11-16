@@ -75,7 +75,7 @@ async def main():
         return ctx, pg
     ctx, pg = await newpage(); t = pg.locator
     async def rec(page=None):
-        await (page or pg).wait_for_timeout(150); return await (page or pg).evaluate("CDGStore.get('rec').then(r=>r||{})")
+        await (page or pg).wait_for_timeout(150); return await (page or pg).evaluate("__cdg.kv.get('rec').then(r=>r||{})")
     QURL = BASE + '?list=complete&question=202301'
     await pg.goto(QURL, wait_until='networkidle')
     nbtn = t('.card button[data-act="note"]')
@@ -170,12 +170,12 @@ async def main():
     await ctx2.close(); await ctx3.close()
     # ---------- 合并规则（纯函数） ----------
     res = await pg.evaluate("""() => {
-      const M = CDGMerge.mergeRecords, C = CDGMerge.canon, sp = CDGMerge.syncPart;
+      const M = __cdg.mergeRecords, C = __cdg.canon, sp = __cdg.syncPart;
       const A = { notes: { 1: { text: 'A 新', at: 300 }, 2: { text: 'A 旧', at: 100 }, 3: { text: '', at: 500 }, 5: { text: '只有 A', at: 10 } }, updated: {}, marks: {}, srs: {}, favorites: [] };
       const B = { notes: { 1: { text: 'B 旧', at: 200 }, 2: { text: 'B 新', at: 400 }, 3: { text: '远端旧内容', at: 450 }, 4: { text: '只有 B', at: 20 } }, updated: {}, marks: {}, srs: {}, favorites: [] };
       const m = M(A, B), m2 = M(B, A), tie = M({ notes: { 1: { text: 'x', at: 5 } } }, { notes: { 1: { text: 'y', at: 5 } } }), tie2 = M({ notes: { 1: { text: 'y', at: 5 } } }, { notes: { 1: { text: 'x', at: 5 } } });
       const legacyRemote = M(A, { favorites: [], marks: {}, srs: {}, updated: {} });
-      const bad = CDGMerge.normalizeNotes({ 1: { text: 5, at: 1 }, x: { text: 'a', at: 1 }, 2: { text: 'ok', at: 0 }, 3: { text: 'ok', at: 7 } });
+      const bad = __cdg.normalizeNotes({ 1: { text: 5, at: 1 }, x: { text: 'a', at: 1 }, 2: { text: 'ok', at: 0 }, 3: { text: 'ok', at: 7 } });
       return { m: m.notes, commut: C(sp(m)) === C(sp(m2)), idem: C(sp(M(m, m))) === C(sp(m)), tie: C(tie.notes) === C(tie2.notes), legacy: legacyRemote.notes, bad };
     }""")
     m = res['m']

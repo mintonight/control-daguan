@@ -1,7 +1,5 @@
-/* 控制大观 · 题目笔记：Markdown（marked，GFM）+ KaTeX 公式 + DOMPurify 清洗；笔记数据的规范化与合并见 merge.js。 */
-(() => {
-'use strict';
-const MAX = window.CDGMerge.NOTE_MAX; // 单题笔记上限（字符）
+/* 笔记 Markdown 渲染：marked（GFM）+ KaTeX 公式 + DOMPurify 清洗。 */
+const { katex, marked, DOMPurify } = globalThis;
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const tex = (src, display) => {
   try { return katex.renderToString(src, { displayMode: display, throwOnError: false, strict: false, trust: false, maxExpand: 500 }); }
@@ -34,12 +32,9 @@ purify.addHook('afterSanitizeAttributes', n => {
 });
 const SAFE = { USE_PROFILES: { html: true, svg: true, mathMl: true }, ADD_ATTR: ['target'], FORBID_TAGS: ['style', 'form', 'input', 'button', 'textarea', 'select', 'iframe'], FORBID_ATTR: ['id', 'name'] };
 /** Markdown → 已清洗的 HTML */
-function render(text) {
+export function renderNote(text) {
   if (!text || !text.trim()) return '';
   let html;
   try { html = md.parse(text); } catch { html = `<pre>${esc(text)}</pre>`; }
   return purify.sanitize(html, SAFE);
 }
-const has = (notes, id) => !!notes?.[id]?.text?.trim();
-window.CDGNotes = { render, has, MAX };
-})();

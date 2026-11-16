@@ -1,9 +1,4 @@
 /* 控制大观 · 学习记录合并（纯函数，无 DOM）。Gist 同步、导入、localStorage 迁移共用 mergeRecords。 */
-(function (root, factory) {
-  const api = factory();
-  if (typeof module === 'object' && module.exports) module.exports = api; else root.CDGMerge = api;
-})(typeof self !== 'undefined' ? self : this, function () {
-'use strict';
 const NOTE_MAX = 50000;
 const SYNC_KEYS = ['favorites', 'marks', 'srs', 'history', 'updated', 'retention', 'retentionAt', 'notes'];
 const syncPart = r => Object.fromEntries(SYNC_KEYS.map(k => [k, r[k]]));
@@ -91,5 +86,5 @@ function mergeRecords(a, b, policy = 'sync') {
   return out;
 }
 
-return { mergeRecords, mergeNotes, normalizeNotes, unionLogs, syncPart, canon, SYNC_KEYS, NOTE_MAX };
-});
+
+export { mergeRecords, mergeNotes, normalizeNotes, unionLogs, syncPart, canon, SYNC_KEYS, NOTE_MAX };

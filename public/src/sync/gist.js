@@ -1,24 +1,14 @@
-/* 控制大观 · 本地存储（IndexedDB）与 GitHub Gist 同步。合并规则见 merge.js。 */
-(() => {
-'use strict';
-// ---------- IndexedDB ----------
-const idb = window.idbKeyval;
-const kv = idb.createStore('control-daguan', 'kv');
-const CDGStore = {
-  get: k => idb.get(k, kv), set: (k, v) => idb.set(k, v, kv), del: k => idb.del(k, kv), keys: () => idb.keys(kv),
-};
+/* GitHub Gist 同步：令牌与状态存 kv，合并规则见 core/merge.js。不碰 DOM。 */
+import { mergeRecords, canon, syncPart } from '../core/merge.js';
 
-const { mergeRecords, canon, syncPart } = window.CDGMerge;
-
-// ---------- GitHub Gist ----------
-const FILE = 'control-daguan-progress.json', API = 'https://api.github.com';
-class SyncError extends Error { constructor(msg, kind) { super(msg); this.kind = kind; } }
-class GistSync {
-  /** opts: getLocal() → rec；applyMerged(rec)；onStatus(cfg)；fetch（测试可替换） */
-  constructor(opts) { Object.assign(this, { fetch: (...a) => fetch(...a) }, opts); this.cfg = null; this.busy = null; this.timer = null; this.pending = false; }
-  async init() { this.cfg = (await CDGStore.get('gist')) || null; this.emit(); return this.cfg; }
+export const FILE = 'control-daguan-progress.json', API = 'https://api.github.com';
+export class SyncError extends Error { constructor(msg, kind) { super(msg); this.kind = kind; } }
+export class GistSync {
+  /** opts: kv（保存令牌与状态的存储）；getLocal() → rec；applyMerged(rec)；onStatus(cfg, busy, pending)；fetch、isOnline（由 store 注入浏览器实现，测试可替换） */
+  constructor(opts) { Object.assign(this, { fetch: (...a) => fetch(...a), isOnline: () => true }, opts); this.cfg = null; this.busy = null; this.timer = null; this.pending = false; }
+  async init() { this.cfg = (await this.kv.get('gist')) || null; this.emit(); return this.cfg; }
   get connected() { return !!this.cfg?.token; }
-  async saveCfg(p) { this.cfg = { ...(this.cfg || {}), ...p }; await CDGStore.set('gist', this.cfg); this.emit(); }
+  async saveCfg(p) { this.cfg = { ...(this.cfg || {}), ...p }; await this.kv.set('gist', this.cfg); this.emit(); }
   emit() { this.onStatus?.(this.cfg, this.busy != null, this.pending); }
   async api(path, init = {}) {
     let r;
@@ -61,7 +51,7 @@ class GistSync {
     await this.saveCfg({ token, gistId: null, lastSync: null, lastError: null });
     try { return await this.sync(); } catch (e) { if (e.kind === 'auth') await this.disconnect(); throw e; }
   }
-  async disconnect() { clearTimeout(this.timer); this.cfg = null; this.pending = false; await CDGStore.del('gist'); this.emit(); }
+  async disconnect() { clearTimeout(this.timer); this.cfg = null; this.pending = false; await this.kv.del('gist'); this.emit(); }
   schedule(ms = 3000) {
     if (!this.connected) return;
     this.pending = true; clearTimeout(this.timer); this.timer = setTimeout(() => this.sync().catch(() => {}), ms); this.emit();
@@ -74,7 +64,7 @@ class GistSync {
   }
   async _sync() {
     clearTimeout(this.timer);
-    if (navigator.onLine === false) { this.pending = true; await this.saveCfg({ lastError: '当前离线，联网后自动同步。', errorKind: 'offline' }); throw new SyncError('当前离线，联网后自动同步。', 'offline'); }
+    if (!this.isOnline()) { this.pending = true; await this.saveCfg({ lastError: '当前离线，联网后自动同步。', errorKind: 'offline' }); throw new SyncError('当前离线，联网后自动同步。', 'offline'); }
     try {
       if (!this.cfg.gistId) await this.saveCfg({ gistId: await this.findOrCreate() });
       let remote;
@@ -95,6 +85,3 @@ class GistSync {
     }
   }
 }
-window.CDGStore = CDGStore;
-window.CDGSync = { GistSync, SyncError, FILE };
-})();

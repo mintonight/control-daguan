@@ -58,7 +58,7 @@ async def main():
     ctx, pg = await newpage(); t = lambda s: pg.locator(s)
     async def txt(s, page=None): return (await (page or pg).locator(s).first.inner_text()).strip()
     async def rec(page=None):
-        await (page or pg).wait_for_timeout(150); return await (page or pg).evaluate("CDGStore.get('rec').then(r=>r||null)")
+        await (page or pg).wait_for_timeout(150); return await (page or pg).evaluate("__cdg.kv.get('rec').then(r=>r||null)")
     # ---------- 1. 迁移 ----------
     await pg.goto(BASE + '?list=complete&question=202301', wait_until='networkidle')
     legacy = {'favorites': [202301], 'marks': {'202301': {'state': 'unknown', 'at': 1700000000000}, '202302': {'state': 'shaky', 'at': 1700000000000}},
@@ -81,14 +81,14 @@ async def main():
     ok('新改动只写 IndexedDB', r['marks']['202301']['state'] == 'mastered' and r['updated']['202301'] > 1700000000000 and await pg.evaluate("localStorage.length") == 0)
     # ---------- 2. 合并逻辑（纯函数） ----------
     res = await pg.evaluate("""() => {
-      const M = CDGMerge.mergeRecords, card = (t, reps) => ({ due: new Date(t + 864e5).toISOString(), last_review: new Date(t).toISOString(), reps, stability: 1, difficulty: 5, state: 2, scheduled_days: 1, lapses: 0, learning_steps: 0 });
+      const M = __cdg.mergeRecords, card = (t, reps) => ({ due: new Date(t + 864e5).toISOString(), last_review: new Date(t).toISOString(), reps, stability: 1, difficulty: 5, state: 2, scheduled_days: 1, lapses: 0, learning_steps: 0 });
       const log = (q, t) => ({ id: `${q}-${t}`, rating: 3, review: new Date(t).toISOString() });
       const A = { favorites: [1, 2], marks: { 1: { state: 'shaky', at: 100 }, 3: { state: 'unknown', at: 500 } }, srs: { 1: { card: card(100, 1), logs: [log(1, 100)] }, 4: { card: card(50, 1), logs: [log(4, 50)] } },
                   updated: { 1: 100, 2: 900, 3: 500, 4: 950 }, history: [{ id: 1, state: 'shaky', at: 100 }], retention: 0.9, retentionAt: 10, mode: 'multiple' };
       const B = { favorites: [1], marks: { 1: { state: 'mastered', at: 300 }, 2: { state: 'unknown', at: 200 } }, srs: { 1: { card: card(300, 2), logs: [log(1, 100), log(1, 300)] }, 4: { card: card(60, 2), logs: [log(4, 50), log(4, 60)] } },
                   updated: { 1: 300, 2: 200, 4: 60 }, history: [{ id: 1, state: 'shaky', at: 100 }, { id: 1, state: 'mastered', at: 300 }], retention: 0.85, retentionAt: 20, mode: 'single' };
       const m = M(A, B), m2 = M(B, A), mm = M(m, m);
-      const C = CDGMerge.canon, sp = CDGMerge.syncPart;
+      const C = __cdg.canon, sp = __cdg.syncPart;
       return { m, commut: C(sp(m)) === C(sp(m2)), idem: C(sp(mm)) === C(sp(m)), empty: C(sp(M({}, A))) === C(sp(M(A, {}))) };
     }""")
     m = res['m']
@@ -101,9 +101,9 @@ async def main():
     ok('合并: 交换律 / 幂等 / 与空记录合并', res['commut'] and res['idem'] and res['empty'], json.dumps({k: res[k] for k in ('commut', 'idem', 'empty')}))
     tomb = await pg.evaluate("""() => { const c = { due: '2026-01-02T00:00:00Z', last_review: '2026-01-01T00:00:00Z', reps: 3 };
       const L = { srs: {}, updated: { 7: Date.parse('2026-02-01') } }, Rm = { srs: { 7: { card: c, logs: [{ id: 'x', review: '2026-01-01T00:00:00Z' }] } }, updated: { 7: Date.parse('2026-01-01') } };
-      return CDGMerge.mergeRecords(L, Rm).srs; }""")
+      return __cdg.mergeRecords(L, Rm).srs; }""")
     ok('合并: 本地较新的「重置复习进度」不被远端旧卡片恢复', tomb == {})
-    imp = await pg.evaluate("""() => { const M = CDGMerge.mergeRecords, c = t => ({ due: new Date(t + 864e5).toISOString(), last_review: new Date(t).toISOString(), reps: 1 });
+    imp = await pg.evaluate("""() => { const M = __cdg.mergeRecords, c = t => ({ due: new Date(t + 864e5).toISOString(), last_review: new Date(t).toISOString(), reps: 1 });
       const local = { favorites: [9], marks: {}, srs: {}, updated: { 7: 5000 } }, file = { favorites: [8], marks: { 7: { state: 'shaky', at: 100 } }, srs: { 7: { card: c(100), logs: [{ id: 'a', review: new Date(100).toISOString() }] } } };
       const legacyFav = M({ favorites: [], marks: {}, srs: {} }, { favorites: [3], marks: {}, srs: {} });
       return { imp: M(local, file, 'import'), sync: M(local, file), legacyFav }; }""")
@@ -120,7 +120,7 @@ async def main():
     ok('连接: 未找到进度 Gist → 新建私密 Gist', len(gh.gists) == 1 and g['public'] is False and FILE in g['files'], f'{gid} public={g["public"]}')
     ok('请求带 Bearer 令牌', all(l[2] == f'Bearer {TOKEN}' for l in gh.log))
     ok('新建的 Gist 内容 = 本地进度', gh.content(gid)['marks']['202301']['state'] == 'mastered')
-    cfg = await pg.evaluate("CDGStore.get('gist')")
+    cfg = await pg.evaluate("__cdg.kv.get('gist')")
     ok('令牌与 gist id 保存在本机 IndexedDB', cfg['token'] == TOKEN and cfg['gistId'] == gid and cfg['lastSync'] > 0)
     ok('令牌不写入 localStorage / 记录 / 导出', await pg.evaluate("JSON.stringify(localStorage).includes('ghp_')") is False and TOKEN not in json.dumps(await rec()))
     ok('显示同步状态与最近同步时间', '已同步' in await txt('#syncStatus') and '最近成功同步' in await txt('#syncMeta'), await txt('#syncStatus'))
@@ -144,7 +144,7 @@ async def main():
     ctx2, pg2 = await newpage(); posts = sum(1 for l in gh.log if l[0] == 'POST')
     await pg2.goto(BASE + '?list=complete&question=202305', wait_until='networkidle'); await pg2.locator('#gearBtn').click(); await open_sec(pg2, 'sync')
     await pg2.locator('#gistToken').fill(TOKEN); await pg2.locator('#syncConnectBtn').click(); await pg2.wait_for_function("document.querySelector('#setMsg').textContent.includes('已连接')")
-    ok('第二台设备: 找到已有 Gist（不重复创建）并拉取进度', sum(1 for l in gh.log if l[0] == 'POST') == posts and (await pg2.evaluate("CDGStore.get('gist')"))['gistId'] == gid and await pg2.locator('button[data-mark="unknown"]').get_attribute('aria-pressed') == 'true')
+    ok('第二台设备: 找到已有 Gist（不重复创建）并拉取进度', sum(1 for l in gh.log if l[0] == 'POST') == posts and (await pg2.evaluate("__cdg.kv.get('gist')"))['gistId'] == gid and await pg2.locator('button[data-mark="unknown"]').get_attribute('aria-pressed') == 'true')
     # 两台设备各自改同一题 → 后改的胜出
     await pg2.locator('#syncOffBtn').evaluate('b=>b.closest(".popover").hidden=true')
     await pg2.locator('button[data-mark="mastered"]').click(); await pg2.wait_for_timeout(4000)
@@ -166,7 +166,7 @@ async def main():
     ok('恢复联网: 自动补同步', gh.content(gid)['marks']['202306']['state'] == 'unknown' and '已同步' in await txt('#syncStatus'), await txt('#syncStatus'))
     # Gist 被删 → 重新创建
     del gh.gists[gid]; await t('#syncNowBtn').click(); await pg.wait_for_function("document.querySelector('#setMsg').textContent.includes('同步完成')"); await pg.wait_for_timeout(200)
-    gid2 = (await pg.evaluate("CDGStore.get('gist')"))['gistId']
+    gid2 = (await pg.evaluate("__cdg.kv.get('gist')"))['gistId']
     ok('Gist 被删除: 自动重建并上传', gid2 != gid and gid2 in gh.gists and gh.content(gid2)['marks']['202306']['state'] == 'unknown', gid2)
     # 权限提醒
     gh.scopes = 'gist, repo'; await t('#syncNowBtn').click(); await pg.wait_for_timeout(500)
@@ -174,7 +174,7 @@ async def main():
     await t('#syncOn').scroll_into_view_if_needed(); await pg.screenshot(path='shots/sync-connected.png')
     # 断开
     await t('#syncOffBtn').click(); await pg.wait_for_timeout(200)
-    ok('断开同步: 删除本机令牌、恢复连接表单、本地记录保留', await pg.evaluate("CDGStore.get('gist')") is None and await t('#syncOff').is_visible() and (await rec())['marks']['202306']['state'] == 'unknown')
+    ok('断开同步: 删除本机令牌、恢复连接表单、本地记录保留', await pg.evaluate("__cdg.kv.get('gist')") is None and await t('#syncOff').is_visible() and (await rec())['marks']['202306']['state'] == 'unknown')
     n0 = len(gh.log); await pg.mouse.click(400, 400); await t('button[data-mark="shaky"]').click(); await pg.wait_for_timeout(3600)
     ok('断开后不再请求 GitHub', len(gh.log) == n0)
     # 导出 / 记录码仍可用

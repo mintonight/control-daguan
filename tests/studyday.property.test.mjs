@@ -2,10 +2,9 @@
 // 时区通过 process.env.TZ 切换（Node 会立即生效）；用 Intl 独立计算本地墙上时间作为对照。
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
 import fc from 'fast-check';
 
-const { DAY_CUT_H, dayStart, endOfStudyDay, dayDiff, dueIds } = createRequire(import.meta.url)('../public/studyday.js');
+import { DAY_CUT_H, dayStart, endOfStudyDay, dayDiff, dueIds } from '../public/src/core/studyday.js';
 const RUNS = { numRuns: +(process.env.FC_RUNS || 300), ...(process.env.FC_SEED ? { seed: +process.env.FC_SEED } : {}) };
 const ZONES = ['UTC', 'Asia/Singapore', 'Asia/Shanghai', 'America/Los_Angeles', 'America/New_York', 'Europe/London', 'Europe/Berlin',
   'Australia/Sydney', 'Australia/Lord_Howe', 'America/Santiago', 'America/St_Johns', 'Pacific/Chatham', 'Asia/Kathmandu', 'America/Havana'];

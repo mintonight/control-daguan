@@ -27,7 +27,7 @@ async def main():
         await pg.wait_for_function("document.querySelector('#setMsg').textContent.length>0")
     async def store():
         await pg.wait_for_timeout(150)  # 等待异步写入 IndexedDB
-        return await pg.evaluate("CDGStore.get('rec').then(r=>r||{})")
+        return await pg.evaluate("__cdg.kv.get('rec').then(r=>r||{})")
     await pg.goto(BASE + '?list=complete&question=202301', wait_until='networkidle'); await pg.evaluate('localStorage.clear()'); await pg.reload(wait_until='networkidle')
     iv = {k: await txt(f'button[data-mark="{k}"] .iv') for k in ('unknown', 'shaky', 'mastered')}
     ok('新题: 按钮显示间隔预览', all(re.match(r'\d+天', v) for v in iv.values()), str(iv))

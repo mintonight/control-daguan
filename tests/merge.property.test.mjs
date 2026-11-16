@@ -2,10 +2,9 @@
 // 复现失败用例：FC_SEED=<种子> npm test
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
 import fc from 'fast-check';
 
-const { mergeRecords, canon } = createRequire(import.meta.url)('../public/merge.js');
+import { mergeRecords, canon } from '../public/src/core/merge.js';
 const RUNS = { numRuns: +(process.env.FC_RUNS || 400), ...(process.env.FC_SEED ? { seed: +process.env.FC_SEED } : {}) };
 const POLICIES = ['sync', 'import'];
 

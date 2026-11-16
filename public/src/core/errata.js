@@ -1,9 +1,4 @@
 /* 控制大观 · 勘误放在哪个框里显示（纯函数，无 DOM）。 */
-(function (root, factory) {
-  const api = factory();
-  if (typeof module === 'object' && module.exports) module.exports = api; else root.CDGErrata = api;
-})(typeof self !== 'undefined' ? self : this, function () {
-'use strict';
 const UNSAFE = new Set(['severe', 'conflict']);
 /**
  * 勘误说的是原图里的内容，所以跟着原图出现；文字版已改正时不显示。
@@ -22,5 +17,5 @@ function errataPlacement(q) {
   if (q.answerOpen && (answerShowsImages || unsafeText(q.hasAnswer, q.answerView))) return 'answer';
   return null;
 }
-return { errataPlacement };
-});
+
+export { errataPlacement };

@@ -4,9 +4,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { createRequire } from 'node:module';
 
-const { errataPlacement } = createRequire(import.meta.url)('../public/errata.js');
+import { errataPlacement } from '../public/src/core/errata.js';
 const FILE = new URL('./errata-placement.table.tsv', import.meta.url);
 const B = [false, true];
 const rows = [];

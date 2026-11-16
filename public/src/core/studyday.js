@@ -1,9 +1,4 @@
 /* 控制大观 · 学习日（纯函数，无 DOM）：凌晨 DAY_CUT_H 点前仍算前一天，按本地墙上时间计算（夏令时切换日同样成立）。 */
-(function (root, factory) {
-  const api = factory();
-  if (typeof module === 'object' && module.exports) module.exports = api; else root.CDGDay = api;
-})(typeof self !== 'undefined' ? self : this, function () {
-'use strict';
 const DAY_CUT_H = 2;
 const DAY_MS = 864e5;
 /** 时刻 d 所属学习日的本地 0 点 */
@@ -26,5 +21,5 @@ function dueIds(srs, now, has = () => true) {
   return Object.entries(srs).filter(([k, v]) => has(+k) && Date.parse(v.card.due) <= lim)
     .sort((a, b) => Date.parse(a[1].card.due) - Date.parse(b[1].card.due) || a[0] - b[0]).map(([k]) => +k);
 }
-return { DAY_CUT_H, DAY_MS, dayStart, endOfStudyDay, dayDiff, dueIds };
-});
+
+export { DAY_CUT_H, DAY_MS, dayStart, endOfStudyDay, dayDiff, dueIds };

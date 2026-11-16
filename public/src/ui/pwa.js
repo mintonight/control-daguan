@@ -1,7 +1,6 @@
-/* 控制大观 · 安装与离线 */
-(() => {
-'use strict';
-const $ = (s, r = document) => r.querySelector(s);
+/* 安装（PWA）、Service Worker 注册与更新提示、离线下载。 */
+import { $ } from './dom.js';
+
 const RUNTIME = 'cdg-runtime';
 const IMG_RE = /img\/[A-Za-z0-9._/-]+/g;
 
@@ -240,10 +239,8 @@ updateInstallUI();
 refreshSize();
 registerSW();
 
-window.CDGPWA = {
-  start(opts) {
-    if (opts) Object.assign(hooks, opts);
-    refreshSize();
-  },
-};
-})();
+/** getLib()：当前题库（离线下载用）；flush()：更新前先把未保存的笔记写入 */
+export function startPWA(opts) {
+  if (opts) Object.assign(hooks, opts);
+  refreshSize();
+}

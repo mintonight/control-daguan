@@ -7,14 +7,7 @@ ROOT = Path(__file__).resolve().parents[1] / "public"
 SW = ROOT / "sw.js"
 SHELL = [
     "index.html",
-    "app.js",
     "app.css",
-    "merge.js",
-    "studyday.js",
-    "errata.js",
-    "notes.js",
-    "sync.js",
-    "pwa.js",
     "manifest.webmanifest",
     "data/library.json",
 ]
@@ -36,6 +29,10 @@ def collect():
         for p in sorted(icons.rglob("*")):
             if p.is_file():
                 add(str(p.relative_to(ROOT)))
+    src = ROOT / "src"
+    if src.is_dir():
+        for p in sorted(src.rglob("*.js")):
+            add(str(p.relative_to(ROOT)))
     vendor = ROOT / "vendor"
     if vendor.is_dir():
         for p in sorted(vendor.rglob("*")):
