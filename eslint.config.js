@@ -28,6 +28,6 @@ export default [
   // 唯一允许直接使用这些 API 的地方
   { files: ['public/src/ui/html.js'], rules: { 'no-restricted-syntax': 'off' } },
   { files: ['public/src/core/timers.js'], rules: { 'no-restricted-globals': 'off' } },
-  { files: ['public/sw.js'], languageOptions: { sourceType: 'script', globals: globals.serviceworker } },
+  { files: ['public/sw.js', 'tests/fixtures/sw-v9.js'], languageOptions: { sourceType: 'script', globals: globals.serviceworker } },
   { files: ['tests/**/*.mjs', 'tools/**/*.mjs', 'eslint.config.js'], languageOptions: { sourceType: 'module', globals: globals.node } },
 ];

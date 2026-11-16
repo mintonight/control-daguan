@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """在构建/部署时生成 Service Worker 的预缓存清单（含内容哈希）。不要手改 PRECACHE。"""
-import hashlib, json, re, sys
+import base64, hashlib, json, re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1] / "public"
-SW = ROOT / "sw.js"
 SHELL = [
     "index.html",
     "app.css",
@@ -14,57 +13,69 @@ SHELL = [
 SKIP_NAMES = {"sw.js"}
 
 
-def collect():
+def collect(root=ROOT):
     files = []
     def add(rel):
         rel = rel.replace("\\", "/")
         if rel in SKIP_NAMES or rel in files:
             return
-        if (ROOT / rel).is_file():
+        if (root / rel).is_file():
             files.append(rel)
     for rel in SHELL:
+        if not (root / rel).is_file():
+            raise FileNotFoundError(f"required shell asset: {rel}")
         add(rel)
-    icons = ROOT / "icons"
+    icons = root / "icons"
     if icons.is_dir():
         for p in sorted(icons.rglob("*")):
             if p.is_file():
-                add(str(p.relative_to(ROOT)))
-    src = ROOT / "src"
+                add(str(p.relative_to(root)))
+    src = root / "src"
     if src.is_dir():
         for p in sorted(src.rglob("*.js")):
-            add(str(p.relative_to(ROOT)))
-    vendor = ROOT / "vendor"
+            add(str(p.relative_to(root)))
+    vendor = root / "vendor"
     if vendor.is_dir():
         for p in sorted(vendor.rglob("*")):
             if p.is_file():
-                add(str(p.relative_to(ROOT)))
+                add(str(p.relative_to(root)))
     return files
 
 
-def version_for(files):
-    h = hashlib.sha256()
+# The worker remains the canonical logic source. Only this block is generated.
+BLOCK = re.compile(r"const PRECACHE = \{.*?\};", re.S)
+
+
+def render(root, source):
+    if len(BLOCK.findall(source)) != 1:
+        raise ValueError("expected exactly one generated PRECACHE block")
+    logic = BLOCK.sub("const PRECACHE = null;", source)
+    files = collect(root)
+    integrity = {}
     for rel in files:
-        h.update(rel.encode())
-        h.update(b"\0")
-        h.update((ROOT / rel).read_bytes())
-        h.update(b"\0")
-    return h.hexdigest()[:12]
+        digest = hashlib.sha256((root / rel).read_bytes()).digest()
+        integrity["./" + rel] = "sha256-" + base64.b64encode(digest).decode("ascii")
+    integrity = {"./": integrity["./index.html"], **integrity}
+    # Logic-only changes need a separate cache too: never overwrite an active worker's shell.
+    payload = logic + "\0" + json.dumps(integrity, ensure_ascii=False, sort_keys=True)
+    version = hashlib.sha256(payload.encode("utf-8")).hexdigest()[:12]
+    manifest = {"version": version, "files": list(integrity), "integrity": integrity}
+    block = "const PRECACHE = " + json.dumps(manifest, ensure_ascii=False, indent=2) + ";"
+    return BLOCK.sub(lambda _: block, source), manifest
+
+
+def build(root=ROOT):
+    sw = root / "sw.js"
+    source = sw.read_text(encoding="utf-8")
+    generated, manifest = render(root, source)
+    if generated != source:
+        sw.write_text(generated, encoding="utf-8")
+    return manifest
 
 
 def main():
-    files = collect()
-    if not files:
-        sys.exit("no shell files found under public/")
-    ver = version_for(files)
-    urls = ["./"] + ["./" + f for f in files]
-    block = "const PRECACHE = " + json.dumps({"version": ver, "files": urls}, ensure_ascii=False, indent=2) + ";"
-    text = SW.read_text(encoding="utf-8")
-    new, n = re.subn(r"const PRECACHE = \{.*?\};", block, text, count=1, flags=re.S)
-    if n != 1:
-        sys.exit(f"expected exactly one PRECACHE block in {SW}, found {n}")
-    if new != text:
-        SW.write_text(new, encoding="utf-8")
-    print(f"precache {len(urls)} urls, version {ver}")
+    manifest = build()
+    print(f"precache {len(manifest['files'])} urls, version {manifest['version']}")
 
 
 if __name__ == "__main__":

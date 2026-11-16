@@ -4,12 +4,14 @@
 本用例把 public/ 复制到临时目录，并挂到 /control-daguan/ 下提供服务（模拟 GitHub Pages 子路径）。
 传入的 base_url 只作提示，不会复用共享端口，以免 Service Worker 干扰其它用例。
 """
-import asyncio, io, json, os, re, shutil, struct, subprocess, sys, tempfile, threading, time
+import asyncio, io, json, os, shutil, struct, subprocess, sys, tempfile, threading
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from playwright.async_api import async_playwright
 
 from verify_support import idle
+from build_precache import build
+from verify_sw_update import verify_upgrade
 ROOT = Path(__file__).resolve().parents[1]
 PREFIX = '/control-daguan'
 R = []
@@ -231,20 +233,21 @@ async def main():
         leak = [u for u in urls if 'api.github.com' in u or 'githubusercontent.com' in u]
         ok('api.github.com / Gist 请求不被缓存', not leak, leak[:5])
 
-        # --- 更新提示：改 sw.js 后出现 toast ---
-        sw_path = site / 'sw.js'
-        src = sw_path.read_text(encoding='utf-8')
-        src2 = re.sub(r'"version":\s*"[^"]+"', '"version": "testupd123"', src, count=1)
-        src2 += f'\n// update-check {time.time()}\n'
-        sw_path.write_text(src2, encoding='utf-8')
+        # --- 更新提示：真实资产改动经生成器产生新 SW，不手改生成版本 ---
+        previous_sw = (site / 'sw.js').read_bytes()
+        css = site / 'app.css'
+        css.write_text(css.read_text(encoding='utf-8') + '\n:root { --cdg-asset-update: item10; }\n', encoding='utf-8')
+        updated = build(site)
+        ok('只改 CSS 后生成 SW 字节变化，浏览器可检测资产修订', previous_sw != (site / 'sw.js').read_bytes())
         await pg.evaluate('() => navigator.serviceWorker.getRegistration().then(r => r.update())')
         await pg.wait_for_selector('#updateToast:not([hidden])', timeout=30000)
         ok('新版本 SW 等待时显示「有新版本，点击更新」', '有新版本' in (await pg.locator('#updateToast').inner_text()))
         await pg.screenshot(path=str(SHOT / 'pwa-update-toast.png'))
         await pg.locator('#updateToast').click()
-        await pg.wait_for_function("""() => [...document.querySelectorAll('#updateToast')].every(el => el.hidden) && !!navigator.serviceWorker.controller""", timeout=20000)
+        await pg.wait_for_function("version => caches.keys().then(keys => keys.includes('cdg-shell-' + version) && keys.filter(k => k.startsWith('cdg-shell-')).length === 1)", arg=updated['version'])
+        await pg.wait_for_function("getComputedStyle(document.documentElement).getPropertyValue('--cdg-asset-update').trim() === 'item10'")
         keys = await pg.evaluate('() => caches.keys()')
-        ok('点击更新后新的壳缓存生效', any('testupd123' in k for k in keys), keys)
+        ok('点击更新后新 CSS 与新的壳缓存生效', 'cdg-shell-' + updated['version'] in keys, keys)
 
         # --- 可安装性 ---
         # 回到在线、已控制的页面
@@ -300,6 +303,7 @@ async def main():
         page_errs = [e for e in errs if 'favicon' not in e.lower()]
         ok('页面无 JavaScript 错误', not page_errs, str(page_errs[:5]))
         await ctx.close()
+        await verify_upgrade(pw, ok)
     finally:
         httpd.shutdown()
         shutil.rmtree(tmp, ignore_errors=True)
