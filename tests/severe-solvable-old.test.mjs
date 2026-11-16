@@ -119,6 +119,34 @@ test('202108 original k is valid in its own outer-loop/coordinate convention, no
   assert.deepEqual(C, [[4, 4, 0]]);
 });
 
+test('202108 original graph input and state definitions exactly match canonical total and added feedback, so its status is checked', () => {
+  const q = source(202108), text = q.explanation;
+  const A = named(q.answer, 'A'), B = named(q.answer, 'B'), C = named(q.answer, 'C'), K = named(q.answer, 'K');
+  const As = named(text, 'A_s'), Bp = named(text, 'B_p'), Cp = named(text, 'C_p'), Ks = named(text, 'K_s'), T = named(text, 'T');
+  const plus = (a, b) => a.map((row, i) => row.map((x, j) => x + b[i][j]));
+  const F = minus(A, mm(B, K)), Fs = minus(As, mm(Bp, Ks)), Ap = plus(As, mm(Bp, Cp));
+  assert.deepEqual(As, [[-2, 4, 4], [0, 0, 1], [-1, 0, 0]]);
+  assert.deepEqual(mm(mm(inverse(T), Ap), T), A);
+  assert.deepEqual(mm(mm(inverse(T), As), T), minus(A, mm(B, C)));
+  assert.deepEqual(mm(inverse(T), Bp), B); assert.deepEqual(mm(Cp, T), C);
+  assert.deepEqual(mm(Ks, T), minus(K, C)); assert.deepEqual(mm(plus(Cp, Ks), T), K);
+  assert.deepEqual(mm(mm(inverse(T), Fs), T), F);
+  for (const s of [.1, .5, 1, 4]) {
+    const plant = tf(Ap, Bp, Cp, s);
+    close(tf(As, Bp, Cp, s), plant / (1 + plant));
+    close(tf(Fs, Bp, Cp, s), tf(F, B, C, s));
+    close(det(eyeMinus(Fs, s)), (s + 1) * (s + 2) * (s + 3));
+  }
+  for (const x of [[[0], [1], [-2]], [[2], [-1], [3]], [[.2], [.7], [-.4]]]) for (const v of [0, 1, -2]) {
+    const xp = mm(T, x), us = v - mm(Ks, xp)[0][0];
+    const sourceDerivative = plus(mm(As, xp), Bp.map(row => [row[0] * us]));
+    const canonicalDerivative = mm(T, plus(mm(F, x), B.map(row => [row[0] * v])));
+    sourceDerivative.forEach((row, i) => close(row[0], canonicalDerivative[i][0]));
+  }
+  assert.equal(q.errataLevel, 'ok', 'a valid original convention must not retain a false severe label');
+  assert.ok(q.notes.includes('已核对') && q.notes.includes('撤回'));
+});
+
 test('202202 published numerical open transfer simultaneously reproduces final error, 30% overshoot and first 0-100% rise at 1s', () => {
   const q = source(202202);
   const match = q.answer.match(/G\(s\)\\approx\\dfrac\{([\d.]+)\}\{s\^2\+([\d.]+)s\+([\d.]+)\}/);
@@ -138,11 +166,11 @@ test('202202 published numerical open transfer simultaneously reproduces final e
   assert.ok(q.explanation.includes('0–100%'));
 });
 
-test('five completed severe questions retain originals, detailed text and source/generated equality', () => {
+test('five completed questions retain correct original-check status, detailed text and source/generated equality', () => {
   for (const id of ids) {
     const q = source(id), p = JSON.parse(readFileSync(new URL(`../public/data/questions/${id}.json`, import.meta.url)));
     assert.ok(q.answer.length > 80 && q.explanation.length > 300);
-    assert.equal(q.errataLevel, 'severe');
+    assert.equal(q.errataLevel, id === 202108 ? 'ok' : 'severe');
     assert.ok(q.notes.includes('文字'));
     for (const field of ['answer', 'explanation', 'notes']) {
       assert.equal(q[field], p[field]);
