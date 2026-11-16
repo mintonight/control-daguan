@@ -78,14 +78,7 @@ export function bindSettings(h) {
     catch (e) { setMsg(e.message || '连接失败。', true); }
     finally { $('#syncConnectBtn').disabled = false; }
   });
-  $('#syncConnectBtn').addEventListener('click', async () => {
-    const tok = $('#gistToken').value; $('#syncConnectBtn').disabled = true; setMsg('正在连接 GitHub…');
-    try { await store.connectSync(tok); $('#gistToken').value = ''; setMsg('已连接，进度会自动同步到你的私密 Gist。'); }
-    catch (e) { setMsg(e.message || '连接失败。', true); }
-    finally { $('#syncConnectBtn').disabled = false; }
-  });
   $('#syncNowBtn').addEventListener('click', () => store.syncNow().then(r => r && setMsg(r.pulled || r.pushed ? `同步完成：${[r.pulled && '已拉取远端改动', r.pushed && '已上传本地改动'].filter(Boolean).join('，')}。` : '同步完成：两边已一致。'), e => setMsg(e.message, true)));
-  $('#syncOffBtn').addEventListener('click', async () => { await store.disconnectSync(); setMsg('已断开同步，本机记录保留；令牌已从本机删除，Gist 仍在你的 GitHub 账号里。'); });
   $('#syncOffBtn').addEventListener('click', async () => { await store.disconnectSync(); setMsg('已断开同步，本机记录保留；令牌已从本机删除，Gist 仍在你的 GitHub 账号里。'); });
   $('#retention').addEventListener('input', e => { store.previewRetention(+e.target.value); $('#retentionVal').textContent = store.rec.retention.toFixed(2); });
   $('#retention').addEventListener('change', () => { store.commitRetention(); hooks.render(); setMsg(`目标记忆率已设为 ${store.rec.retention.toFixed(2)}。`); });
@@ -96,32 +89,6 @@ export function bindSettings(h) {
   $('#codeInput').addEventListener('input', e => $('#importCodeBtn').disabled = !e.target.value.trim());
   $('#importCodeBtn').addEventListener('click', importCode);
   $('#importJsonBtn').addEventListener('click', () => $('#importFile').click());
-  $('#importFile').addEventListener('change', async e => {
-    const f = e.target.files[0]; e.target.value = ''; if (!f) return;
-    if (f.size > 10 * 1024 * 1024) return setMsg('记录文件超过 10 MB，请选择导出的学习记录 JSON。', true);
-    try { applyImport(JSON.parse(await f.text())); setMsg('已导入学习记录 JSON。'); } catch (err) { setMsg(err instanceof SyntaxError ? '无法读取 JSON，请重新选择完整的学习记录文件。' : err.message, true); }
-  });
-  $('#codeInput').addEventListener('input', e => $('#importCodeBtn').disabled = !e.target.value.trim());
-  $('#importCodeBtn').addEventListener('click', importCode);
-  $('#importJsonBtn').addEventListener('click', () => $('#importFile').click());
-  $('#importFile').addEventListener('change', async e => {
-    const f = e.target.files[0]; e.target.value = ''; if (!f) return;
-    if (f.size > 10 * 1024 * 1024) return setMsg('记录文件超过 10 MB，请选择导出的学习记录 JSON。', true);
-    try { applyImport(JSON.parse(await f.text())); setMsg('已导入学习记录 JSON。'); } catch (err) { setMsg(err instanceof SyntaxError ? '无法读取 JSON，请重新选择完整的学习记录文件。' : err.message, true); }
-  });
-  $('#importCodeBtn').addEventListener('click', importCode);
-  $('#importJsonBtn').addEventListener('click', () => $('#importFile').click());
-  $('#importFile').addEventListener('change', async e => {
-    const f = e.target.files[0]; e.target.value = ''; if (!f) return;
-    if (f.size > 10 * 1024 * 1024) return setMsg('记录文件超过 10 MB，请选择导出的学习记录 JSON。', true);
-    try { applyImport(JSON.parse(await f.text())); setMsg('已导入学习记录 JSON。'); } catch (err) { setMsg(err instanceof SyntaxError ? '无法读取 JSON，请重新选择完整的学习记录文件。' : err.message, true); }
-  });
-  $('#importJsonBtn').addEventListener('click', () => $('#importFile').click());
-  $('#importFile').addEventListener('change', async e => {
-    const f = e.target.files[0]; e.target.value = ''; if (!f) return;
-    if (f.size > 10 * 1024 * 1024) return setMsg('记录文件超过 10 MB，请选择导出的学习记录 JSON。', true);
-    try { applyImport(JSON.parse(await f.text())); setMsg('已导入学习记录 JSON。'); } catch (err) { setMsg(err instanceof SyntaxError ? '无法读取 JSON，请重新选择完整的学习记录文件。' : err.message, true); }
-  });
   $('#importFile').addEventListener('change', async e => {
     const f = e.target.files[0]; e.target.value = ''; if (!f) return;
     if (f.size > 10 * 1024 * 1024) return setMsg('记录文件超过 10 MB，请选择导出的学习记录 JSON。', true);

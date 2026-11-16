@@ -70,6 +70,16 @@ async def main():
     await t('#genCodeBtn').click(); msg = t('#setMsg'); await pg.wait_for_function("document.querySelector('#setMsg').textContent.includes('记录码')", timeout=5000)
     ok('提示条: 操作后在面板底部显示', await msg.is_visible() and '记录码' in await msg.inner_text(), await msg.inner_text())
     await pg.screenshot(path='shots/settings-records.png', clip={'x': max(L['left'] - 20, 0), 'y': 0, 'width': L['w'] + 40, 'height': min(L['bottom'] + 20, 900)})
+    # 文件选择器是浏览器边界：拦住真正的对话框，计数一次用户点击触发几次打开请求。
+    await pg.evaluate("""() => {
+      const input = document.querySelector('#importFile');
+      window.filePickerRequests = 0;
+      input.click = () => { window.filePickerRequests++; };
+    }""")
+    await t('#importJsonBtn').click()
+    picker_requests = await pg.evaluate('window.filePickerRequests')
+    await pg.evaluate("delete document.querySelector('#importFile').click")
+    ok('导入 JSON：一次点击只打开一次文件选择器', picker_requests == 1, picker_requests)
     await t('#acc-sync-btn').click()
     mb, sb = await box(pg, '#setMsg'), await box(pg, '#settings')
     ok('提示条: 切换分组后仍可见（不在折叠组里）', await msg.is_visible() and mb['y'] + mb['height'] <= sb['y'] + sb['height'] + 1)
