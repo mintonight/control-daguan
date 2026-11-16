@@ -204,12 +204,12 @@ async def main():
     ok('201608 补解后: 原图解析仍显示原图与警告', await t('.box[data-kind="exp"] .orig img').count() == 2 and await t('.box[data-kind="exp"] .note.errata').count() == 1)
     await t('.box[data-kind="answer"] .src-tabs button[data-view="text"]').click(); await t('.box[data-kind="exp"] .src-tabs button[data-view="text"]').click()
     ok('201608 补解后: 两区切回文字不加载图片且警告不重复', await t('.orig img').count() == 0 and await t('.box .note.errata').count() == 1)
-    # 严重勘误但已有文字（尚未改正，如 202502）：文字视图也保留勘误
+    # 严重原解已有修正文字（202502）：文字视图仍保留原解警告
     await pg.goto(BASE + '?list=complete&question=202502', wait_until='networkidle')
     await t('button[aria-label="解析"]').click(); await pg.wait_for_selector('.box[data-kind="exp"] .src-tabs')
-    ok('严重未改正题: 文字解析仍显示勘误', await t('.box[data-kind="exp"] .src-tabs button[data-view="text"]').get_attribute('aria-selected') == 'true' and await t('.box[data-kind="exp"] .note.errata').count() == 1 and await t('.orig img').count() == 0)
+    ok('严重原解补解后: 文字解析仍显示原解警告', await t('.box[data-kind="exp"] .src-tabs button[data-view="text"]').get_attribute('aria-selected') == 'true' and await t('.box[data-kind="exp"] .note.errata').count() == 1 and await t('.orig img').count() == 0)
     await t('.box[data-kind="exp"] .src-tabs button[data-view="orig"]').click(); await pg.wait_for_selector('.orig img')
-    ok('严重未改正题: 原图解析也显示勘误', await t('.box[data-kind="exp"] .orig img').count() >= 1 and await t('.box[data-kind="exp"] .note.errata').count() == 1)
+    ok('严重原解补解后: 原图解析仍显示警告', await t('.box[data-kind="exp"] .orig img').count() >= 1 and await t('.box[data-kind="exp"] .note.errata').count() == 1)
     # 移动端
     m = await b.new_page(viewport={'width': 390, 'height': 844}); await m.goto(BASE + '?list=complete&question=202501', wait_until='networkidle')
     ok('移动端: 侧栏默认隐藏', not await m.locator('#sidebar').is_visible())
