@@ -11,6 +11,7 @@ SHELL = [
     "app.css",
     "merge.js",
     "studyday.js",
+    "errata.js",
     "notes.js",
     "sync.js",
     "pwa.js",

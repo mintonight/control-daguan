@@ -22,7 +22,7 @@ const F = window.FSRS;
 const GRADE = { unknown: F.Rating.Again, shaky: F.Rating.Hard, mastered: F.Rating.Good };
 
 // ---------- 存储：IndexedDB（idb-keyval），首次加载自动从 localStorage 迁移 ----------
-const { CDGStore, CDGSync, CDGNotes, CDGMerge } = window;
+const { CDGStore, CDGSync, CDGNotes, CDGMerge, CDGErrata } = window;
 // 设置面板折叠分组；最近展开的一组记在本机偏好（不导出、不同步）
 const SET_SECS = ['read', 'review', 'records', 'sync', 'offline', 'about'];
 function normRec(r) {
@@ -238,30 +238,10 @@ function errataHTML(d) {
   const sev = lv === 'ok' ? 'ok' : (lv === 'severe' || lv === 'conflict') ? 'severe' : 'warn';
   return `<aside class="note errata" data-sev="${sev}"><div class="errata-hd"><span class="errata-tag">${title}</span>${badge ? `<span class="errata-badge">${badge}</span>` : ''}</div><div class="errata-bd">${md(d.notes)}</div></aside>`;
 }
-// 勘误针对原图内容：有文字/原图切换时，跟原图一起出现；已改正的文字视图不显示。
-// 严重/题目矛盾且文字尚未改正时，文字视图也保留勘误，避免只看到可照抄的错文。
-// 仅有原图（无文字切换）时，勘误始终与原图一起显示。答案与解析同时展开时只出现一次，优先在解析框。
-function showingOrigImages(kind, sh, d, hasImgs) {
-  if (kind === 'answer') {
-    if (d.answer && hasImgs) return sh.ansSrc === 'orig';
-    if (d.answer) return false;
-    return hasImgs && !sh.exp;
-  }
-  if (d.explanation && hasImgs) return sh.expSrc === 'orig';
-  return hasImgs;
-}
-function showingUncorrectedText(kind, sh, d, hasImgs) {
-  const lv = d.errataLevel || '';
-  if (lv !== 'severe' && lv !== 'conflict') return false;
-  if (kind === 'answer') return !!(d.answer && (!hasImgs || sh.ansSrc !== 'orig'));
-  return !!(d.explanation && (!hasImgs || sh.expSrc !== 'orig'));
-}
 function errataIn(kind, sh, d, hasImgs) {
-  if (!d || !d.notes) return '';
-  const expGets = sh.exp && (showingOrigImages('exp', sh, d, hasImgs) || showingUncorrectedText('exp', sh, d, hasImgs));
-  const ansGets = sh.answer && (showingOrigImages('answer', sh, d, hasImgs) || showingUncorrectedText('answer', sh, d, hasImgs));
-  if (kind === 'exp' ? expGets : ansGets && !expGets) return errataHTML(d);
-  return '';
+  const at = CDGErrata.errataPlacement({ hasNotes: !!d.notes, level: d.errataLevel, hasAnswer: !!d.answer, hasExplanation: !!d.explanation, hasImages: hasImgs,
+    answerOpen: !!sh.answer, expOpen: !!sh.exp, answerView: sh.ansSrc === 'orig' ? 'orig' : 'text', expView: sh.expSrc === 'orig' ? 'orig' : 'text' });
+  return at === kind ? errataHTML(d) : '';
 }
 function origHTML(d) {
   if (!d || !d.originalImages.length) return '';
