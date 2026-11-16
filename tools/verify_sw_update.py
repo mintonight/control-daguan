@@ -143,7 +143,8 @@ async def verify_upgrade(pw, ok):
             staged = await snapshot(page, new_key)
             expected = {base + url[2:]: base64.b64decode(value.split('-', 1)[1]).hex() for url, value in manifest['integrity'].items()}
             ok('成功安装等待激活：整个候选缓存与生成清单哈希一致，旧缓存未变', state == 'installed' and staged == expected and before == await snapshot(page, old_key), f'{len(staged)} assets')
-            await page.locator('#updateToast').click()
+            async with page.expect_navigation(wait_until='domcontentloaded'):
+                await page.locator('#updateToast').click()
             await page.wait_for_function("keys => caches.keys().then(names => names.includes(keys.newKey) && !names.includes(keys.oldKey))", arg={'newKey': new_key, 'oldKey': old_key})
             await idle(page)
             preserved = await page.evaluate("() => caches.open('cdg-runtime').then(c => c.match('data/questions/upgrade-sentinel.json')).then(r => r && r.text())")

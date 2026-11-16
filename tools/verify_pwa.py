@@ -243,7 +243,8 @@ async def main():
         await pg.wait_for_selector('#updateToast:not([hidden])', timeout=30000)
         ok('新版本 SW 等待时显示「有新版本，点击更新」', '有新版本' in (await pg.locator('#updateToast').inner_text()))
         await pg.screenshot(path=str(SHOT / 'pwa-update-toast.png'))
-        await pg.locator('#updateToast').click()
+        async with pg.expect_navigation(wait_until='domcontentloaded'):
+            await pg.locator('#updateToast').click()
         await pg.wait_for_function("version => caches.keys().then(keys => keys.includes('cdg-shell-' + version) && keys.filter(k => k.startsWith('cdg-shell-')).length === 1)", arg=updated['version'])
         await pg.wait_for_function("getComputedStyle(document.documentElement).getPropertyValue('--cdg-asset-update').trim() === 'item10'")
         keys = await pg.evaluate('() => caches.keys()')
