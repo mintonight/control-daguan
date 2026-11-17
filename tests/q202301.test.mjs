@@ -15,8 +15,8 @@ test('202301 uses the figure symbols and explains both state scalings accurately
     assert.ok(q.answer.includes('C_y=\\begin{bmatrix}1&0\\end{bmatrix}'));
     assert.ok(q.answer.includes('D=0'));
     assert.ok(q.explanation.includes('静平衡位置'));
-    assert.ok(q.explanation.includes('z_1=mf(t)'));
-    assert.ok(q.explanation.includes('z_2=m\\dot f(t)'));
+    assert.ok(q.notes.includes('z_1=mf(t)'));
+    assert.ok(q.notes.includes('z_2=m\\dot f(t)'));
     assert.ok(q.notes.includes('A_{12}=0'));
     assert.ok(q.notes.includes('应为 $1$'));
     assert.ok(q.notes.includes('缩放状态'));
@@ -61,5 +61,30 @@ test('202301 physical and scaled states give exactly 1/(ms²+Cs+K); printed A12=
       assert.deepEqual(trim(wrong.numerator), [0n]);
       assert.notDeepEqual(trim(wrong.denominator), [0n]);
     }
+  }
+});
+
+test('202301 answer and explanation are a standalone solution; historical comparisons stay in notes', () => {
+  const correct = String.raw`\begin{bmatrix}0&1\\-K/m&-C/m\end{bmatrix}`;
+  for (const q of [question, published]) {
+    for (const text of [q.answer, q.explanation]) {
+      assert.doesNotMatch(text, /原图|原答案|原解|扫描|勘误|\$A\$\s*不变|A\s*不变/);
+      assert.ok(text.includes('静平衡位置'));
+      assert.ok(text.includes('位移'));
+      assert.ok(text.includes('外加力'));
+      assert.ok(text.includes('A=' + correct));
+      assert.ok(text.includes('B=\\begin{bmatrix}0\\\\1/m\\end{bmatrix}'));
+      assert.ok(text.includes('C_y=\\begin{bmatrix}1&0\\end{bmatrix}'));
+      assert.ok(text.includes('D=0'));
+    }
+    assert.ok(q.explanation.includes('\\dot x_1=x_2'));
+    assert.ok(q.explanation.includes('第一行系数为 $[0,1]$'));
+    assert.ok(q.explanation.includes('第二行系数为 $[-K/m,-C/m]$'));
+    assert.ok(q.notes.includes('$k=K$'));
+    assert.ok(q.notes.includes('$f=C$'));
+    assert.ok(q.notes.includes('不是位移 $f(t)$'));
+    assert.ok(q.notes.includes('原图第一行是 $[0,0]$'));
+    assert.ok(q.notes.includes('$A_{12}=0$（应为 $1$）'));
+    assert.ok(q.notes.includes('A_z=' + correct));
   }
 });
