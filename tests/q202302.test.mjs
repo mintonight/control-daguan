@@ -65,7 +65,7 @@ function bisect(f, a, b) {
   return (a + b) / 2;
 }
 
-test('202302 exact 5% settling is the LAST entry after the slightly-out-of-band peak', () => {
+test('202302 exam answer labels the engineering settling estimate approximate while precision remains in regression', () => {
   const { kt, kd } = parameters();
   const wn = Math.sqrt((kt + kd) / 1.2), alpha = (1 + 1.2 * kt) / 2.4;
   const wd = Math.sqrt(wn * wn - alpha * alpha);
@@ -74,7 +74,7 @@ test('202302 exact 5% settling is the LAST entry after the slightly-out-of-band 
   const mp = residual(tp);
   close(100 * mp, 5.073773990658204);
   const textOvershoot = Number(q.answer.match(/\\sigma\\%\\approx([\d.]+)/)?.[1]);
-  close(textOvershoot, 100 * mp, 1e-5);
+  close(textOvershoot, 100 * mp, .005);
   const ts = bisect(t => residual(t) - 0.05, tp, 2 * tp);
   const first = bisect(t => residual(t) + 0.05, 0, tp);
   assert.ok(first < tp && tp < ts);
@@ -83,9 +83,13 @@ test('202302 exact 5% settling is the LAST entry after the slightly-out-of-band 
   // all subsequent extrema decrease geometrically, hence no later boundary crossing.
   assert.ok(Math.abs(residual(2 * tp)) < .05);
   for (let n = 2; n <= 12; n++) close(Math.abs(residual(n * tp)), mp ** n);
-  const textExact = Number(q.answer.match(/t_\{s,\\mathrm\{exact\}\}\\approx([\d.]+)/)?.[1]);
-  const textApprox = Number(q.answer.match(/t_\{s,\\mathrm\{approx\}\}\\approx([\d.]+)/)?.[1]);
-  close(textExact, ts, 1e-6); close(textApprox, 3 / alpha, 1e-6);
+  const textApprox = Number(q.answer.match(/t_s\\approx([\d.]+)/)?.[1]);
+  close(textApprox, 3 / alpha, .005);
+  assert.doesNotMatch(q.answer + q.explanation, /2\.254293|1\.425946|最后入带|\\rho/);
+  assert.match(q.answer + q.explanation, /工程近似/);
+  assert.ok(q.explanation.includes('Y=\\frac{U+G_cR}{s+K_t}'));
+  assert.ok(q.explanation.includes('分子阶次不高于分母'));
+  assert.ok(q.explanation.length < 1800, 'exam-style derivation, no long numerical-root digression');
   assert.ok(Math.abs(ts - 3 / alpha) > .07);
   close(1 / (kt + kd), 5 / 24);
   assert.ok(q.explanation.includes('相对于输出终值'));
