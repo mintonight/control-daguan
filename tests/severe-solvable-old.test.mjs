@@ -108,7 +108,7 @@ test('202108 published open-plant canonical realization and gain meet the actual
 });
 
 test('202108 original k is valid in its own outer-loop/coordinate convention, not interchangeable with canonical open-plant k', () => {
-  const q = source(202108), T = named(q.explanation, 'T'), As = named(q.explanation, 'A_s'), Ks = named(q.explanation, 'K_s');
+  const q = source(202108), T = named(q.notes, 'T'), As = named(q.notes, 'A_s'), Ks = named(q.notes, 'K_s');
   const A = named(q.answer, 'A'), B = named(q.answer, 'B'), C = named(q.answer, 'C'), K = named(q.answer, 'K');
   const Bp = [[0], [0], [1]], Cp = [[1, 0, 0]], F = minus(A, mm(B, K));
   assert.deepEqual(mm(mm(inverse(T), minus(As, mm(Bp, Ks))), T), F);
@@ -120,7 +120,7 @@ test('202108 original k is valid in its own outer-loop/coordinate convention, no
 });
 
 test('202108 original graph input and state definitions exactly match canonical total and added feedback, so its status is checked', () => {
-  const q = source(202108), text = q.explanation;
+  const q = source(202108), text = q.notes;
   const A = named(q.answer, 'A'), B = named(q.answer, 'B'), C = named(q.answer, 'C'), K = named(q.answer, 'K');
   const As = named(text, 'A_s'), Bp = named(text, 'B_p'), Cp = named(text, 'C_p'), Ks = named(text, 'K_s'), T = named(text, 'T');
   const plus = (a, b) => a.map((row, i) => row.map((x, j) => x + b[i][j]));
