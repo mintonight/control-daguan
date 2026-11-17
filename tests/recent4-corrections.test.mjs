@@ -202,8 +202,8 @@ test('202502 dominant first-order settling is approximate; exact normalized outp
 
 test('202305 symbolic T coefficients reproduce exact sampled continuous step differences', () => {
   const q = question(202305);
-  assert.ok(q.explanation.includes('b=T/2'));
-  assert.ok(q.explanation.includes('不能唯一'));
+  assert.ok(q.explanation.includes('部分分式'));
+  assert.ok(q.explanation.includes('Z变换对应表'));
   for (const T of [.1, .5, 1, 1.3]) {
     const a = Math.exp(-2 * T), b = T / 2 - (1 - a) / 4, d = (1 - a) / 4 - T * a / 2;
     const step = n => n * T / 2 - (1 - Math.exp(-2 * n * T)) / 4;

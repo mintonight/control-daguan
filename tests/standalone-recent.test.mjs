@@ -52,12 +52,12 @@ test('state and feedback definitions are complete without consulting an answer i
   assert.ok(q(202607).explanation.includes('第1问所列'));
 });
 
-test('202305 symbolic period solution and initial-sample formulas match exact held-input plant evolution', () => {
+test('202305 adopted period and given-sample workflow retain general held-input math coverage', () => {
   const row = q(202305);
   assert.ok(row.answer.includes('T=\\tau'));
-  assert.ok(row.answer.includes('\\min'));
-  assert.ok(row.answer.includes('1+a-2b'));
-  assert.ok(row.explanation.includes('不能唯一'));
+  assert.ok(row.answer.includes('T=\\tau=1'));
+  assert.ok(row.answer.includes('3e^{-4}'));
+  assert.ok(row.explanation.includes('n\\ge2'));
   for (const T of [.05, .1, .5, 1, 2, 4]) {
     const a = Math.exp(-2 * T), b = T / 2 - (1 - a) / 4, d = (1 - a) / 4 - T * a / 2;
     assert.ok(b > d && d > 0);

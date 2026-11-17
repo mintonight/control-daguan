@@ -5,9 +5,9 @@ const q=id=>JSON.parse(readFileSync(new URL(`../data-src/${Math.floor(id/100)}/q
 const near=(a,b,tol=1e-10)=>assert.ok(Math.abs(a-b)<tol,`${a} != ${b}`);
 const root=f=>{let a=.001,b=30;for(let i=0;i<100;i++){const m=(a+b)/2;if(f(m)>0)a=m;else b=m;}return(a+b)/2;};
 const published=(text,re)=>{const m=text.match(re);assert.ok(m,re.toString());return Number.parseFloat(m[1]);};
-test('202305 keeps the general period and input instead of inventing a numerical second problem',()=>{
+test('202305 adopted numerical scenario is explicit, not a universal missing-data default',()=>{
  const text=q(202305).answer+q(202305).explanation;
- assert.doesNotMatch(text,/T=1|1\.14875|例如附加|作为明确附加条件/);assert.ok(text.includes('T=\\tau'));assert.ok(text.includes('r(0)'));assert.ok(text.includes('r(2)'));assert.ok(text.includes('不能唯一'));
+ assert.ok(text.includes('T=\\tau=1'));assert.ok(text.includes('单位阶跃'));assert.ok(q(202305).notes.includes('未给输入'));assert.doesNotMatch(text,/通常默认|一律默认|满分|h\(t\)|a=e|b=T/);
  const sample=(T,r0,r1)=>{const a=Math.exp(-2*T),b=T/2-(1-a)/4,d=(1-a)/4-T*a/2;near(b,T/2-.25+.25*a);return .5*(1+a-2*b)+2*b*r1+2*d*r0;};
  assert.ok(Math.abs(sample(.5,1,1)-sample(1,1,1))>.1);assert.ok(Math.abs(sample(1,0,1)-sample(1,1,1))>.1);
 });
