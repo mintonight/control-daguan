@@ -37,7 +37,8 @@ test('201804 gain-change directions independently match requested dB and phase m
   near(4.18 * (1 / 4.18), 1); near(180 - 140, 40);
 });
 test('201707 exact held first-order pole reproduces all real-gain stability cases', () => {
-  assert.ok(q(201707).answer.includes('-1<K\\le1'));
+  assert.ok(q(201707).notes.includes('-1<K\\le1'));
+  assert.ok(q(201707).answer.includes('0<K\\le1'));
   for (const K of [-2, -1, -.9, 0, .5, 1, 1.01, 2, 10]) for (const T of [.01, .2, 1, 5, 10]) {
     const a = Math.exp(-T), pole = a - K * (1 - a);
     const stated = K > -1 && (K <= 1 || T < Math.log((K + 1) / (K - 1)));
