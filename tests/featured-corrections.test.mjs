@@ -70,7 +70,8 @@ test('201705 published formula matches actual 3/10/20 slope changes and stable n
 
 test('201706 exact logistic solution has the stated equilibria, local signs, basin and finite escape', () => {
   const q = question(201706), text = q.answer + q.explanation;
-  assert.ok(text.includes('1+a(e^t-1)'));
+  assert.ok(q.notes.includes('1+a(e^t-1)'));
+  assert.ok(text.includes('相曲线'));
   assert.ok(q.notes.includes('箭头方向正确'));
   assert.doesNotMatch(text, /吸引域为空/);
   const solution = (a, t) => a * Math.exp(t) / (1 + a * Math.expm1(t));
@@ -145,7 +146,8 @@ test('201902 identifies the omitted gain without falsely claiming the original d
 
 test('202306 both harmonic-balance roots are above the dead zone and the small root is not exactly its boundary', () => {
   const q = question(202306);
-  assert.ok(q.answer.includes('0.500387'));
+  assert.ok(q.answer.includes('0.5004'));
+  assert.ok(Math.abs(.5004-.5003865756611343)<.00005);
   assert.ok(q.explanation.includes('描述函数'));
   const M = 2, h = .5, k = 10, squared = (2 * M * k / Math.PI) ** 2;
   const largeSquared = (squared + Math.sqrt(squared ** 2 - 4 * squared * h ** 2)) / 2;

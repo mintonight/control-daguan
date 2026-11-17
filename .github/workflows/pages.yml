@@ -2,20 +2,22 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
-  pages: write
-  id-token: write
-concurrency:
-  group: pages
-  cancel-in-progress: true
 jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    concurrency:
+      group: checks-${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -23,55 +25,38 @@ jobs:
         with:
           node-version: '22'
           cache: npm
-      - name: Unit and property tests (node --test)
-        run: npm ci && npm test
-      - name: Lint (eslint flat config)
-        run: npm run lint
-      - name: Strict JS domain and boundary types (no emit)
-        run: npm run types
-      - name: Ban fixed browser sleeps
-        run: npm run check:waits
-      - name: Install Playwright (uses the runner's Google Chrome) and Pillow
-        run: pip install playwright pillow
-      - name: Validate data-src and rebuild public/data
-        run: python3 tools/build_data.py
-      - name: Build precache list
-        run: python3 tools/build_precache.py
-      - name: Committed public/ must match a fresh build from data-src
-        run: |
-          if [ -n "$(git status --porcelain -- public)" ]; then
-            git status --short -- public
-            echo "::error::public/ 与 data-src 重新构建的结果不一致：改题目请改 data-src/<年份>/questions.json，再运行 python3 tools/build_data.py && python3 tools/build_precache.py 并一起提交"
-            exit 1
-          fi
-      - name: Playwright checks
-        run: |
-          mkdir -p shots
-          python3 -m http.server 8765 -d public > /tmp/http.log 2>&1 &
-          curl --fail --silent --show-error --retry 30 --retry-connrefused --retry-delay 1 --retry-max-time 30 http://localhost:8765/ > /dev/null
-          python3 tools/verify_all.py http://localhost:8765/ --shots
+      - name: Install validation dependencies
+        run: npm ci && pip install playwright pillow
+      - name: Risk-based validation (shared local and CI entry)
+        run: python3 tools/validate_changes.py --ci
       - if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-shots
+          name: validation-evidence
           path: shots/
           if-no-files-found: ignore
+      - if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        name: Prepare the verified site artifact
+        run: touch public/.nojekyll
+      - if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
   deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     needs: test
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    concurrency:
+      group: pages-production
+      cancel-in-progress: false
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
-      - name: Check data files
-        run: |
-          python3 -c "import json;d=json.load(open('public/data/library.json'));print(len(d['questions']),'questions')"
-          python3 tools/build_precache.py
-          touch public/.nojekyll
       - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: public
       - id: deployment
         uses: actions/deploy-pages@v4

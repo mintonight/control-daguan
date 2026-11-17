@@ -28,7 +28,8 @@ test('all 32 recent written solutions stand independently of original answer sca
 test('requested sketches have explicit construction recipes, not an unavailable original-answer reference', () => {
   for (const id of [202303, 202304, 202403, 202404, 202405, 202503, 202504, 202506, 202603, 202604, 202606]) {
     const text = q(id).answer + q(id).explanation;
-    assert.match(text, /绘图|作图/);
+    if (id === 202304) assert.match(text, /!\[[^\]]+\]\(img\/solution-202304-bode\.svg\)/);
+    else assert.match(text, /绘图|作图/);
     assert.doesNotMatch(text, /见原图解析|曲线见原图/);
   }
   assert.ok(q(202405).explanation.includes('校正器自身'));
@@ -51,12 +52,12 @@ test('state and feedback definitions are complete without consulting an answer i
   assert.ok(q(202607).explanation.includes('第1问所列'));
 });
 
-test('202305 symbolic period solution and initial-sample formulas match exact held-input plant evolution', () => {
+test('202305 adopted period and given-sample workflow retain general held-input math coverage', () => {
   const row = q(202305);
   assert.ok(row.answer.includes('T=\\tau'));
-  assert.ok(row.answer.includes('\\min'));
-  assert.ok(row.answer.includes('1+a-2b'));
-  assert.ok(row.explanation.includes('不能唯一'));
+  assert.ok(row.answer.includes('T=\\tau=1'));
+  assert.ok(row.answer.includes('3e^{-4}'));
+  assert.ok(row.explanation.includes('n\\ge2'));
   for (const T of [.05, .1, .5, 1, 2, 4]) {
     const a = Math.exp(-2 * T), b = T / 2 - (1 - a) / 4, d = (1 - a) / 4 - T * a / 2;
     assert.ok(b > d && d > 0);

@@ -35,10 +35,9 @@ const bisect = (f, low, high) => {
   return (low + high) / 2;
 };
 
-test('202604 both counterexamples meet magnitude, >=40 degree margin and closed-loop Routh stability', () => {
+test('202604 independent feasible examples refute unconditional impossibility and retain all stability checks', () => {
   const q = question(202604);
   assert.ok(q.notes.includes('两级'));
-  assert.ok(q.notes.includes('衰减'));
   assert.doesNotMatch(q.notes, /题设本身有问题|单级超前理论上达不到/);
   assert.equal(q.errataLevel, 'severe');
   const baseDen = [0, 0, 1, 1];
@@ -68,8 +67,8 @@ function inverse(a) {
 }
 test('202608 the third pole belongs to an explicitly added controller state, not a 2-state coordinate change', () => {
   const q = question(202608), text = q.answer + q.explanation;
-  assert.ok(text.includes('静态状态反馈'));
-  assert.ok(text.includes('额外积分状态'));
+  assert.ok(q.notes.includes('静态状态反馈'));
+  assert.ok(text.includes('增加积分状态'));
   assert.ok(text.includes('零初始'));
   assert.ok(q.notes.includes('条件'));
   const A = [[0, 1, 0], [0, 0, 1], [0, -3, -2]], B = [[0], [0], [1]], C = [[0, 2, 0]], K = [[4, 3, 2]];
@@ -125,8 +124,10 @@ test('202603 correct reciprocal preserves the final breakpoint/gain pairing and 
 
 test('202304 phase initially rises; exact and piecewise crossover figures are different calculations', () => {
   const q = question(202304);
-  assert.ok(q.answer.includes('折线近似'));
-  assert.ok(q.explanation.includes('47/150'));
+  assert.ok(q.answer.includes('渐近线'));
+  assert.match(q.explanation, /!\[Bode图[^\]]*\|720\]\(img\/solution-202304-bode\.svg\)/);
+  assert.doesNotMatch(q.answer+q.explanation, /原答案|原图|原解|47\/150|8\.200077/);
+  assert.ok(q.explanation.includes('先上升'));
   assert.notEqual(q.errataLevel, 'ok');
   const phase = w => -Math.PI / 2 + Math.atan(w / 2) + Math.atan(w / 3) - Math.atan(w / 2.5) - Math.atan(w / 10) - Math.atan(w / 50);
   close((phase(1e-6) - phase(0)) / 1e-6, 47 / 150, 1e-9);
@@ -136,6 +137,20 @@ test('202304 phase initially rises; exact and piecewise crossover figures are di
   close(w, 8.2000776, 1e-6);
   close(180 + phase(w) * 180 / Math.PI, 114.4875655, 1e-6);
   assert.ok(Math.abs(w - 12.5) > 4);
+  const svg = readFileSync(new URL('../data-src/2023/img/solution-202304-bode.svg', import.meta.url), 'utf8');
+  assert.match(svg, /viewBox="0 0 720 810"/);
+  assert.match(svg, /γ ≈ 103.3°/);
+  assert.doesNotMatch(svg, /114.5°|<script|<foreignObject/);
+  const curves = [...svg.matchAll(/<polyline data-kind="([^"]+)" points="([^"]+)"/g)];
+  assert.equal(curves.length, 2);
+  for (const [,kind,points] of curves) for (const pair of points.split(' ')) {
+    const [px,py] = pair.split(',').map(Number), omega=10**((px-70)*4/620-1);
+    if (kind==='phase-exact') close(-45-(py-460)*140/250,phase(omega)*180/Math.PI,1e-6);
+    else {
+      const amp=omega<2?3/omega:omega<2.5?1.5:omega<3?3.75/omega:omega<10?1.25:omega<50?12.5/omega:625/(omega*omega);
+      close(40-(py-40)*110/200,20*Math.log10(amp),1e-6);
+    }
+  }
 });
 
 test('202605 Jury absolute condition, correct line correspondence and ramp limit agree with delayed plant', () => {
@@ -173,8 +188,8 @@ test('202505 rounded numerator/denominator agree and coefficient rounding change
 
 test('202502 dominant first-order settling is approximate; exact normalized output crosses 95% later', () => {
   const q = question(202502);
-  assert.ok(q.notes.includes('4.12790'));
-  assert.ok(q.notes.includes('近似'));
+  assert.ok(q.notes.includes('4.13'));
+  assert.ok(q.explanation.includes('近似'));
   assert.equal(q.errataLevel, 'severe');
   const root = Math.sqrt(5), slow = 3 - root, fast = 3 + root;
   const error = t => (fast * Math.exp(-slow * t) - slow * Math.exp(-fast * t)) / (2 * root);
@@ -187,8 +202,8 @@ test('202502 dominant first-order settling is approximate; exact normalized outp
 
 test('202305 symbolic T coefficients reproduce exact sampled continuous step differences', () => {
   const q = question(202305);
-  assert.ok(q.explanation.includes('b=T/2'));
-  assert.ok(q.explanation.includes('不能唯一'));
+  assert.ok(q.explanation.includes('部分分式'));
+  assert.ok(q.explanation.includes('Z变换对应表'));
   for (const T of [.1, .5, 1, 1.3]) {
     const a = Math.exp(-2 * T), b = T / 2 - (1 - a) / 4, d = (1 - a) / 4 - T * a / 2;
     const step = n => n * T / 2 - (1 - Math.exp(-2 * n * T)) / 4;

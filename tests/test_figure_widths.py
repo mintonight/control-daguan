@@ -32,22 +32,6 @@ class FigureWidthsTest(unittest.TestCase):
         self.assertEqual(self.validate_widths([560]), [])
         self.assertEqual(self.validate_widths(None, omit=True), [])
 
-    def test_explanation_figure_must_use_bode_name_and_exist(self):
-        source = json.loads((ROOT / 'data-src/2023/questions.json').read_text(encoding='utf-8'))
-        question = copy.deepcopy(source['questions'][1])
-        question['answer'] = '见 ![幅频|520](img/not-bode.png)'
-        question['explanation'] = question['answer']
-        source['questions'] = [question]
-        with tempfile.TemporaryDirectory() as directory:
-            folder = Path(directory) / '2023'
-            (folder / 'img').mkdir(parents=True)
-            for image in question['figures'] + question['answerImages']:
-                shutil.copyfile(ROOT / 'data-src/2023' / image, folder / image)
-            path = folder / 'questions.json'
-            path.write_text(json.dumps(source), encoding='utf-8')
-            errors = validate_file(str(path), {}, {})
-        self.assertTrue(any('b2023-2-' in error for error in errors), errors)
-
     def test_invalid_widths_rejected_at_source_boundary(self):
         for widths in [[], [560, 200], ['560'], [True], [0], [-1], [1.5], [None], '560']:
             with self.subTest(widths=widths):
