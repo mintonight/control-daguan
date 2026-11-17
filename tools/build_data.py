@@ -36,6 +36,8 @@ for qf in SRC_FILES:
         tags=[c.split(' / ')[0] for c in d['cats']],hasFigure=bool(figs),stem=stem,pdfPage=src.get('questionPages',''),
         **({'contributor':src['contributor']} if src.get('contributor') else {}),search=' '.join([str(qid),source,*cats,stem])))
     ans=[pub(a) for a in d['answerImages']]
+    for rel in dict.fromkeys(re.findall(r'\]\((img/b\d+-\d+-\d+\.png)\)', (d.get('answer') or '') + (d.get('explanation') or ''))):
+      pub(rel)
     det=dict(answer=d.get('answer',''),explanation=d.get('explanation',''),notes=d.get('notes',''),
         originalImages=[dict(src=a,w=round(Image.open(os.path.join(ROOT,'public',a)).width*0.6)) for a in ans],
         answerPdfPages=src.get('answerPages',''))

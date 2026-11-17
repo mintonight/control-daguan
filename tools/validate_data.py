@@ -101,6 +101,18 @@ def validate_file(path, seen_ids, seen_imgs):
                 if name in seen_imgs:
                     errs.append(f'{where}: 图片名 {name} 与 {seen_imgs[name]} 重名，构建复制到 public/img/ 时会互相覆盖')
                 seen_imgs[name] = where
+        body = ''.join(q.get(field) or '' for field in ('answer', 'explanation') if isinstance(q.get(field), str))
+        for rel in dict.fromkeys(re.findall(r'\]\((img/[^)]+)\)', body)):
+            if not re.fullmatch(rf'img/b{y}-{no}-\d+\.png', rel):
+                errs.append(f'{where}: 答案或解析中的图片 "{rel}" 应命名为 "img/b{y}-{no}-序号.png"（解析附图不写入 figures 或 answerImages）')
+                continue
+            if not os.path.isfile(os.path.join(base, rel)):
+                errs.append(f'{where}: 答案或解析引用的图片不存在：{os.path.relpath(os.path.join(base, rel))}')
+                continue
+            name = os.path.basename(rel)
+            if name in seen_imgs and seen_imgs[name] != where:
+                errs.append(f'{where}: 图片名 {name} 与 {seen_imgs[name]} 重名，构建复制到 public/img/ 时会互相覆盖')
+            seen_imgs[name] = where
         figs = q.get('figures') if isinstance(q.get('figures'), list) else []
         widths = q.get('figureWidths')
         if isinstance(widths, list):
