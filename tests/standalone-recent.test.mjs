@@ -28,7 +28,8 @@ test('all 32 recent written solutions stand independently of original answer sca
 test('requested sketches have explicit construction recipes, not an unavailable original-answer reference', () => {
   for (const id of [202303, 202304, 202403, 202404, 202405, 202503, 202504, 202506, 202603, 202604, 202606]) {
     const text = q(id).answer + q(id).explanation;
-    assert.match(text, /绘图|作图/);
+    if (id === 202304) assert.match(text, /!\[[^\]]+\]\(img\/solution-202304-bode\.svg\)/);
+    else assert.match(text, /绘图|作图/);
     assert.doesNotMatch(text, /见原图解析|曲线见原图/);
   }
   assert.ok(q(202405).explanation.includes('校正器自身'));

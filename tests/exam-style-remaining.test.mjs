@@ -37,7 +37,7 @@ test('202306 rounded small root stays distinguishable from the dead-zone boundar
 test('frequency answers round final values, not the exact model or phase-trend calculation',()=>{
  const first=q(201705);assert.doesNotMatch(first.explanation,/23\.07560|5\.23095|17\.83035/);assert.ok(first.explanation.includes('1480/9'));assert.ok(first.explanation.includes('1/3'));
  const w=root(w=>16*Math.hypot(1,w/3)/(w*w*Math.hypot(1,w/10)*Math.hypot(1,w/20))-1),pm=(Math.atan(w/3)-Math.atan(w/10)-Math.atan(w/20))*180/Math.PI;near(w,5.257,.0005);near(pm,17.83,.005);
- const row=q(202304),text=row.answer+row.explanation;assert.doesNotMatch(text,/8\.20008|114\.48757|73\.65777/);assert.ok(text.includes('47/150'));
+ const row=q(202304),text=row.answer+row.explanation;assert.doesNotMatch(text,/8\.20008|114\.48757|73\.65777/);assert.ok(text.includes('先上升'));
  const gain=w=>500*Math.hypot(w,2)*Math.hypot(w,3)/(w*Math.hypot(.8*w,2)*Math.hypot(w,10)*Math.hypot(w,50));
  const phase=w=>90+(Math.atan(w/2)+Math.atan(w/3)-Math.atan(w/2.5)-Math.atan(w/10)-Math.atan(w/50))*180/Math.PI;
  const wc=root(w=>gain(w)-1);near(wc,8.200,.0005);near(phase(wc),114.5,.05);near(phase(12.5),103.3,.05);

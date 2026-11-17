@@ -7,7 +7,7 @@ questions=[]; details={}
 # 唯一数据源：data-src/<年份>/questions.json（格式见 incoming/SPEC.md），先整体校验再生成
 import glob, shutil
 from PIL import Image
-from validate_data import validate_all, TOPICS
+from validate_data import validate_all, TOPICS, TEXT_IMAGES
 SRC_FILES=sorted(glob.glob(os.path.join(ROOT,'data-src','*','questions.json')))
 errs=validate_all(SRC_FILES)
 if errs:
@@ -35,6 +35,9 @@ for qf in SRC_FILES:
     questions.append(dict(id=qid,year=y,number=d['no'],score=d.get('score'),source=source,categories=cats,
         tags=[c.split(' / ')[0] for c in d['cats']],hasFigure=bool(figs),stem=stem,pdfPage=src.get('questionPages',''),
         **({'contributor':src['contributor']} if src.get('contributor') else {}),search=' '.join([str(qid),source,*cats,stem])))
+    for field in ('answer', 'explanation'):
+      for image in TEXT_IMAGES.findall(d.get(field, '')):
+        pub(image)
     ans=[pub(a) for a in d['answerImages']]
     det=dict(answer=d.get('answer',''),explanation=d.get('explanation',''),notes=d.get('notes',''),
         originalImages=[dict(src=a,w=round(Image.open(os.path.join(ROOT,'public',a)).width*0.6)) for a in ans],

@@ -8,6 +8,7 @@ TOP_REQUIRED = {'year': int, 'questionPages': str, 'answerPages': str, 'question
 TOP_OPTIONAL = {'contributor': str}
 Q_REQUIRED = {'no': int, 'cats': list, 'stem': str, 'figures': list, 'answerImages': list}
 Q_OPTIONAL = {'score': (int, type(None)), 'figureWidths': list, 'answer': str, 'explanation': str, 'notes': str, 'errataLevel': (str, type(None))}  # errataLevel 取值由下方单独检查
+TEXT_IMAGES = re.compile(r'!\[[^\]]*\]\(([^)]+)\)')
 MAX_NO = 10  # 题号转“第一…第十题”
 
 
@@ -101,6 +102,15 @@ def validate_file(path, seen_ids, seen_imgs):
                 if name in seen_imgs:
                     errs.append(f'{where}: 图片名 {name} 与 {seen_imgs[name]} 重名，构建复制到 public/img/ 时会互相覆盖')
                 seen_imgs[name] = where
+        for field in ('answer', 'explanation'):
+            text = q.get(field)
+            if not isinstance(text, str):
+                continue
+            for image in TEXT_IMAGES.findall(text):
+                if not re.fullmatch(rf'img/solution-{qid}-[a-z0-9-]+\.(png|svg)', image):
+                    errs.append(f'{where}: {field} 图片须为本题本地 img/solution-{qid}-<名称>.png 或 .svg')
+                elif not os.path.isfile(os.path.join(base, image)):
+                    errs.append(f'{where}: {field} 引用的图片不存在：{image}')
         figs = q.get('figures') if isinstance(q.get('figures'), list) else []
         widths = q.get('figureWidths')
         if isinstance(widths, list):
