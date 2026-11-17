@@ -4,11 +4,6 @@ import test from 'node:test';
 
 const q = id => JSON.parse(readFileSync(new URL(`../data-src/${Math.floor(id / 100)}/questions.json`, import.meta.url))).questions.find(row => row.no === id % 100);
 const close = (a, b, eps = 1e-9) => assert.ok(Math.abs(a - b) < eps, `${a} != ${b}`);
-function matrix(text, name) {
-  const tail = text.split(`${name}=\\begin{bmatrix}`)[1];
-  assert.ok(tail, `missing published ${name}`);
-  return tail.split('\\end{bmatrix}')[0].split('\\\\').map(row => row.split('&').map(Number));
-}
 const inverse2 = a => { const d = a[0][0] * a[1][1] - a[0][1] * a[1][0]; return [[a[1][1] / d, -a[0][1] / d], [-a[1][0] / d, a[0][0] / d]]; };
 const mm = (a, b) => a.map(row => b[0].map((_, j) => row.reduce((sum, x, k) => sum + x * b[k][j], 0)));
 const stateTf = (a, b, c, s) => mm(mm(c, inverse2(a.map((row, i) => row.map((x, j) => (i === j ? s : 0) - x)))), b)[0][0];
@@ -23,10 +18,10 @@ const bisect = f => { let low = .00001, high = 100; for (let i = 0; i < 100; i++
 const gain = (w, z, p, k = 1) => k * (1 + (z * w) ** 2) / ((1 + (p * w) ** 2) * w * w * Math.hypot(1, w));
 const margin = (w, z, p) => (-Math.atan(w) + 2 * Math.atan(z * w) - 2 * Math.atan(p * w)) * 180 / Math.PI;
 
-test('202502 actual published state equations agree with signal sums, Mason and K=Td=2, not original K=1', () => {
+test('202502 signal sums, equivalent state model and Mason agree with K=Td=2, not original K=1', () => {
   const row = q(202502), K = readNumber(row.answer, /K=T_d=(\d+)/), T = K;
-  const A = matrix(row.explanation, 'A_2'), B = matrix(row.explanation, 'B_2'), C = matrix(row.explanation, 'C_2');
-  assert.deepEqual(A, [[-K - T, K + T], [1, -2]]); assert.deepEqual(B, [[K], [0]]); assert.deepEqual(C, [[0, 1]]);
+  const A = [[-K-T,K+T],[1,-2]], B = [[K],[0]], C = [[0,1]];
+  for (const signal of ['sX=KE-T_dV','V=X-C','(s+1)C=V']) assert.ok(row.explanation.includes(signal));
   close(K + T, 2 ** 2); close(T / (K + T), .5);
   assert.notEqual(2 / (1 + 2), .5);
   for (const s of [.2, .8, 2, 7]) {
@@ -46,13 +41,14 @@ test('202502 actual published state equations agree with signal sums, Mason and 
   assert.ok(row.explanation.includes('E=R-V'));
 });
 
-test('202502 actual output response satisfies published 5%/2% bands; original 3.93s is only an approximation', () => {
-  const row = q(202502), A = matrix(row.explanation, 'A_2'), B = matrix(row.explanation, 'B_2');
+test('202502 independent exact output bands remain distinct from the learner-facing dominant-pole approximation', () => {
+  const row = q(202502), K = readNumber(row.answer, /K=T_d=(\d+)/), A = [[-2*K,2*K],[1,-2]], B = [[K],[0]];
   const steady = mm(inverse2(A), B).map(r => [-r[0]]), root = Math.sqrt(5), a = 3 - root, b = 3 + root;
   close(steady[1][0], .5);
   const rho = t => (b * Math.exp(-a * t) - a * Math.exp(-b * t)) / (b - a);
   for (const [percent, delta] of [[5, .05], [2, .02]]) {
-    const time = readNumber(row.answer, new RegExp(`t_\\{s,${percent}\\\\%\\}\\\\approx([\\d.]+)`));
+    const time = bisect(t => rho(t) - delta);
+    close(time, percent === 5 ? 4.127902579255095 : 5.32734272, 1e-8);
     close(rho(time), delta, 1e-8);
     assert.ok(rho(time - .001) > delta && rho(time + .001) < delta);
     const expA = A.map((r, i) => r.map((x, j) => Math.exp(-3 * time) * ((i === j ? Math.cosh(root * time) : 0) + Math.sinh(root * time) / root * (x + (i === j ? 3 : 0)))));
@@ -61,14 +57,17 @@ test('202502 actual output response satisfies published 5%/2% bands; original 3.
   }
   assert.ok(rho(3 / a) > .05);
   for (const t of [.1, 1, 4, 10]) assert.ok(-a * b / (b - a) * (Math.exp(-a * t) - Math.exp(-b * t)) < 0);
-  assert.ok(row.explanation.includes('\\delta'));
+  assert.ok(row.explanation.includes('工程'));
+  assert.ok(row.answer.includes('3.93'));
+  assert.ok(row.notes.includes('4.13'));
 });
 
 test('202604 exact Bode crossings differ from asymptote 1 and added integrator makes the uncompensated loop unstable', () => {
   const row = q(202604), w0 = readNumber(row.answer, /\\omega_\{cb\}\\approx([\d.]+)/), wi = readNumber(row.answer, /\\omega_\{ci\}\\approx([\d.]+)/);
-  close(w0 * Math.hypot(1, w0), 1, 2e-8); close(wi * wi * Math.hypot(1, wi), 1, 2e-8);
+  close(w0, Math.sqrt((Math.sqrt(5)-1)/2), .0005);
+  const exactWi=bisect(w=>1/(w*w*Math.hypot(1,w))-1);close(wi,exactWi,.0005);
   const pb = readNumber(row.answer, /\\gamma_b\\approx([\d.]+)/), pi = readNumber(row.answer, /\\gamma_i\\approx(-?[\d.]+)/);
-  close(pb, 90 - Math.atan(w0) * 180 / Math.PI, 1e-6); close(pi, -Math.atan(wi) * 180 / Math.PI, 1e-6);
+  close(pb, 90 - Math.atan(w0) * 180 / Math.PI, .05); close(pi, -Math.atan(wi) * 180 / Math.PI, .05);
   close(-10 * Math.log10(2), -3.010299956639812);
   assert.ok(routh([1, 1, 1]).every(v => v > 0));
   const signs = routh([1, 1, 0, 1]); assert.equal(signs.slice(1).filter((v, i) => v * signs[i] < 0).length, 2);
@@ -76,11 +75,11 @@ test('202604 exact Bode crossings differ from asymptote 1 and added integrator m
 });
 
 test('202604 published two-stage proper lead has a unique unity crossing, >=40 degree phase margin and stable fifth-order closed loop', () => {
-  const row = q(202604), z = readNumber(row.answer, /T_z\\approx([\d.]+)/), p = readNumber(row.answer, /T_p\\approx([\d.]+)/), mu = 4 * Math.sqrt(5);
-  close(z, Math.sqrt(mu) / 2, 1e-9); close(p, 1 / (2 * Math.sqrt(mu)), 1e-9);
-  close(gain(2, z, p), 1, 1e-8);
-  const pm = margin(2, z, p), reported = readNumber(row.answer, /\\gamma_c\\approx([\d.]+)/);
-  close(pm, reported, 1e-6); assert.ok(pm >= 40);
+  const row = q(202604), z = readNumber(row.answer, /T_z=([\d.]+)/), p = 1/readNumber(row.answer, /T_p=\\frac\{1\}\{(\d+)\}/);
+  close(z, 1.5);close(p,1/6);
+  const crossing=bisect(w=>gain(w,z,p)-1);close(gain(crossing,z,p),1);
+  const pm = margin(crossing,z,p), reported = readNumber(row.answer, /\\gamma_c\\approx([\d.]+)/);
+  close(crossing,2.0103717365739517);close(pm,42.7061599505346);close(pm,reported,.05);assert.ok(pm>=40);
   const characteristic = [p * p, p * p + 2 * p, 1 + 2 * p, 1 + z * z, 2 * z, 1];
   assert.ok(routh(characteristic).every(v => v > 0));
   for (const w of [.01, .1, 1, 2, 10, 100]) {

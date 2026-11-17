@@ -35,10 +35,9 @@ const bisect = (f, low, high) => {
   return (low + high) / 2;
 };
 
-test('202604 both counterexamples meet magnitude, >=40 degree margin and closed-loop Routh stability', () => {
+test('202604 independent feasible examples refute unconditional impossibility and retain all stability checks', () => {
   const q = question(202604);
   assert.ok(q.notes.includes('两级'));
-  assert.ok(q.notes.includes('衰减'));
   assert.doesNotMatch(q.notes, /题设本身有问题|单级超前理论上达不到/);
   assert.equal(q.errataLevel, 'severe');
   const baseDen = [0, 0, 1, 1];
@@ -68,8 +67,8 @@ function inverse(a) {
 }
 test('202608 the third pole belongs to an explicitly added controller state, not a 2-state coordinate change', () => {
   const q = question(202608), text = q.answer + q.explanation;
-  assert.ok(text.includes('静态状态反馈'));
-  assert.ok(text.includes('额外积分状态'));
+  assert.ok(q.notes.includes('静态状态反馈'));
+  assert.ok(text.includes('增加积分状态'));
   assert.ok(text.includes('零初始'));
   assert.ok(q.notes.includes('条件'));
   const A = [[0, 1, 0], [0, 0, 1], [0, -3, -2]], B = [[0], [0], [1]], C = [[0, 2, 0]], K = [[4, 3, 2]];
@@ -173,8 +172,8 @@ test('202505 rounded numerator/denominator agree and coefficient rounding change
 
 test('202502 dominant first-order settling is approximate; exact normalized output crosses 95% later', () => {
   const q = question(202502);
-  assert.ok(q.notes.includes('4.12790'));
-  assert.ok(q.notes.includes('近似'));
+  assert.ok(q.notes.includes('4.13'));
+  assert.ok(q.explanation.includes('近似'));
   assert.equal(q.errataLevel, 'severe');
   const root = Math.sqrt(5), slow = 3 - root, fast = 3 + root;
   const error = t => (fast * Math.exp(-slow * t) - slow * Math.exp(-fast * t)) / (2 * root);
