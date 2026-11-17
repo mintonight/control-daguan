@@ -13,6 +13,12 @@ SHELL = [
 SKIP_NAMES = {"sw.js"}
 
 
+def _ci_order(path):
+    # Linux compares path parts with case intact. Windows folds case, which
+    # reorders LICENCE/README.md and makes CI reject the committed manifest.
+    return tuple(path.as_posix().split("/"))
+
+
 def collect(root=ROOT):
     files = []
     def add(rel):
@@ -27,16 +33,16 @@ def collect(root=ROOT):
         add(rel)
     icons = root / "icons"
     if icons.is_dir():
-        for p in sorted(icons.rglob("*")):
+        for p in sorted(icons.rglob("*"), key=_ci_order):
             if p.is_file():
                 add(str(p.relative_to(root)))
     src = root / "src"
     if src.is_dir():
-        for p in sorted(src.rglob("*.js")):
+        for p in sorted(src.rglob("*.js"), key=_ci_order):
             add(str(p.relative_to(root)))
     vendor = root / "vendor"
     if vendor.is_dir():
-        for p in sorted(vendor.rglob("*")):
+        for p in sorted(vendor.rglob("*"), key=_ci_order):
             if p.is_file():
                 add(str(p.relative_to(root)))
     return files
