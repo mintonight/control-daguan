@@ -3,6 +3,7 @@
 import asyncio, sys, json, re
 from playwright.async_api import async_playwright
 from verify_support import idle
+from verify_copy_tex import check_note
 BASE = sys.argv[1] if len(sys.argv) > 1 else 'http://localhost:8765/'
 R = []
 async def open_sec(p, key):
@@ -107,6 +108,7 @@ async def main():
     ok('实时预览: 标题/粗体/斜体/列表/嵌套有序列表', chk['h1'] == '劳斯判据要点' and chk['strong'] and chk['em'] and chk['ul'] >= 2 and chk['ol'], chk)
     ok('实时预览: 引用/行内代码/代码块/表格', chk['bq'] and chk['code'] == 'char_eq(s)' and '$x$' in (chk['pre'] or '') and chk['table'] == 2 and chk['tdmath'], chk)
     ok('实时预览: 行内与块级 KaTeX 公式，下标不被当成斜体', chk['katexInline'] >= 3 and chk['katexBlock'] and not chk['sub'], chk)
+    await check_note(pg, ok)
     ok('链接在新标签页打开（noopener）', chk['link'] == '_blank' and 'noopener' in (chk['rel'] or ''), chk)
     ok('XSS: 原始 HTML 按文本显示，无 script/onerror/javascript: 链接', chk['script'] == 0 and chk['onerror'] == 0 and not chk['jsHref'] and chk['raw'] and await pg.evaluate('window.__xss') is None, chk)
     ok('题目卡片出现「有笔记」标识，笔记按钮带圆点', await t('.note-flag').count() == 1 and await t('button[data-act="note"] .dot').count() == 1)

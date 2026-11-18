@@ -31,7 +31,9 @@ purify.addHook('afterSanitizeAttributes', n => {
   if (n.tagName === 'A' && n.getAttribute('href')) { n.setAttribute('target', '_blank'); n.setAttribute('rel', 'noopener noreferrer nofollow'); }
   if (n.tagName === 'IMG') { n.setAttribute('loading', 'lazy'); n.setAttribute('referrerpolicy', 'no-referrer'); }
 });
-const SAFE = { USE_PROFILES: { html: true, svg: true, mathMl: true }, ADD_ATTR: ['target'], FORBID_TAGS: ['style', 'form', 'input', 'button', 'textarea', 'select', 'iframe'], FORBID_ATTR: ['id', 'name'] };
+// KaTeX 把 TeX 源码放在 <annotation> 里，选中复制时 copy-tex 用它还原 $…$；只允许纯文本 annotation（不含 annotation-xml）。
+purify.addHook('afterSanitizeElements', n => { if (n.nodeName === 'annotation' && n.childElementCount) n.replaceChildren(n.textContent); });
+const SAFE = { USE_PROFILES: { html: true, svg: true, mathMl: true }, ADD_TAGS: ['semantics', 'annotation'], ADD_ATTR: ['target', 'encoding'], FORBID_TAGS: ['style', 'form', 'input', 'button', 'textarea', 'select', 'iframe'], FORBID_ATTR: ['id', 'name'] };
 /** Markdown → 已清洗的 Html；空笔记返回 null */
 export function renderNote(text) {
   if (!text || !text.trim()) return null;

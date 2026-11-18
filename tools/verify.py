@@ -2,6 +2,7 @@
 import asyncio, sys, json, os
 from playwright.async_api import async_playwright
 from verify_support import idle
+from verify_copy_tex import check_question
 BASE = sys.argv[1] if len(sys.argv) > 1 else 'http://localhost:8765/'
 R = []
 async def open_sec(p, key):
@@ -210,6 +211,10 @@ async def main():
     ok('严重原解补解后: 文字解析仍显示原解警告', await t('.box[data-kind="exp"] .src-tabs button[data-view="text"]').get_attribute('aria-selected') == 'true' and await t('.box[data-kind="exp"] .note.errata').count() == 1 and await t('.orig img').count() == 0)
     await t('.box[data-kind="exp"] .src-tabs button[data-view="orig"]').click(); await pg.wait_for_selector('.orig img')
     ok('严重原解补解后: 原图解析仍显示警告', await t('.box[data-kind="exp"] .orig img').count() >= 1 and await t('.box[data-kind="exp"] .note.errata').count() == 1)
+    # 选中公式复制得到 LaTeX 源码（KaTeX copy-tex）
+    await pg.goto(BASE + '?list=complete&question=202302', wait_until='networkidle')
+    await t('button[aria-label="解析"]').click(); await pg.wait_for_selector('.box[data-kind="exp"] .katex-display'); await idle(pg)
+    await check_question(pg, ok)
     # 移动端
     m = await b.new_page(viewport={'width': 390, 'height': 844}); await m.goto(BASE + '?list=complete&question=202501', wait_until='networkidle')
     ok('移动端: 侧栏默认隐藏', not await m.locator('#sidebar').is_visible())

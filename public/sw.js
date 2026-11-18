@@ -3,7 +3,7 @@
 
 // PRECACHE 由 tools/build_precache.py 在构建时写入，请勿手改
 const PRECACHE = {
-  "version": "3d71920e0d08",
+  "version": "9485807be546",
   "files": [
     "./",
     "./index.html",
@@ -44,6 +44,7 @@ const PRECACHE = {
     "./vendor/idb-keyval/LICENCE",
     "./vendor/idb-keyval/idb-keyval.umd.js",
     "./vendor/katex/README.md",
+    "./vendor/katex/contrib/copy-tex.min.js",
     "./vendor/katex/fonts/KaTeX_AMS-Regular.ttf",
     "./vendor/katex/fonts/KaTeX_AMS-Regular.woff",
     "./vendor/katex/fonts/KaTeX_AMS-Regular.woff2",
@@ -112,8 +113,8 @@ const PRECACHE = {
     "./vendor/ts-fsrs/ts-fsrs.umd.js"
   ],
   "integrity": {
-    "./": "sha256-eAPFtsfKSMTQVGI/JCvnB+3xcvQvqZQQYwZ68g+zkCo=",
-    "./index.html": "sha256-eAPFtsfKSMTQVGI/JCvnB+3xcvQvqZQQYwZ68g+zkCo=",
+    "./": "sha256-4jy+vNjj1Alq6SdTASg9JT4FpPalMgro2Xt6JKUMF4s=",
+    "./index.html": "sha256-4jy+vNjj1Alq6SdTASg9JT4FpPalMgro2Xt6JKUMF4s=",
     "./app.css": "sha256-QG9Zf1bZtTz2QiLoBAfbst//S37zyoTZz0KnuFLNCNM=",
     "./manifest.webmanifest": "sha256-ZrcDxEM2u72u5QMKdyBVo4SHynb9/lcn4RctC2GcBco=",
     "./data/library.json": "sha256-2DRpWCtmtlNjbg8kixyltO4RHoNCbsBo2vfJDur1z1Q=",
@@ -141,7 +142,7 @@ const PRECACHE = {
     "./src/ui/html.js": "sha256-sxzgeI9nTk/eWS+fvMLy4rGVmxOxcQvhBm9i4o/AEHA=",
     "./src/ui/icons.js": "sha256-eD27zFW+KSGjYY0VbzKXefs61R/dVQQC7UDdMksbwJM=",
     "./src/ui/markdown.js": "sha256-M50uwueavR2DHo6stv2T7WFFXWvIzlnqWJ7wY4Emrfs=",
-    "./src/ui/note-markdown.js": "sha256-/bNnQxWMLZ4cHx6m/mf8sIepZWI23wcThO147ZqIZJk=",
+    "./src/ui/note-markdown.js": "sha256-B/eXuz31VOgZ9WiwVajr1T3UJ1g4B2yxIhm3Dz8iVuw=",
     "./src/ui/notes-editor.js": "sha256-qub7EVgNYhyOEFxTVqi9D5Grwdjl+xNu0B/ZxMzCk7A=",
     "./src/ui/pwa.js": "sha256-Olq1qg/V+9R46HqqQm66VQAGEgF/J4pmof3MGvVa6gM=",
     "./src/ui/settings.js": "sha256-7oZ6t/9dVkbbtGPwuJtHJbz6/3YsC2DUfPnGKr0GDWU=",
@@ -151,6 +152,7 @@ const PRECACHE = {
     "./vendor/idb-keyval/LICENCE": "sha256-IMJ9YzlhnusxE8uGXU6Yo/VZ5Slk/HXK6py1+nJnRWU=",
     "./vendor/idb-keyval/idb-keyval.umd.js": "sha256-HVrvoMHMeJYu8RbxG3YI2v6r9JUPccuZ/atBBCKSHVI=",
     "./vendor/katex/README.md": "sha256-giyGYixXQ9voPZvzMNZ1C70kSyvLGuD8U2+cxsTnjVA=",
+    "./vendor/katex/contrib/copy-tex.min.js": "sha256-xXHEm1IMuOkEAoczgoayF4Pjm0dmYLi1bZ4cA37q6v8=",
     "./vendor/katex/fonts/KaTeX_AMS-Regular.ttf": "sha256-aFNIQLz90r/7bw6N60hoTdAefwTqKBMmdXevuQbeHRM=",
     "./vendor/katex/fonts/KaTeX_AMS-Regular.woff": "sha256-MNqR6EyJP4deJSaJ+uvcWQsocRReitx/mp1NvYzgslE=",
     "./vendor/katex/fonts/KaTeX_AMS-Regular.woff2": "sha256-DN04fJWQoan5eUVgAi27WWVKfYbxh6oMgUla1C06cwg=",
