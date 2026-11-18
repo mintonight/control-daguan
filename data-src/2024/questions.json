@@ -1,164 +1,164 @@
 {
- "year": 2024,
- "questionPages": "51–54",
- "answerPages": "181–191",
- "questions": [
-  {
-   "no": 1,
-   "score": null,
-   "cats": [
-    "建模 / 电路网络 / 运放电路传递函数",
-    "频域分析 / 由对数幅频特性确定参数"
-   ],
-   "stem": "控制系统结构如下图所示。\n\n[[fig:1]]\n\n[[fig:2]]\n\n1. 求 $\\dfrac{u_y(s)}{u_r(s)}$；\n\n2. $C_1=10\\,\\mu\\mathrm F$，$C_2=10\\,\\mu\\mathrm F$，求 $R_1$、$R_2$ 的值使得系统满足图 (b) 对数幅频特性曲线。",
-   "figures": [
-    "img/q2024-1-1.png",
-    "img/q2024-1-2.png"
-   ],
-   "answerImages": [
-    "img/a2024-1-1.png"
-   ],
-   "answer": "1. $\\dfrac{U_y(s)}{U_r(s)}=\\dfrac{(1+sR_2C_2)(1+sR_1C_1)}{sR_1C_2}$（$A_2$ 为 $-1$ 倍反相器）。\n\n2. 由图 (b)：$\\dfrac{U_y(s)}{U_r(s)}=\\dfrac{10(s+1)\\left(\\frac s{10}+1\\right)}{s}$，得 $R_1=10\\,\\mathrm{k\\Omega}$，$R_2=100\\,\\mathrm{k\\Omega}$。",
-   "explanation": "1. 记第一级输出为 $U_x(s)$、第二级输出为 $U_y(s)$。第一级为反相运放，阻抗 $Z_f=R_2+1/(sC_2)$，$Z_{\\mathrm{in}}=R_1\\parallel 1/(sC_1)$，故\n$$\\dfrac{U_x(s)}{U_r(s)}=-\\dfrac{Z_f}{Z_{\\mathrm{in}}}=-\\dfrac{(1+sR_2C_2)(1+sR_1C_1)}{sR_1C_2}.$$\n第二级 $A_2$ 为电阻比 $R_1/R_1$ 的反相器，$\\dfrac{U_y}{U_x}=-1$。两级相乘（负号相消）得\n$$\\dfrac{U_y(s)}{U_r(s)}=\\dfrac{(1+sR_2C_2)(1+sR_1C_1)}{sR_1C_2}.$$\n\n\n2. 图 (b) 低频以 $-20\\,\\mathrm{dB/dec}$ 过点 $(1,20\\,\\mathrm{dB})$，故 $20\\lg K=20$、$K=10$，且为 1 型；转折频率 $1$、$10$ 处各上折 $+20\\,\\mathrm{dB/dec}$，因此\n$$\\dfrac{U_y}{U_r}=\\dfrac{10(s+1)\\bigl(s/10+1\\bigr)}{s}.$$\n与第 1 问比较：$1/(R_1C_2)=10$，代入 $C_2=10\\,\\mu\\mathrm F=10^{-5}\\,\\mathrm F$，得 $R_1=10\\,\\mathrm{k\\Omega}$。$R_1C_1=1/10$ 对应转折 $10$，故与 $C_1=10\\,\\mu\\mathrm F$ 一致；$R_2C_2=1$ 对应转折 $1$，得 $R_2=100\\,\\mathrm{k\\Omega}$。",
-   "notes": "上方文字答案已改正；原答案图中合并两级时左侧误写成 $U_x/U_r$，右式其实是 $U_y/U_r$。总传递函数表达式与 $R_1$、$R_2$ 正确。"
-  },
-  {
-   "no": 2,
-   "score": null,
-   "cats": [
-    "时域分析 / 由阶跃响应确定参数",
-    "时域分析 / 二阶系统性能指标",
-    "时域分析 / 稳态误差"
-   ],
-   "stem": "在开关 $K$ 断开的情况下，系统为二阶系统且单位阶跃输入响应如下图所示。\n\n[[fig:1]]\n\n[[fig:2]]\n\n1. $K$ 断开时，求闭环传递函数；\n\n2. $K$ 断开和闭合后，求系统 $\\sigma\\%$ 和 $t_s\\ (\\Delta=2\\%)$；\n\n3. 单位阶跃输入时，$K$ 断开和闭合的稳态误差和稳态输出。",
-   "figures": [
-    "img/q2024-2-1.png",
-    "img/q2024-2-2.png"
-   ],
-   "answerImages": [
-    "img/a2024-2-1.png",
-    "img/a2024-2-2.png"
-   ],
-   "answer": "1. $\\sigma\\%=\\dfrac{1.7-1.2}{1.2}\\approx41.7\\%$，$\\zeta\\approx0.268$，$t_p=2\\,\\mathrm s\\Rightarrow\\omega_n\\approx1.63$；$\\Phi(s)\\approx\\dfrac{3.19}{s^2+0.874s+2.66}$。\n\n2. 断开：$\\sigma\\%\\approx41.7\\%$，$t_s\\approx10.07\\,\\mathrm s$；闭合：$\\Phi(s)=\\dfrac{3.19}{s^2+2.465s+2.66}$，$\\zeta\\approx0.756$，$\\sigma\\%\\approx2.66\\%$，$t_s\\approx3.57\\,\\mathrm s$。\n\n3. 断开、闭合两种情况均有 $c(\\infty)\\approx1.2$，$e(\\infty)=1-1.2=-0.2$。\n\n上述 $t_s$ 均采用 $4.4/(\\zeta\\omega_n)$ 的工程估算式，不是按精确响应求最后入带时刻。",
-   "explanation": "1. 由图，单位阶跃响应 $c(\\infty)=1.2$，峰值 $1.7$，峰值时间 $t_p=2\\,\\mathrm s$。超调\n$$\\sigma\\%=\\dfrac{1.7-1.2}{1.2}=\\dfrac{5}{12}\\approx41.7\\%.$$\n$$\\zeta=\\sqrt{\\dfrac{\\ln^2\\sigma}{\\pi^2+\\ln^2\\sigma}}\\approx0.268,\\qquad\n\\omega_n=\\dfrac{\\pi}{t_p\\sqrt{1-\\zeta^2}}\\approx1.63.$$\n比例系数为 $c(\\infty)=1.2$，故断开时\n$$\\Phi(s)=\\dfrac{1.2\\,\\omega_n^2}{s^2+2\\zeta\\omega_n s+\\omega_n^2}\\approx\\dfrac{3.19}{s^2+0.874s+2.66}.$$\n\n2. 断开时已求得 $\\sigma\\%\\approx41.7\\%$，采用工程估算 $t_s\\approx4.4/(\\zeta\\omega_n)\\approx10.07\\,\\mathrm s$（$\\Delta=2\\%$）。单位负反馈下前向通道\n$$G(s)=\\dfrac{\\Phi}{1-\\Phi}\\approx\\dfrac{3.19}{s^2+0.87s-0.53}.$$\n开关 $K$ 闭合后增加内环反馈 $0.5s$，新闭环为\n$$\\Phi'(s)=\\dfrac{G}{1+G(1+0.5s)}\\approx\\dfrac{3.19}{s^2+2.465s+2.66}$$\n。此时 $2\\zeta'\\omega_n'=2.465$，$\\omega_n'^2=2.66$，得 $\\zeta'\\approx0.756$，\n$$\\sigma\\%\\approx2.66\\%,\\qquad t_s\\approx\\dfrac{4.4}{\\zeta'\\omega_n'}\\approx3.57\\,\\mathrm s.$$\n\n3. 两种情形分子、常数项之比相同，由终值定理 $c(\\infty)=1.2$，单位阶跃下 $e(\\infty)=1-c(\\infty)=-0.2$。亦可用劳斯表确认闭合后闭环稳定，再使用终值定理。",
-   "notes": "上方文字答案已改正；原答案图第 3 问叙述中有一处把 $2.465s$ 写成了 $2.645s$，劳斯表仍用 $2.465$，属笔误。超调、$\\zeta$、$\\omega_n$、闭环与稳态值正确。"
-  },
-  {
-   "no": 3,
-   "score": null,
-   "cats": [
-    "根轨迹 / 常规根轨迹绘制",
-    "时域分析 / 稳态误差 / 静态误差系数"
-   ],
-   "stem": "单位负反馈条件下，开环传递函数\n$$G(s)=\\frac{K^*}{s(s+5)(s+12)}$$\n\n1. 绘制 $K^*:0\\to+\\infty$ 变化时的根轨迹，给出必要步骤；\n\n2. 系统稳定时，开环增益 $K$ 的范围；\n\n3. 是否存在 $K^*$，使得静态速度误差系数 $K_v\\ge20$。",
-   "figures": [],
-   "answerImages": [
-    "img/a2024-3-1.png",
-    "img/a2024-3-2.png"
-   ],
-   "answer": "开环极点 $0,-5,-12$；实轴根轨迹 $(-\\infty,-12)\\cup(-5,0)$；渐近线 $\\sigma_a=-\\dfrac{17}{3}\\approx-5.67$，倾角 $\\pm60^\\circ,180^\\circ$；分离点 $d=\\dfrac{-17+\\sqrt{109}}{3}\\approx-2.19$（$K^*\\approx60.4$）；$K^*=1020$ 时与虚轴交于 $\\pm j2\\sqrt{15}\\approx\\pm j7.75$。稳定范围 $0<K^*<1020$，开环增益 $0<K<17$。$K_v=\\dfrac{K^*}{60}\\ge20$ 要求 $K^*\\ge1200>1020$，系统不稳定，**不存在**这样的 $K^*$。",
-   "explanation": "**一、特征方程与极点。** $G(s)=\\dfrac{K^*}{s(s+5)(s+12)}$，特征方程\n$$s^3+17s^2+60s+K^*=0.$$\n开环极点 $0,-5,-12$，无零点，$n-m=3$。\n\n**二、实轴与渐近线。** 实轴根轨迹 $(-\\infty,-12)\\cup(-5,0)$；\n$$\\sigma_a=\\dfrac{0-5-12}{3}=-\\dfrac{17}{3}\\approx-5.67,\\qquad \\varphi_a=\\pm60^\\circ,\\ 180^\\circ.$$\n\n**三、分离点。** $K^*=-(s^3+17s^2+60s)$，$\\dfrac{\\mathrm dK^*}{\\mathrm ds}=-(3s^2+34s+60)=0$，得\n$$s=\\dfrac{-17\\pm\\sqrt{109}}{3}\\approx-2.19,\\ -9.15.$$\n$-9.15$ 在 $(-12,-5)$ 内，不在根轨迹，舍去；分离点 $d\\approx-2.19$，$K^*\\approx60.4$。\n\n**四、虚轴交点与稳定范围。** 对 $s^3+17s^2+60s+K^*=0$ 列劳斯表：\n$$\\begin{array}{c|cc}\ns^3 & 1 & 60\\\\\ns^2 & 17 & K^*\\\\\ns^1 & \\dfrac{17\\times60-1\\times K^*}{17}=\\dfrac{1020-K^*}{17} & 0\\\\\ns^0 & K^* &\n\\end{array}$$\n令 $s^1$ 行首项为零得 $K^*=1020$；由 $s^2$ 行辅助方程 $17s^2+K^*=0$ 得 $s^2=-60$，即 $s=\\pm j2\\sqrt{15}\\approx\\pm j7.75$。故稳定范围 $0<K^*<1020$。开环增益 $K=\\dfrac{K^*}{5\\times12}=\\dfrac{K^*}{60}$，即 $0<K<17$。\n\n**五、作图。** $-12$ 一支沿实轴向左趋于 $-\\infty$；$0,-5$ 两支在 $d\\approx-2.19$ 会合后沿 $\\pm60^\\circ$ 渐近线进入右半平面，在 $K^*=1020$ 时穿过 $\\pm j2\\sqrt{15}$。图见下。\n\n![根轨迹图|520](img/solution-202403-rootlocus.svg)\n\n**六、速度误差系数要求。** 系统为 1 型，\n$$K_v=\\lim_{s\\to0}sG(s)=\\dfrac{K^*}{5\\times12}=\\dfrac{K^*}{60}.$$\n若 $K_v\\ge20$，则 $K^*\\ge1200$，但这已超过稳定临界 $K^*=1020$，此时闭环不稳定、稳态误差概念失去意义。故**不存在**满足 $K_v\\ge20$ 的稳定 $K^*$。",
-   "notes": "已核对：正确。稳定范围 $0<K^*<1020$（开环增益 $0<K<17$）；不存在同时满足 $K_v\\ge 20$ 的稳定 $K^*$。文字解析已按特征方程重画根轨迹图。",
-   "errataLevel": "ok"
-  },
-  {
-   "no": 4,
-   "score": null,
-   "cats": [
-    "非线性系统 / 描述函数法 / 自振分析"
-   ],
-   "stem": "非线性系统框图如下图所示，其中 $N(A)=\\dfrac{4M}{\\pi A}$，$M=1$。\n\n[[fig:1]]\n\n1. 绘制负倒描述函数 $-\\dfrac1{N(A)}$ 与 $G(j\\omega)$ 的奈奎斯特图像；\n\n2. 判断系统是否会产生自振；\n\n3. 若自振，求 $c(t)$ 的振幅和频率。",
-   "figures": [
-    "img/q2024-4-1.png"
-   ],
-   "answerImages": [
-    "img/a2024-4-1.png",
-    "img/a2024-4-2.png"
-   ],
-   "answer": "采用描述函数基波近似，$A$ 表示非线性输入 $x(t)$ 的振幅。\n\n1. $-\\dfrac1{N(A)}=-\\dfrac{\\pi A}{4}$，沿负实轴由 $0$ 到 $-\\infty$；等效线性部分 $G(s)=\\dfrac1{s(s+1)(s+2)}$，与负实轴交于 $\\omega_g=\\sqrt2$，$G(j\\omega_g)=-\\dfrac16$。\n\n2. 交点 $A=\\dfrac2{3\\pi}\\approx0.2122$，为**稳定自振**。\n\n3. $c(t)$ 振幅 $A_c\\approx0.52$，频率 $\\omega=\\sqrt2\\,\\mathrm{rad/s}$。",
-   "explanation": "采用描述函数基波近似，令 $A$ 为非线性环节输入 $x(t)$ 的正弦振幅。题干中继电输出幅值 $M=1$，反馈通道 $G_1(s)=1/(s+2)$，非线性环节后的前向部分为 $1/[s(s+1)]$，故谐波平衡所用线性部分为\n$$G(s)=\\frac1{s(s+1)(s+2)},\\qquad -\\frac1{N(A)}=-\\frac{\\pi A}{4}.$$\n\n1. Nyquist 绘图可按以下实、虚部描点：\n$$\\Re G(j\\omega)=-\\frac3{(1+\\omega^2)(4+\\omega^2)},\\quad \\Im G(j\\omega)=\\frac{\\omega^2-2}{\\omega(1+\\omega^2)(4+\\omega^2)}.$$\n正频率曲线从实部趋于 $-3/4$、虚部趋于 $-\\infty$ 处出发，随 $\\omega$ 增大，在 $\\omega=\\sqrt2$ 穿过 $(-1/6,0)$，然后进入第二象限并从上方趋于原点；负频率部分关于实轴对称。另一条轨迹 $-1/N(A)$ 位于负实轴，随 $A$ 增大从 $0$ 向 $-\\infty$ 移动，标出该方向即可。\n\n2. 相位条件\n$$-90^\\circ-\\arctan\\omega-\\arctan(\\omega/2)=-180^\\circ$$\n给出 $\\omega=\\sqrt2$，此时 $G=-1/6$。由 $-\\pi A/4=-1/6$ 得\n$$A=\\frac2{3\\pi}\\approx0.2122.$$\n等效线性闭环特征式为 $s^3+3s^2+2s+N(A)$，劳斯稳定条件为 $N(A)<6$。由于 $N(A)=4/(\\pi A)$ 随 $A$ 增大而减小，小于交点振幅时 $N(A)>6$、振幅趋向增长，大于交点振幅时 $N(A)<6$、振幅趋向衰减，故描述函数法预测稳定自振；这是近似判别，不是全局非线性稳定性证明。\n\n3. 因为 $r=0$，有 $X=-G_1C$。输出 $c(t)$ 的振幅为\n$$A_c=\\frac{A}{|G_1(j\\sqrt2)|}=\\sqrt6\\,\\frac2{3\\pi}\\approx0.52,$$\n频率仍为 $\\sqrt2\\,\\mathrm{rad/s}$。",
-   "notes": "已核对：正确。稳定自振振幅 $A=2/(3\\pi)\\approx 0.2122$，输出振幅 $A_c\\approx 0.52$，频率 $\\omega=\\sqrt{2}$。",
-   "errataLevel": "ok"
-  },
-  {
-   "no": 5,
-   "score": null,
-   "cats": [
-    "校正 / 由校正后特性求校正装置",
-    "频域分析 / 三频段理论",
-    "频域分析 / 截止频率与相角裕度"
-   ],
-   "stem": "单位负反馈条件下开环传递函数\n$$G(s)=\\frac{12}{(s+1)(s+3)(s+0.4)}$$\n校正后系统的对数幅频特性曲线如下图所示。\n\n[[fig:1]]\n\n1. 写出 $G_c(s)$，并画出 $G_c(s)$ 的对数幅频特性图；\n\n2. 利用三频段理论分析系统校正前与校正后各频段性能；\n\n3. 试求校正前与校正后，系统的相角裕量与截止频率。",
-   "figures": [
-    "img/q2024-5-1.png"
-   ],
-   "answerImages": [
-    "img/a2024-5-1.png",
-    "img/a2024-5-2.png"
-   ],
-   "answer": "1. 由校正后幅频读出\n$$G(s)G_c(s)=\\dfrac{10\\sqrt{10}\\,(s/2+1)}{s\\,(s/0.4+1)\\,(s/10+1)\\,(s/20+1)},$$\n$$G_c(s)=\\dfrac{\\sqrt{10}\\,(s/2+1)(s+1)(s/3+1)}{s\\,(s/10+1)\\,(s/20+1)}.$$\n校正器自身的对数幅频：转折 $1,2,3,10,20$，各段斜率 $-20,0,+20,+40,+20,0$。\n\n![校正器对数幅频|520](img/solution-202405-bode.png)\n\n2. 低频增加一个积分，稳态误差减小；中频以 $-20\\,\\mathrm{dB/dec}$ 过 $0\\,\\mathrm{dB}$；高频被抬高，抑制高频干扰的能力下降。\n\n3. 折线法：校正前 $\\omega_c=2$，$\\gamma\\approx4.185^\\circ$；校正后 $\\omega_c=2\\sqrt{10}\\approx6.325$，$\\gamma\\approx26.21^\\circ$。这两个裕度都算在各自的渐近剪切频率上。",
-   "explanation": "1. 校正后曲线低频斜率为 $-20\\,\\mathrm{dB/dec}$，过 $(0.1,50\\,\\mathrm{dB})$，故\n$$20\\lg(K/0.1)=50,\\qquad K=10\\sqrt{10}.$$\n转折为 $0.4$（向下）、$2$（向上）、$10$ 与 $20$（向下）。校正前\n$$G(s)=\\dfrac{10}{(s+1)(s/3+1)(s/0.4+1)},$$\n相除得到 $G_c(s)$。\n\n校正器自身的幅频作图：横轴为 $\\lg\\omega$。$G_c$ 有一个原点极点，零点转折为 $1,2,3$，另两个极点转折为 $10,20$。低频直线 $L_c=10-20\\lg\\omega$ 经过 $(1,10\\,\\mathrm{dB})$。各段斜率为 $-20,0,+20,+40,+20,0\\,\\mathrm{dB/dec}$。高频趋于 $20\\lg(100\\sqrt{10}/3)\\approx40.46\\,\\mathrm{dB}$。图中实线是这条折线，点线是精确幅频，只作对照。\n\n![校正器对数幅频|520](img/solution-202405-bode.png)\n\n2. 校正前是 0 型，校正后是 I 型，低频抬高，阶跃和斜坡稳态误差减小。中频段斜率为 $-20\\,\\mathrm{dB/dec}$ 并穿过 $0\\,\\mathrm{dB}$。高频段相对校正前上移，高频衰减变弱。\n\n3. 校正前在 $1<\\omega<3$ 段，$10/(2.5\\omega^2)=1$，得折线剪切频率 $\\omega_c=2$。代入\n$$\\angle G(j\\omega)=-\\arctan\\omega-\\arctan(\\omega/3)-\\arctan(\\omega/0.4),$$\n$\\gamma(2)\\approx4.185^\\circ$。校正后在 $2<\\omega<10$ 段，\n$$\\dfrac{10\\sqrt{10}\\cdot(\\omega/2)}{\\omega\\cdot(\\omega/0.4)}=1,$$\n得 $\\omega_c=2\\sqrt{10}\\approx6.325$。代入\n$$\\angle GG_c=\\arctan(\\omega/2)-90^\\circ-\\arctan(\\omega/0.4)-\\arctan(\\omega/10)-\\arctan(\\omega/20),$$\n$\\gamma(6.325)\\approx26.21^\\circ$。\n\n精确幅频穿越是另一组数，不代入上面的结论：校正前 $\\omega_c\\approx1.709\\,\\mathrm{rad/s}$、$\\gamma\\approx13.84^\\circ$；校正后 $\\omega_c\\approx5.620\\,\\mathrm{rad/s}$、$\\gamma\\approx29.45^\\circ$。",
-   "notes": "扫描把相角公式的符号写反，但 $\\omega_c$ 与 $\\gamma$ 的数值是用正确相角、在渐近剪切频率上算的，折线结论可以沿用。精确穿越为校正前 $1.709\\,\\mathrm{rad/s}$、$13.84^\\circ$，校正后 $5.620\\,\\mathrm{rad/s}$、$29.45^\\circ$，不能与 $2$、$6.325$ 上的裕度混成一对。"
-  },
-  {
-   "no": 6,
-   "score": null,
-   "cats": [
-    "离散系统 / 脉冲传递函数",
-    "离散系统 / 稳定性（朱利判据）",
-    "离散系统 / 稳态误差"
-   ],
-   "stem": "离散系统控制框图如下图所示，采样时间 $T=1$ 秒，试求：\n\n[[fig:1]]\n\n1. 闭环脉冲传递函数；\n\n2. 判断闭环系统稳定性；\n\n3. 单位阶跃输入作用下，系统的稳态误差。",
-   "figures": [
-    "img/q2024-6-1.png"
-   ],
-   "answerImages": [
-    "img/a2024-6-1.png",
-    "img/a2024-6-2.png",
-    "img/a2024-6-3.png"
-   ],
-   "answer": "令 $a=e^{-1}$，$T=1\\,\\mathrm s$。题图比较点参考端为 $+$、反馈端为 $-$。\n\n1.\n$$G(z)=\\dfrac{(2z-1)(1-a)}{(z-1)(z-a)},\\qquad\n\\Phi(z)=\\dfrac{(2z-1)(1-a)}{z^2+(1-3a)z+(2a-1)}.$$\n\n2. $D(1)=1-a>0$，$D(-1)=5a-1>0$，$|2a-1|<1$，闭环渐近稳定。极点约为 $0.5685$ 与 $-0.4648$。\n\n3. 单位阶跃 $e_{ss}=0$。",
-   "explanation": "两只采样开关同步，中间环节和后面环节要分别求脉冲传递函数，再相乘。\n\n1. 第一段 $G_1(s)=1+1/s$，采样后\n$$G_1(z)=1+\\dfrac{z}{z-1}=\\dfrac{2z-1}{z-1}.$$\n第二段是零阶保持器与 $1/(s+1)$。部分分式 $1/[s(s+1)]=1/s-1/(s+1)$，查表并乘 $(1-z^{-1})$，$T=1$ 时\n$$G_2(z)=\\dfrac{1-a}{z-a},\\qquad a=e^{-1}.$$\n开环 $G=G_1G_2$。比较点已标出负反馈，故 $\\Phi=G/(1+G)$，分母\n$$(z-1)(z-a)+(2z-1)(1-a)=z^2+(1-3a)z+(2a-1).$$\n\n2. 记该分母为 $D(z)$。\n$$D(1)=1-a>0,\\qquad D(-1)=5a-1=5/e-1>0,\\qquad |2a-1|<1.$$\n三条都成立，闭环稳定。二次方程的根为 $0.568468$ 与 $-0.464830$，四位有效数字 $0.5685$、$-0.4648$。\n\n3. $D(1)=1-a$，分子在 $z=1$ 也是 $1-a$，故 $\\Phi(1)=1$。稳定时单位阶跃的终值为 $1$，采样时刻稳态误差为 $0$。",
-   "notes": "扫描的开环、闭环、稳定结论和单位阶跃稳态误差与上述计算一致。极点若只写到三位小数，为 $0.568$ 与 $-0.465$。",
-   "errataLevel": "ok"
-  },
-  {
-   "no": 7,
-   "score": null,
-   "cats": [
-    "状态空间 / 状态转移矩阵",
-    "状态空间 / 能控性与能观性",
-    "状态空间 / 李雅普诺夫稳定性"
-   ],
-   "stem": "状态空间表达式为\n$$\\begin{cases}\\dot x=\\begin{bmatrix}0&1\\\\-2&-3\\end{bmatrix}x+\\begin{bmatrix}0\\\\1\\end{bmatrix}u\\\\[4pt] y=\\begin{bmatrix}1&a\\end{bmatrix}x\\end{cases}$$\n\n1. 试求状态转移矩阵 $\\phi(t)$，以及传递函数 $G(s)$；\n\n2. $a$ 为何值时，系统完全可测；\n\n3. 试用李雅普诺夫第二法判断系统稳定性。",
-   "figures": [],
-   "answerImages": [
-    "img/a2024-7-1.png",
-    "img/a2024-7-2.png"
-   ],
-   "answer": "1. $\\Phi(t)=\\begin{bmatrix}2e^{-t}-e^{-2t}&e^{-t}-e^{-2t}\\\\-2e^{-t}+2e^{-2t}&-e^{-t}+2e^{-2t}\\end{bmatrix}$，$G(s)=\\dfrac{as+1}{s^2+3s+2}$。\n\n2. $Q_o=\\begin{bmatrix}1&a\\\\-2a&1-3a\\end{bmatrix}$，$|Q_o|=2a^2-3a+1=(2a-1)(a-1)\\ne0$，即 $a\\ne1$ 且 $a\\ne\\dfrac12$ 时完全能观。\n\n3. 解 $A^TP+PA=-I$ 得 $P=\\begin{bmatrix}\\frac54&\\frac14\\\\\\frac14&\\frac14\\end{bmatrix}$ 正定，系统在原点**大范围渐近稳定**。",
-   "explanation": "1. $sI-A=\\begin{bmatrix}s&-1\\\\2&s+3\\end{bmatrix}$，$\\lvert sI-A\\rvert=s^2+3s+2=(s+1)(s+2)$，\n$$(sI-A)^{-1}=\\dfrac{1}{s^2+3s+2}\\begin{bmatrix}s+3&1\\\\-2&s\\end{bmatrix}.$$\n部分分式后逐项反变换：\n$$\\dfrac{s+3}{(s+1)(s+2)}=\\dfrac{2}{s+1}-\\dfrac{1}{s+2},\\quad\n\\dfrac{1}{(s+1)(s+2)}=\\dfrac{1}{s+1}-\\dfrac{1}{s+2},$$\n$$\\dfrac{-2}{(s+1)(s+2)}=\\dfrac{-2}{s+1}+\\dfrac{2}{s+2},\\quad\n\\dfrac{s}{(s+1)(s+2)}=\\dfrac{-1}{s+1}+\\dfrac{2}{s+2},$$\n即得\n$$\\Phi(t)=\\begin{bmatrix}2e^{-t}-e^{-2t}&e^{-t}-e^{-2t}\\\\-2e^{-t}+2e^{-2t}&-e^{-t}+2e^{-2t}\\end{bmatrix}.$$\n$B=[0\\ 1]^\\mathrm T$，取 $(sI-A)^{-1}$ 的第二列再左乘 $C=[1\\ \\ a]$，得\n$$G(s)=\\dfrac{as+1}{s^2+3s+2}.$$\n\n2. 能观判别阵\n$$Q_o=\\begin{bmatrix}C\\\\CA\\end{bmatrix}=\\begin{bmatrix}1&a\\\\-2a&1-3a\\end{bmatrix},\\qquad\n\\lvert Q_o\\rvert=2a^2-3a+1=(2a-1)(a-1).$$\n$\\lvert Q_o\\rvert\\neq0$ 当且仅当 $a\\neq1$ 且 $a\\neq1/2$，此时系统完全能观（完全可测）。\n\n3. 取 $Q=I$，解李雅普诺夫方程 $A^\\mathrm TP+PA=-I$。设\n$P=\\begin{bmatrix}p&q\\\\q&r\\end{bmatrix}$，展开并比较元素得 $q=1/4$、$r=1/4$、$p=5/4$，即\n$$P=\\begin{bmatrix}5/4&1/4\\\\1/4&1/4\\end{bmatrix}.$$\n$p=5/4>0$，$\\lvert P\\rvert=1/4>0$，故 $P$ 正定；$V=x^\\mathrm TPx$ 正定且径向无界，$\\dot V=-x_1^2-x_2^2$ 负定，原点**大范围渐近稳定**。（$P$ 的元素不要与输出参数 $a$ 混用同一字母。）",
-   "notes": "上方文字答案已补全；原答案图列出能观判别阵后未解出 $a\\neq 1$ 且 $a\\neq 1/2$，随后把 $P$ 的元素写成 $a,b,c,d$，与输出参数 $a$ 混用。$\\Phi(t)$、$G(s)$ 与李雅普诺夫结论正确。"
-  },
-  {
-   "no": 8,
-   "score": null,
-   "cats": [
-    "状态空间 / 建立状态空间表达式",
-    "状态空间 / 状态反馈极点配置"
-   ],
-   "stem": "控制系统框图如下图所示。\n\n[[fig:1]]\n\n1. 求状态空间表达式；\n\n2. 是否存在状态反馈 $K$ 使极点配置在 $-1\\pm j\\sqrt2,\\ -5$。",
-   "figures": [
-    "img/q2024-8-1.png"
-   ],
-   "answerImages": [
-    "img/a2024-8-1.png",
-    "img/a2024-8-2.png"
-   ],
-   "answer": "保留题干的单位负反馈，取状态 $x=[x_1,x_2,x_3]^T$，其中 $x_1=y$；设计附加反馈时采用 $r=v-Kx$。\n\n1. $\\dot x=\\begin{bmatrix}0&1&0\\\\0&-2&1\\\\-1&0&-1\\end{bmatrix}x+\\begin{bmatrix}0\\\\0\\\\1\\end{bmatrix}r$，$y=\\begin{bmatrix}1&0&0\\end{bmatrix}x$。\n\n2. $\\operatorname{rank}Q_c=3$，完全能控，**存在**：$K=\\begin{bmatrix}14&3&4\\end{bmatrix}$。",
-   "explanation": "取 $x_1=y$ 为积分器输出，$x_2$ 为 $1/(s+2)$ 的输出，$x_3$ 为 $1/(s+1)$ 的输出，输入为题干结构图中的 $r$。由题干的单位负反馈连接：$\\dot x_3=-x_1-x_3+r$，$\\dot x_2=x_3-2x_2$，$\\dot x_1=x_2$，$y=x_1$。\n\n$Q_c=[B\\ AB\\ A^2B]=\\begin{bmatrix}0&0&1\\\\0&1&-3\\\\1&-1&1\\end{bmatrix}$。\n\n$|\\lambda I-A+BK|=\\lambda^3+(3+k_3)\\lambda^2+(2+k_2+2k_3)\\lambda+(1+k_1)$，期望 $(\\lambda+5)(\\lambda^2+2\\lambda+3)=\\lambda^3+7\\lambda^2+13\\lambda+15$。\n\n在上述已经包含单位外环的模型上，附加 $r=v-Kx$，闭环矩阵为 $A-BK$。将特征多项式与期望式逐项比较，得 $k_3=4$、$k_2=3$、$k_1=14$，所以 $K=[14,3,4]$，所要求的极点可配置。",
-   "notes": "已核对：正确。",
-   "errataLevel": "ok"
-  }
- ]
+  "year": 2024,
+  "questionPages": "51–54",
+  "answerPages": "181–191",
+  "questions": [
+    {
+      "no": 1,
+      "score": null,
+      "cats": [
+        "建模 / 电路网络 / 运放电路传递函数",
+        "频域分析 / 由对数幅频特性确定参数"
+      ],
+      "stem": "控制系统结构如下图所示。\n\n[[fig:1]]\n\n[[fig:2]]\n\n1. 求 $\\dfrac{u_y(s)}{u_r(s)}$；\n\n2. $C_1=10\\,\\mu\\mathrm F$，$C_2=10\\,\\mu\\mathrm F$，求 $R_1$、$R_2$ 的值使得系统满足图 (b) 对数幅频特性曲线。",
+      "figures": [
+        "img/q2024-1-1.png",
+        "img/q2024-1-2.png"
+      ],
+      "answerImages": [
+        "img/a2024-1-1.png"
+      ],
+      "answer": "1. $\\dfrac{U_y(s)}{U_r(s)}=\\dfrac{(1+sR_2C_2)(1+sR_1C_1)}{sR_1C_2}$（$A_2$ 为 $-1$ 倍反相器）。\n\n2. 由图 (b)：$\\dfrac{U_y(s)}{U_r(s)}=\\dfrac{10(s+1)\\left(\\frac s{10}+1\\right)}{s}$，得 $R_1=10\\,\\mathrm{k\\Omega}$，$R_2=100\\,\\mathrm{k\\Omega}$。",
+      "explanation": "1. 记第一级输出为 $U_x(s)$、第二级输出为 $U_y(s)$。第一级为反相运放，阻抗 $Z_f=R_2+1/(sC_2)$，$Z_{\\mathrm{in}}=R_1\\parallel 1/(sC_1)$，故\n$$\\dfrac{U_x(s)}{U_r(s)}=-\\dfrac{Z_f}{Z_{\\mathrm{in}}}=-\\dfrac{(1+sR_2C_2)(1+sR_1C_1)}{sR_1C_2}.$$\n第二级 $A_2$ 为电阻比 $R_1/R_1$ 的反相器，$\\dfrac{U_y}{U_x}=-1$。两级相乘（负号相消）得\n$$\\dfrac{U_y(s)}{U_r(s)}=\\dfrac{(1+sR_2C_2)(1+sR_1C_1)}{sR_1C_2}.$$\n\n\n2. 图 (b) 低频以 $-20\\,\\mathrm{dB/dec}$ 过点 $(1,20\\,\\mathrm{dB})$，故 $20\\lg K=20$、$K=10$，且为 1 型；转折频率 $1$、$10$ 处各上折 $+20\\,\\mathrm{dB/dec}$，因此\n$$\\dfrac{U_y}{U_r}=\\dfrac{10(s+1)\\bigl(s/10+1\\bigr)}{s}.$$\n与第 1 问比较：$1/(R_1C_2)=10$，代入 $C_2=10\\,\\mu\\mathrm F=10^{-5}\\,\\mathrm F$，得 $R_1=10\\,\\mathrm{k\\Omega}$。$R_1C_1=1/10$ 对应转折 $10$，故与 $C_1=10\\,\\mu\\mathrm F$ 一致；$R_2C_2=1$ 对应转折 $1$，得 $R_2=100\\,\\mathrm{k\\Omega}$。",
+      "notes": "上方文字答案已改正；原答案图中合并两级时左侧误写成 $U_x/U_r$，右式其实是 $U_y/U_r$。总传递函数表达式与 $R_1$、$R_2$ 正确。"
+    },
+    {
+      "no": 2,
+      "score": null,
+      "cats": [
+        "时域分析 / 由阶跃响应确定参数",
+        "时域分析 / 二阶系统性能指标",
+        "时域分析 / 稳态误差"
+      ],
+      "stem": "在开关 $K$ 断开的情况下，系统为二阶系统且单位阶跃输入响应如下图所示。\n\n[[fig:1]]\n\n[[fig:2]]\n\n1. $K$ 断开时，求闭环传递函数；\n\n2. $K$ 断开和闭合后，求系统 $\\sigma\\%$ 和 $t_s\\ (\\Delta=2\\%)$；\n\n3. 单位阶跃输入时，$K$ 断开和闭合的稳态误差和稳态输出。",
+      "figures": [
+        "img/q2024-2-1.png",
+        "img/q2024-2-2.png"
+      ],
+      "answerImages": [
+        "img/a2024-2-1.png",
+        "img/a2024-2-2.png"
+      ],
+      "answer": "1. $\\sigma\\%=\\dfrac{1.7-1.2}{1.2}\\approx41.7\\%$，$\\zeta\\approx0.268$，$t_p=2\\,\\mathrm s\\Rightarrow\\omega_n\\approx1.63$；$\\Phi(s)\\approx\\dfrac{3.19}{s^2+0.874s+2.66}$。\n\n2. 断开：$\\sigma\\%\\approx41.7\\%$，$t_s\\approx10.30\\,\\mathrm s$；闭合：$\\Phi(s)=\\dfrac{3.19}{s^2+2.465s+2.66}$，$\\zeta\\approx0.756$，$\\sigma\\%\\approx2.66\\%$，$t_s\\approx3.65\\,\\mathrm s$。\n\n3. 断开、闭合两种情况均有 $c(\\infty)\\approx1.2$，$e(\\infty)=1-1.2=-0.2$。\n\n上述 $t_s$ 均采用 $\\Delta=2\\%$ 时的重大标准估算式 $t_s\\approx4.5/(\\zeta\\omega_n)$（断开时若按粗略式 $4/(\\zeta\\omega_n)$ 则约为 $9.15\\,\\mathrm s$，闭合时约为 $3.25\\,\\mathrm s$；部分资料取 $4.4$ 对应 $10.07\\,\\mathrm s$ 与 $3.57\\,\\mathrm s$）。",
+      "explanation": "1. 由图，单位阶跃响应 $c(\\infty)=1.2$，峰值 $1.7$，峰值时间 $t_p=2\\,\\mathrm s$。超调\n$$\\sigma\\%=\\dfrac{1.7-1.2}{1.2}=\\dfrac{5}{12}\\approx41.7\\%.$$\n$$\\zeta=\\sqrt{\\dfrac{\\ln^2\\sigma}{\\pi^2+\\ln^2\\sigma}}\\approx0.268,\\qquad\n\\omega_n=\\dfrac{\\pi}{t_p\\sqrt{1-\\zeta^2}}\\approx1.63.$$\n比例系数为 $c(\\infty)=1.2$，故断开时\n$$\\Phi(s)=\\dfrac{1.2\\,\\omega_n^2}{s^2+2\\zeta\\omega_n s+\\omega_n^2}\\approx\\dfrac{3.19}{s^2+0.874s+2.66}.$$\n\n2. 断开时已求得 $\\sigma\\%\\approx41.7\\%$，对于 $\\Delta=2\\%$，采用重大及经典教材常用标准估算式 $t_s\\approx4.5/(\\zeta\\omega_n)$：\n$$t_s\\approx\\dfrac{4.5}{\\zeta\\omega_n}=\\dfrac{4.5}{0.437}\\approx10.30\\,\\mathrm s.$$\n（若按粗略式 $4/(\\zeta\\omega_n)$ 估算为 $9.15\\,\\mathrm s$；部分参考资料取 $4.4/(\\zeta\\omega_n)$ 约为 $10.07\\,\\mathrm s$）。\n\n单位负反馈下前向通道\n$$G(s)=\\dfrac{\\Phi}{1-\\Phi}\\approx\\dfrac{3.19}{s^2+0.87s-0.53}.$$\n开关 $K$ 闭合后增加内环反馈 $0.5s$，新闭环为\n$$\\Phi'(s)=\\dfrac{G}{1+G(1+0.5s)}\\approx\\dfrac{3.19}{s^2+2.465s+2.66}.$$\n此时 $2\\zeta'\\omega_n'=2.465$，得 $\\zeta'\\omega_n'=1.2325$，$\\omega_n'^2=2.66$，得 $\\zeta'\\approx0.756$，\n$$\\sigma\\%\\approx2.66\\%,\\qquad t_s\\approx\\dfrac{4.5}{\\zeta'\\omega_n'}=\\dfrac{4.5}{1.2325}\\approx3.65\\,\\mathrm s.$$\n（若按粗略式 $4/(\\zeta'\\omega_n')$ 估算约为 $3.25\\,\\mathrm s$；若取 $4.4$ 则约为 $3.57\\,\\mathrm s$）。\n\n3. 两种情形分子、常数项之比相同，由终值定理 $c(\\infty)=1.2$，单位阶跃下 $e(\\infty)=1-c(\\infty)=-0.2$。亦可用劳斯表确认闭合后闭环稳定，再使用终值定理。",
+      "notes": "上方文字答案已改正；原答案图第 3 问叙述中有一处把 $2.465s$ 写成了 $2.645s$，劳斯表仍用 $2.465$，属笔误。超调、$\\zeta$、$\\omega_n$、闭环与稳态值正确。"
+    },
+    {
+      "no": 3,
+      "score": null,
+      "cats": [
+        "根轨迹 / 常规根轨迹绘制",
+        "时域分析 / 稳态误差 / 静态误差系数"
+      ],
+      "stem": "单位负反馈条件下，开环传递函数\n$$G(s)=\\frac{K^*}{s(s+5)(s+12)}$$\n\n1. 绘制 $K^*:0\\to+\\infty$ 变化时的根轨迹，给出必要步骤；\n\n2. 系统稳定时，开环增益 $K$ 的范围；\n\n3. 是否存在 $K^*$，使得静态速度误差系数 $K_v\\ge20$。",
+      "figures": [],
+      "answerImages": [
+        "img/a2024-3-1.png",
+        "img/a2024-3-2.png"
+      ],
+      "answer": "开环极点 $0,-5,-12$；实轴根轨迹 $(-\\infty,-12)\\cup(-5,0)$；渐近线 $\\sigma_a=-\\dfrac{17}{3}\\approx-5.67$，倾角 $\\pm60^\\circ,180^\\circ$；分离点 $d=\\dfrac{-17+\\sqrt{109}}{3}\\approx-2.19$（$K^*\\approx60.4$）；$K^*=1020$ 时与虚轴交于 $\\pm j2\\sqrt{15}\\approx\\pm j7.75$。稳定范围 $0<K^*<1020$，开环增益 $0<K<17$。$K_v=\\dfrac{K^*}{60}\\ge20$ 要求 $K^*\\ge1200>1020$，系统不稳定，**不存在**这样的 $K^*$。",
+      "explanation": "**一、特征方程与极点。** $G(s)=\\dfrac{K^*}{s(s+5)(s+12)}$，特征方程\n$$s^3+17s^2+60s+K^*=0.$$\n开环极点 $0,-5,-12$，无零点，$n-m=3$。\n\n**二、实轴与渐近线。** 实轴根轨迹 $(-\\infty,-12)\\cup(-5,0)$；\n$$\\sigma_a=\\dfrac{0-5-12}{3}=-\\dfrac{17}{3}\\approx-5.67,\\qquad \\varphi_a=\\pm60^\\circ,\\ 180^\\circ.$$\n\n**三、分离点。** $K^*=-(s^3+17s^2+60s)$，$\\dfrac{\\mathrm dK^*}{\\mathrm ds}=-(3s^2+34s+60)=0$，得\n$$s=\\dfrac{-17\\pm\\sqrt{109}}{3}\\approx-2.19,\\ -9.15.$$\n$-9.15$ 在 $(-12,-5)$ 内，不在根轨迹，舍去；分离点 $d\\approx-2.19$，$K^*\\approx60.4$。\n\n**四、虚轴交点与稳定范围。** 对 $s^3+17s^2+60s+K^*=0$ 列劳斯表：\n$$\\begin{array}{c|cc}\ns^3 & 1 & 60\\\\\ns^2 & 17 & K^*\\\\\ns^1 & \\dfrac{17\\times60-1\\times K^*}{17}=\\dfrac{1020-K^*}{17} & 0\\\\\ns^0 & K^* &\n\\end{array}$$\n令 $s^1$ 行首项为零得 $K^*=1020$；由 $s^2$ 行辅助方程 $17s^2+K^*=0$ 得 $s^2=-60$，即 $s=\\pm j2\\sqrt{15}\\approx\\pm j7.75$。故稳定范围 $0<K^*<1020$。开环增益 $K=\\dfrac{K^*}{5\\times12}=\\dfrac{K^*}{60}$，即 $0<K<17$。\n\n**五、作图。** $-12$ 一支沿实轴向左趋于 $-\\infty$；$0,-5$ 两支在 $d\\approx-2.19$ 会合后沿 $\\pm60^\\circ$ 渐近线进入右半平面，在 $K^*=1020$ 时穿过 $\\pm j2\\sqrt{15}$。图见下。\n\n![根轨迹图|520](img/solution-202403-rootlocus.svg)\n\n**六、速度误差系数要求。** 系统为 1 型，\n$$K_v=\\lim_{s\\to0}sG(s)=\\dfrac{K^*}{5\\times12}=\\dfrac{K^*}{60}.$$\n若 $K_v\\ge20$，则 $K^*\\ge1200$，但这已超过稳定临界 $K^*=1020$，此时闭环不稳定、稳态误差概念失去意义。故**不存在**满足 $K_v\\ge20$ 的稳定 $K^*$。",
+      "notes": "已核对：正确。稳定范围 $0<K^*<1020$（开环增益 $0<K<17$）；不存在同时满足 $K_v\\ge 20$ 的稳定 $K^*$。文字解析已按特征方程重画根轨迹图。",
+      "errataLevel": "ok"
+    },
+    {
+      "no": 4,
+      "score": null,
+      "cats": [
+        "非线性系统 / 描述函数法 / 自振分析"
+      ],
+      "stem": "非线性系统框图如下图所示，其中 $N(A)=\\dfrac{4M}{\\pi A}$，$M=1$。\n\n[[fig:1]]\n\n1. 绘制负倒描述函数 $-\\dfrac1{N(A)}$ 与 $G(j\\omega)$ 的奈奎斯特图像；\n\n2. 判断系统是否会产生自振；\n\n3. 若自振，求 $c(t)$ 的振幅和频率。",
+      "figures": [
+        "img/q2024-4-1.png"
+      ],
+      "answerImages": [
+        "img/a2024-4-1.png",
+        "img/a2024-4-2.png"
+      ],
+      "answer": "采用描述函数基波近似，$A$ 表示非线性输入 $x(t)$ 的振幅。\n\n1. $-\\dfrac1{N(A)}=-\\dfrac{\\pi A}{4}$，沿负实轴由 $0$ 到 $-\\infty$；等效线性部分 $G(s)=\\dfrac1{s(s+1)(s+2)}$，与负实轴交于 $\\omega_g=\\sqrt2$，$G(j\\omega_g)=-\\dfrac16$。\n\n2. 交点 $A=\\dfrac2{3\\pi}\\approx0.2122$，为**稳定自振**。\n\n3. $c(t)$ 振幅 $A_c\\approx0.52$，频率 $\\omega=\\sqrt2\\,\\mathrm{rad/s}$。",
+      "explanation": "采用描述函数基波近似，令 $A$ 为非线性环节输入 $x(t)$ 的正弦振幅。题干中继电输出幅值 $M=1$，反馈通道 $G_1(s)=1/(s+2)$，非线性环节后的前向部分为 $1/[s(s+1)]$，故谐波平衡所用线性部分为\n$$G(s)=\\frac1{s(s+1)(s+2)},\\qquad -\\frac1{N(A)}=-\\frac{\\pi A}{4}.$$\n\n1. Nyquist 绘图可按以下实、虚部描点：\n$$\\Re G(j\\omega)=-\\frac3{(1+\\omega^2)(4+\\omega^2)},\\quad \\Im G(j\\omega)=\\frac{\\omega^2-2}{\\omega(1+\\omega^2)(4+\\omega^2)}.$$\n正频率曲线从实部趋于 $-3/4$、虚部趋于 $-\\infty$ 处出发，随 $\\omega$ 增大，在 $\\omega=\\sqrt2$ 穿过 $(-1/6,0)$，然后进入第二象限并从上方趋于原点；负频率部分关于实轴对称。另一条轨迹 $-1/N(A)$ 位于负实轴，随 $A$ 增大从 $0$ 向 $-\\infty$ 移动，标出该方向即可。\n\n2. 相位条件\n$$-90^\\circ-\\arctan\\omega-\\arctan(\\omega/2)=-180^\\circ$$\n给出 $\\omega=\\sqrt2$，此时 $G=-1/6$。由 $-\\pi A/4=-1/6$ 得\n$$A=\\frac2{3\\pi}\\approx0.2122.$$\n等效线性闭环特征式为 $s^3+3s^2+2s+N(A)$，劳斯稳定条件为 $N(A)<6$。由于 $N(A)=4/(\\pi A)$ 随 $A$ 增大而减小，小于交点振幅时 $N(A)>6$、振幅趋向增长，大于交点振幅时 $N(A)<6$、振幅趋向衰减，故描述函数法预测稳定自振；这是近似判别，不是全局非线性稳定性证明。\n\n3. 因为 $r=0$，有 $X=-G_1C$。输出 $c(t)$ 的振幅为\n$$A_c=\\frac{A}{|G_1(j\\sqrt2)|}=\\sqrt6\\,\\frac2{3\\pi}\\approx0.52,$$\n频率仍为 $\\sqrt2\\,\\mathrm{rad/s}$。",
+      "notes": "已核对：正确。稳定自振振幅 $A=2/(3\\pi)\\approx 0.2122$，输出振幅 $A_c\\approx 0.52$，频率 $\\omega=\\sqrt{2}$。",
+      "errataLevel": "ok"
+    },
+    {
+      "no": 5,
+      "score": null,
+      "cats": [
+        "校正 / 由校正后特性求校正装置",
+        "频域分析 / 三频段理论",
+        "频域分析 / 截止频率与相角裕度"
+      ],
+      "stem": "单位负反馈条件下开环传递函数\n$$G(s)=\\frac{12}{(s+1)(s+3)(s+0.4)}$$\n校正后系统的对数幅频特性曲线如下图所示。\n\n[[fig:1]]\n\n1. 写出 $G_c(s)$，并画出 $G_c(s)$ 的对数幅频特性图；\n\n2. 利用三频段理论分析系统校正前与校正后各频段性能；\n\n3. 试求校正前与校正后，系统的相角裕量与截止频率。",
+      "figures": [
+        "img/q2024-5-1.png"
+      ],
+      "answerImages": [
+        "img/a2024-5-1.png",
+        "img/a2024-5-2.png"
+      ],
+      "answer": "1. 由校正后幅频读出\n$$G(s)G_c(s)=\\dfrac{10\\sqrt{10}\\,(s/2+1)}{s\\,(s/0.4+1)\\,(s/10+1)\\,(s/20+1)},$$\n$$G_c(s)=\\dfrac{\\sqrt{10}\\,(s/2+1)(s+1)(s/3+1)}{s\\,(s/10+1)\\,(s/20+1)}.$$\n校正器自身的对数幅频：转折 $1,2,3,10,20$，各段斜率 $-20,0,+20,+40,+20,0$。\n\n![校正器对数幅频|520](img/solution-202405-bode.png)\n\n2. 低频增加一个积分，稳态误差减小；中频以 $-20\\,\\mathrm{dB/dec}$ 过 $0\\,\\mathrm{dB}$；高频被抬高，抑制高频干扰的能力下降。\n\n3. 折线法：校正前 $\\omega_c=2$，$\\gamma\\approx4.185^\\circ$；校正后 $\\omega_c=2\\sqrt{10}\\approx6.325$，$\\gamma\\approx26.21^\\circ$。这两个裕度都算在各自的渐近剪切频率上。",
+      "explanation": "1. 校正后曲线低频斜率为 $-20\\,\\mathrm{dB/dec}$，过 $(0.1,50\\,\\mathrm{dB})$，故\n$$20\\lg(K/0.1)=50,\\qquad K=10\\sqrt{10}.$$\n转折为 $0.4$（向下）、$2$（向上）、$10$ 与 $20$（向下）。校正前\n$$G(s)=\\dfrac{10}{(s+1)(s/3+1)(s/0.4+1)},$$\n相除得到 $G_c(s)$。\n\n校正器自身的幅频作图：横轴为 $\\lg\\omega$。$G_c$ 有一个原点极点，零点转折为 $1,2,3$，另两个极点转折为 $10,20$。低频直线 $L_c=10-20\\lg\\omega$ 经过 $(1,10\\,\\mathrm{dB})$。各段斜率为 $-20,0,+20,+40,+20,0\\,\\mathrm{dB/dec}$。高频趋于 $20\\lg(100\\sqrt{10}/3)\\approx40.46\\,\\mathrm{dB}$。图中实线是这条折线，点线是精确幅频，只作对照。\n\n![校正器对数幅频|520](img/solution-202405-bode.png)\n\n2. 校正前是 0 型，校正后是 I 型，低频抬高，阶跃和斜坡稳态误差减小。中频段斜率为 $-20\\,\\mathrm{dB/dec}$ 并穿过 $0\\,\\mathrm{dB}$。高频段相对校正前上移，高频衰减变弱。\n\n3. 校正前在 $1<\\omega<3$ 段，$10/(2.5\\omega^2)=1$，得折线剪切频率 $\\omega_c=2$。代入\n$$\\angle G(j\\omega)=-\\arctan\\omega-\\arctan(\\omega/3)-\\arctan(\\omega/0.4),$$\n$\\gamma(2)\\approx4.185^\\circ$。校正后在 $2<\\omega<10$ 段，\n$$\\dfrac{10\\sqrt{10}\\cdot(\\omega/2)}{\\omega\\cdot(\\omega/0.4)}=1,$$\n得 $\\omega_c=2\\sqrt{10}\\approx6.325$。代入\n$$\\angle GG_c=\\arctan(\\omega/2)-90^\\circ-\\arctan(\\omega/0.4)-\\arctan(\\omega/10)-\\arctan(\\omega/20),$$\n$\\gamma(6.325)\\approx26.21^\\circ$。\n\n精确幅频穿越是另一组数，不代入上面的结论：校正前 $\\omega_c\\approx1.709\\,\\mathrm{rad/s}$、$\\gamma\\approx13.84^\\circ$；校正后 $\\omega_c\\approx5.620\\,\\mathrm{rad/s}$、$\\gamma\\approx29.45^\\circ$。",
+      "notes": "扫描把相角公式的符号写反，但 $\\omega_c$ 与 $\\gamma$ 的数值是用正确相角、在渐近剪切频率上算的，折线结论可以沿用。精确穿越为校正前 $1.709\\,\\mathrm{rad/s}$、$13.84^\\circ$，校正后 $5.620\\,\\mathrm{rad/s}$、$29.45^\\circ$，不能与 $2$、$6.325$ 上的裕度混成一对。"
+    },
+    {
+      "no": 6,
+      "score": null,
+      "cats": [
+        "离散系统 / 脉冲传递函数",
+        "离散系统 / 稳定性（朱利判据）",
+        "离散系统 / 稳态误差"
+      ],
+      "stem": "离散系统控制框图如下图所示，采样时间 $T=1$ 秒，试求：\n\n[[fig:1]]\n\n1. 闭环脉冲传递函数；\n\n2. 判断闭环系统稳定性；\n\n3. 单位阶跃输入作用下，系统的稳态误差。",
+      "figures": [
+        "img/q2024-6-1.png"
+      ],
+      "answerImages": [
+        "img/a2024-6-1.png",
+        "img/a2024-6-2.png",
+        "img/a2024-6-3.png"
+      ],
+      "answer": "令 $a=e^{-1}$，$T=1\\,\\mathrm s$。题图比较点参考端为 $+$、反馈端为 $-$。\n\n1.\n$$G(z)=\\dfrac{(2z-1)(1-a)}{(z-1)(z-a)},\\qquad\n\\Phi(z)=\\dfrac{(2z-1)(1-a)}{z^2+(1-3a)z+(2a-1)}.$$\n\n2. $D(1)=1-a>0$，$D(-1)=5a-1>0$，$|2a-1|<1$，闭环渐近稳定。极点约为 $0.5685$ 与 $-0.4648$。\n\n3. 单位阶跃 $e_{ss}=0$。",
+      "explanation": "两只采样开关同步，中间环节和后面环节要分别求脉冲传递函数，再相乘。\n\n1. 第一段 $G_1(s)=1+1/s$，采样后\n$$G_1(z)=1+\\dfrac{z}{z-1}=\\dfrac{2z-1}{z-1}.$$\n第二段是零阶保持器与 $1/(s+1)$。部分分式 $1/[s(s+1)]=1/s-1/(s+1)$，查表并乘 $(1-z^{-1})$，$T=1$ 时\n$$G_2(z)=\\dfrac{1-a}{z-a},\\qquad a=e^{-1}.$$\n开环 $G=G_1G_2$。比较点已标出负反馈，故 $\\Phi=G/(1+G)$，分母\n$$(z-1)(z-a)+(2z-1)(1-a)=z^2+(1-3a)z+(2a-1).$$\n\n2. 记该分母为 $D(z)$。\n$$D(1)=1-a>0,\\qquad D(-1)=5a-1=5/e-1>0,\\qquad |2a-1|<1.$$\n三条都成立，闭环稳定。二次方程的根为 $0.568468$ 与 $-0.464830$，四位有效数字 $0.5685$、$-0.4648$。\n\n3. $D(1)=1-a$，分子在 $z=1$ 也是 $1-a$，故 $\\Phi(1)=1$。稳定时单位阶跃的终值为 $1$，采样时刻稳态误差为 $0$。",
+      "notes": "扫描的开环、闭环、稳定结论和单位阶跃稳态误差与上述计算一致。极点若只写到三位小数，为 $0.568$ 与 $-0.465$。",
+      "errataLevel": "ok"
+    },
+    {
+      "no": 7,
+      "score": null,
+      "cats": [
+        "状态空间 / 状态转移矩阵",
+        "状态空间 / 能控性与能观性",
+        "状态空间 / 李雅普诺夫稳定性"
+      ],
+      "stem": "状态空间表达式为\n$$\\begin{cases}\\dot x=\\begin{bmatrix}0&1\\\\-2&-3\\end{bmatrix}x+\\begin{bmatrix}0\\\\1\\end{bmatrix}u\\\\[4pt] y=\\begin{bmatrix}1&a\\end{bmatrix}x\\end{cases}$$\n\n1. 试求状态转移矩阵 $\\phi(t)$，以及传递函数 $G(s)$；\n\n2. $a$ 为何值时，系统完全可测；\n\n3. 试用李雅普诺夫第二法判断系统稳定性。",
+      "figures": [],
+      "answerImages": [
+        "img/a2024-7-1.png",
+        "img/a2024-7-2.png"
+      ],
+      "answer": "1. $\\Phi(t)=\\begin{bmatrix}2e^{-t}-e^{-2t}&e^{-t}-e^{-2t}\\\\-2e^{-t}+2e^{-2t}&-e^{-t}+2e^{-2t}\\end{bmatrix}$，$G(s)=\\dfrac{as+1}{s^2+3s+2}$。\n\n2. $Q_o=\\begin{bmatrix}1&a\\\\-2a&1-3a\\end{bmatrix}$，$|Q_o|=2a^2-3a+1=(2a-1)(a-1)\\ne0$，即 $a\\ne1$ 且 $a\\ne\\dfrac12$ 时完全能观。\n\n3. 解 $A^TP+PA=-I$ 得 $P=\\begin{bmatrix}\\frac54&\\frac14\\\\\\frac14&\\frac14\\end{bmatrix}$ 正定，系统在原点**大范围渐近稳定**。",
+      "explanation": "1. $sI-A=\\begin{bmatrix}s&-1\\\\2&s+3\\end{bmatrix}$，$\\lvert sI-A\\rvert=s^2+3s+2=(s+1)(s+2)$，\n$$(sI-A)^{-1}=\\dfrac{1}{s^2+3s+2}\\begin{bmatrix}s+3&1\\\\-2&s\\end{bmatrix}.$$\n部分分式后逐项反变换：\n$$\\dfrac{s+3}{(s+1)(s+2)}=\\dfrac{2}{s+1}-\\dfrac{1}{s+2},\\quad\n\\dfrac{1}{(s+1)(s+2)}=\\dfrac{1}{s+1}-\\dfrac{1}{s+2},$$\n$$\\dfrac{-2}{(s+1)(s+2)}=\\dfrac{-2}{s+1}+\\dfrac{2}{s+2},\\quad\n\\dfrac{s}{(s+1)(s+2)}=\\dfrac{-1}{s+1}+\\dfrac{2}{s+2},$$\n即得\n$$\\Phi(t)=\\begin{bmatrix}2e^{-t}-e^{-2t}&e^{-t}-e^{-2t}\\\\-2e^{-t}+2e^{-2t}&-e^{-t}+2e^{-2t}\\end{bmatrix}.$$\n$B=[0\\ 1]^\\mathrm T$，取 $(sI-A)^{-1}$ 的第二列再左乘 $C=[1\\ \\ a]$，得\n$$G(s)=\\dfrac{as+1}{s^2+3s+2}.$$\n\n2. 能观判别阵\n$$Q_o=\\begin{bmatrix}C\\\\CA\\end{bmatrix}=\\begin{bmatrix}1&a\\\\-2a&1-3a\\end{bmatrix},\\qquad\n\\lvert Q_o\\rvert=2a^2-3a+1=(2a-1)(a-1).$$\n$\\lvert Q_o\\rvert\\neq0$ 当且仅当 $a\\neq1$ 且 $a\\neq1/2$，此时系统完全能观（完全可测）。\n\n3. 取 $Q=I$，解李雅普诺夫方程 $A^\\mathrm TP+PA=-I$。设\n$P=\\begin{bmatrix}p&q\\\\q&r\\end{bmatrix}$，展开并比较元素得 $q=1/4$、$r=1/4$、$p=5/4$，即\n$$P=\\begin{bmatrix}5/4&1/4\\\\1/4&1/4\\end{bmatrix}.$$\n$p=5/4>0$，$\\lvert P\\rvert=1/4>0$，故 $P$ 正定；$V=x^\\mathrm TPx$ 正定且径向无界，$\\dot V=-x_1^2-x_2^2$ 负定，原点**大范围渐近稳定**。（$P$ 的元素不要与输出参数 $a$ 混用同一字母。）",
+      "notes": "上方文字答案已补全；原答案图列出能观判别阵后未解出 $a\\neq 1$ 且 $a\\neq 1/2$，随后把 $P$ 的元素写成 $a,b,c,d$，与输出参数 $a$ 混用。$\\Phi(t)$、$G(s)$ 与李雅普诺夫结论正确。"
+    },
+    {
+      "no": 8,
+      "score": null,
+      "cats": [
+        "状态空间 / 建立状态空间表达式",
+        "状态空间 / 状态反馈极点配置"
+      ],
+      "stem": "控制系统框图如下图所示。\n\n[[fig:1]]\n\n1. 求状态空间表达式；\n\n2. 是否存在状态反馈 $K$ 使极点配置在 $-1\\pm j\\sqrt2,\\ -5$。",
+      "figures": [
+        "img/q2024-8-1.png"
+      ],
+      "answerImages": [
+        "img/a2024-8-1.png",
+        "img/a2024-8-2.png"
+      ],
+      "answer": "保留题干的单位负反馈，取状态 $x=[x_1,x_2,x_3]^T$，其中 $x_1=y$；设计附加反馈时采用 $r=v-Kx$。\n\n1. $\\dot x=\\begin{bmatrix}0&1&0\\\\0&-2&1\\\\-1&0&-1\\end{bmatrix}x+\\begin{bmatrix}0\\\\0\\\\1\\end{bmatrix}r$，$y=\\begin{bmatrix}1&0&0\\end{bmatrix}x$。\n\n2. $\\operatorname{rank}Q_c=3$，完全能控，**存在**：$K=\\begin{bmatrix}14&3&4\\end{bmatrix}$。",
+      "explanation": "取 $x_1=y$ 为积分器输出，$x_2$ 为 $1/(s+2)$ 的输出，$x_3$ 为 $1/(s+1)$ 的输出，输入为题干结构图中的 $r$。由题干的单位负反馈连接：$\\dot x_3=-x_1-x_3+r$，$\\dot x_2=x_3-2x_2$，$\\dot x_1=x_2$，$y=x_1$。\n\n$Q_c=[B\\ AB\\ A^2B]=\\begin{bmatrix}0&0&1\\\\0&1&-3\\\\1&-1&1\\end{bmatrix}$。\n\n$|\\lambda I-A+BK|=\\lambda^3+(3+k_3)\\lambda^2+(2+k_2+2k_3)\\lambda+(1+k_1)$，期望 $(\\lambda+5)(\\lambda^2+2\\lambda+3)=\\lambda^3+7\\lambda^2+13\\lambda+15$。\n\n在上述已经包含单位外环的模型上，附加 $r=v-Kx$，闭环矩阵为 $A-BK$。将特征多项式与期望式逐项比较，得 $k_3=4$、$k_2=3$、$k_1=14$，所以 $K=[14,3,4]$，所要求的极点可配置。",
+      "notes": "已核对：正确。",
+      "errataLevel": "ok"
+    }
+  ]
 }

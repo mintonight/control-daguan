@@ -1,161 +1,161 @@
 {
- "year": 2023,
- "questionPages": "47–50",
- "answerPages": "170–180",
- "questions": [
-  {
-   "no": 1,
-   "score": null,
-   "cats": [
-    "建模 / 机械系统 / 微分方程与传递函数",
-    "状态空间 / 建立状态空间表达式"
-   ],
-   "stem": "系统如下图所示（弹簧刚度 $K$、黏性阻尼系数 $C$、质量 $m$）。为明确符号，以下按 $g(t)$ 为向下外加力、$f(t)$ 为质量块向下位移来建模，以静平衡位置为位移零点。求：\n\n[[fig:1]]\n\n1、该系统的微分方程；\n\n2、由外力到位移的传递函数；\n\n3、状态空间方程表达式。",
-   "figures": [
-    "img/q2023-1-1.png"
-   ],
-   "answerImages": [
-    "img/a2023-1-1.png"
-   ],
-   "answer": "取向下为正，$f(t)$ 为相对静平衡位置的位移，$g(t)$ 为外加力；$m,K,C$ 分别为质量、弹簧刚度和黏性阻尼系数。\n\n1. 微分方程：$m\\ddot f(t)+C\\dot f(t)+Kf(t)=g(t)$。\n\n2. 零初始条件下，$\\Phi(s)=\\dfrac{F(s)}{G(s)}=\\dfrac{1}{ms^2+Cs+K}$。\n\n3. 取 $x_1=f(t),\\ x_2=\\dot f(t)$，输入 $u=g(t)$，输出 $y=f(t)$：\n$$\\dot{\\boldsymbol{x}}=A\\boldsymbol{x}+Bu,\\qquad y=C_y\\boldsymbol{x}+Du,$$\n$$A=\\begin{bmatrix}0&1\\\\-K/m&-C/m\\end{bmatrix},\\quad B=\\begin{bmatrix}0\\\\1/m\\end{bmatrix},\\quad C_y=\\begin{bmatrix}1&0\\end{bmatrix},\\quad D=0.$$\n这里 $C_y$ 为输出矩阵，区别于阻尼系数 $C$。",
-   "explanation": "1. **列微分方程。** 设质量为 $m$，弹簧刚度为 $K$，黏性阻尼系数为 $C$。取向下为正，$f(t)$ 为相对静平衡位置的位移，$g(t)$ 为向下外加力。静平衡时重力与静态弹簧力已抵消，因此增量弹簧力为 $-Kf(t)$，阻尼力为 $-C\\dot f(t)$。由牛顿第二定律，\n$$m\\ddot f(t)=g(t)-C\\dot f(t)-Kf(t),$$\n即\n$$m\\ddot f(t)+C\\dot f(t)+Kf(t)=g(t).$$\n\n2. **求由力到位移的传递函数。** 定义 $F(s)=\\mathcal L\\{f(t)\\}$、$G(s)=\\mathcal L\\{g(t)\\}$。在零初始条件下作拉普拉斯变换：\n$$(ms^2+Cs+K)F(s)=G(s),$$\n故\n$$\\Phi(s)=\\frac{F(s)}{G(s)}=\\frac{1}{ms^2+Cs+K}.$$\n\n3. **建立状态空间方程。** 取位移和速度为状态：$x_1=f(t)$、$x_2=\\dot f(t)$，输入 $u=g(t)$，输出 $y=f(t)$。由状态定义及微分方程逐行得到\n$$\\dot x_1=x_2,$$\n$$\\dot x_2=-\\frac Km x_1-\\frac Cm x_2+\\frac1m u,\\qquad y=x_1.$$\n因此状态矩阵第一行系数为 $[0,1]$，第二行系数为 $[-K/m,-C/m]$；输入只直接作用于第二个状态方程。完整矩阵为\n$$\\dot{\\boldsymbol{x}}=A\\boldsymbol{x}+Bu,\\qquad y=C_y\\boldsymbol{x}+Du,$$\n$$A=\\begin{bmatrix}0&1\\\\-K/m&-C/m\\end{bmatrix},\\quad B=\\begin{bmatrix}0\\\\1/m\\end{bmatrix},\\quad C_y=\\begin{bmatrix}1&0\\end{bmatrix},\\quad D=0.$$\n这里 $C_y$ 是输出矩阵，不是阻尼系数 $C$；由该实现也可验证 $C_y(sI-A)^{-1}B=1/(ms^2+Cs+K)$。",
-   "notes": "原解的 $k=K$，原解用作阻尼系数的字母 $f=C$，不是位移 $f(t)$。原解未明确其位移及状态符号的定义；微分方程和传递函数在相应符号对应下成立。\n\n原图第一行是 $[0,0]$，即 $A_{12}=0$（应为 $1$），与其标量式 $\\dot x_1=x_2$ 矛盾；照该矩阵及所印输入、输出矩阵计算，传递函数为零。正确状态矩阵的第一行必须是 $[0,1]$。\n\n不能仅凭原解将 $1/m$ 放在输出矩阵就判错。若采用缩放状态 $z_1=mf(t)$、$z_2=m\\dot f(t)$，输入仍为 $u=g(t)$、输出为 $y=f(t)$，一组完整的正确实现是\n$$A_z=\\begin{bmatrix}0&1\\\\-K/m&-C/m\\end{bmatrix},\\quad B_z=\\begin{bmatrix}0\\\\1\\end{bmatrix},\\quad C_{y,z}=\\begin{bmatrix}1/m&0\\end{bmatrix},\\quad D=0.$$\n这里 $A_z=(mI)A(mI)^{-1}$ 中的 $A$ 是文字解中已经正确建立的物理状态矩阵，不是原图第一行印为 $[0,0]$ 的错误矩阵。两种正确实现的传递函数均为 $1/(ms^2+Cs+K)$。"
-  },
-  {
-   "no": 2,
-   "score": null,
-   "cats": [
-    "时域分析 / 二阶系统性能指标",
-    "时域分析 / 稳态误差 / 复合控制"
-   ],
-   "stem": "系统结构图如下（按用户提供的新图重绘）。该系统的无阻尼振荡频率为 $2\\,\\mathrm{rad/s}$；误差为外环比较点的 $E(s)=R(s)-K_dY(s)$，不是 $R(s)-Y(s)$。各环节初始状态为零，求：\n\n[[fig:1]]\n\n1、$G_c(s)=0$ 时，系统在单位阶跃输入下的稳态误差 $e_{ss}=0.4$，求参数 $K_t$、$K_d$，并计算此时输出的最大超调量 $\\sigma\\%$ 和调节时间 $t_s\\ (\\Delta=\\pm5\\%)$；\n\n2、当 $e_{ss}=0$ 时，求 $G_c(s)$ 的形式。",
-   "figures": [
-    "img/q2023-2-1.png"
-   ],
-   "answerImages": [
-    "img/a2023-2-1.png",
-    "img/a2023-2-2.png"
-   ],
-   "answer": "1. $K_t=1.92$，$K_d=2.88$，阻尼比 $\\zeta=413/600\\approx0.6883$。相对于输出终值的最大超调量为 $\\sigma\\%\\approx5.07\\%$；按 $5\\%$ 带的工程近似式，$t_s\\approx2.18\\,\\mathrm{s}$。\n\n2. 延续第1问参数与单位阶跃输入，稳态无差要求\n$$G_c(0)=\\dfrac{2}{3}.$$\n最简可取比例前馈 $G_c(s)=\\dfrac23$。",
-   "explanation": "**1．化简结构，求输出与误差传递函数。**\n令 $U(s)$ 为惯性环节 $1/(1.2s+1)$ 的输出。积分器与内反馈 $K_t$ 化简后为 $1/(s+K_t)$，因此\n$$E=R-K_dY,\\qquad U=\\frac{E}{1.2s+1},\\qquad Y=\\frac{U+G_cR}{s+K_t}.$$\n消去 $U,E$，记\n$$D(s)=(1.2s+1)(s+K_t)+K_d=1.2s^2+(1+1.2K_t)s+K_t+K_d,$$\n得到\n$$\\Phi(s)=\\frac{Y(s)}{R(s)}=\\frac{1+(1.2s+1)G_c(s)}{D(s)},$$\n$$\\Phi_e(s)=\\frac{E(s)}{R(s)}=\\frac{(1.2s+1)[s+K_t-K_dG_c(s)]}{D(s)}.$$\n\n**2．第1问：求反馈参数、超调量和调节时间。**\n$G_c=0$ 时，将 $D(s)$ 除以 $1.2$，与 $s^2+2\\zeta\\omega_ns+\\omega_n^2$ 比较。由 $\\omega_n=2$，得\n$$K_t+K_d=1.2\\omega_n^2=4.8.$$\n单位阶跃输入的稳态误差为\n$$e_{ss}=\\lim_{s\\to0}\\Phi_e(s)=\\frac{K_t}{K_t+K_d}=0.4.$$\n联立可得 $K_t=1.92$、$K_d=2.88$。此时 $D(s)=1.2s^2+3.304s+4.8$，二阶系数均为正，闭环稳定，终值定理适用。进一步有\n$$2\\zeta\\omega_n=\\frac{3.304}{1.2},\\qquad \\zeta=\\frac{413}{600}\\approx0.6883.$$\n相对于输出终值，最大超调量为\n$$\\sigma\\%=100e^{-\\pi\\zeta/\\sqrt{1-\\zeta^2}}\\%\\approx5.07\\%.$$\n对 $\\Delta=\\pm5\\%$，采用工程近似\n$$t_s\\approx\\frac3{\\zeta\\omega_n}=\\frac3{(413/600)\\times2}\\approx2.18\\,\\mathrm{s}.$$\n\n**3．第2问：求阶跃稳态无差的前馈环节。**\n沿用第1问参数与单位阶跃输入。设前馈环节稳定、分子阶次不高于分母，且 $G_c(0)$ 有限；整体响应稳定时，由终值定理\n$$e_{ss}=\\Phi_e(0)=\\frac{K_t-K_dG_c(0)}{K_t+K_d}=0,$$\n因此\n$$G_c(0)=\\frac{K_t}{K_d}=\\frac23.$$\n只约束直流增益，解并不唯一，最简可取比例环节 $G_c(s)=2/3$；它不改变已稳定的特征分母。\n\n（若额外要求 $E/R\\equiv0$，理想全补偿才为 $G_c(s)=(s+1.92)/2.88$，含理想微分，条件强于本问。）",
-   "notes": "文字已按用户提供的新图重算。保留的原答案扫描对应旧图，不是新图的配套解答；其中 $k_a=0.4$、超调量、调节时间及 $G_c=s+0.4$ 均不能套用于现图。扫描还将0型单位反馈的阶跃稳态误差误写为 $1/K_p$（应为 $1/(1+K_p)$），且未使用 $\\omega_n=2$ 条件。",
-   "errataLevel": "severe",
-   "figureWidths": [
-    560
-   ]
-  },
-  {
-   "no": 3,
-   "score": null,
-   "cats": [
-    "根轨迹 / 常规根轨迹绘制",
-    "时域分析 / 稳态误差 / 静态误差系数",
-    "根轨迹 / 主导极点与降阶"
-   ],
-   "stem": "$$G(s)=\\frac{K(s+4)}{s(s+2)(s+15)}$$\n\n1、绘制其根轨迹；\n\n2、若要求系统稳定，求 $K$ 的开环增益范围；\n\n3、$s_1=-9$ 时，系统是否可视为二阶系统？当 $r(t)=2+3t$ 时，求此时对应的稳态误差？",
-   "figures": [],
-   "answerImages": [
-    "img/a2023-3-1.png",
-    "img/a2023-3-2.png",
-    "img/a2023-3-3.png"
-   ],
-   "answer": "开环极点 $0,-2,-15$，零点 $-4$；实轴根轨迹 $(-15,-4)\\cup(-2,0)$；渐近线 $\\sigma_a=-6.5$，倾角 $\\pm90^\\circ$；分离点 $d\\approx-1.14$（$K\\approx4.75$）；与虚轴无交点，$K>0$ 时系统恒稳定。$s_1=-9$ 时 $K=75.6$，另两极点 $-4\\pm j4.195$；因 $9/4=2.25<5$，**不能**视为二阶系统。$r(t)=2+3t$ 时 $K_v=\\dfrac{252}{25}=10.08$，$e_{ss}=\\dfrac{3}{K_v}=\\dfrac{25}{84}\\approx0.298$。",
-   "explanation": "**一、开环极零点与实轴。** $G(s)=\\dfrac{K(s+4)}{s(s+2)(s+15)}$，开环极点 $0,-2,-15$，零点 $-4$，$n-m=2$。实轴根轨迹位于奇数个实极、零点右侧，即 $(-15,-4)\\cup(-2,0)$。渐近线\n$$\\sigma_a=\\dfrac{0-2-15-(-4)}{2}=-6.5,\\qquad \\varphi_a=\\pm90^\\circ,$$\n为过 $-6.5$ 的竖直线。\n\n**二、分离点。** 由 $K=-\\dfrac{s(s+2)(s+15)}{s+4}$，令 $\\dfrac{\\mathrm dK}{\\mathrm ds}=0$，得\n$$2s^3+29s^2+136s+120=0,$$\n实根 $s\\approx-1.14$（另两根为复数），位于 $(-2,0)$ 上，对应 $K\\approx4.75$。\n\n**三、虚轴交点与稳定范围。** 特征多项式\n$$D(s)=s(s+2)(s+15)+K(s+4)=s^3+17s^2+(30+K)s+4K.$$\n劳斯表\n$$\\begin{array}{c|cc}\ns^3 & 1 & 30+K\\\\\ns^2 & 17 & 4K\\\\\ns^1 & \\dfrac{17(30+K)-1\\times4K}{17}=\\dfrac{510+13K}{17} & 0\\\\\ns^0 & 4K &\n\\end{array}$$\n当 $K>0$ 时首列全为正（$\\dfrac{510+13K}{17}>0$、$4K>0$），故系统对一切 $K>0$ 稳定，与正虚轴无交点。\n\n**四、作图。** $-15$ 一支沿实轴向右趋于零点 $-4$；$0,-2$ 两支相向运动，在 $d\\approx-1.14$ 会合后离开实轴，成为共轭分支沿过 $-6.5$ 的 $\\pm90^\\circ$ 渐近线趋向无穷，全部位于左半平面。图见下。\n\n![根轨迹图|520](img/solution-202303-rootlocus.svg)\n\n**五、二阶近似判断。** 由幅值条件\n$$K=\\dfrac{|s|\\,|s+2|\\,|s+15|}{|s+4|}\\Big|_{s=-9}=\\dfrac{9\\times7\\times6}{5}=75.6.$$\n由根之和（$-17$）得另两根实部为 $\\dfrac{-17+9}{2}=-4$；由根之积（$4K$）得它们满足 $s^2+8s+33.6=0$，即\n$$r_{2,3}=-4\\pm j4.195.$$\n共轭极点实部 $4$ 与实极点 $9$ 之比 $\\dfrac{9}{4}=2.25<5$，实极点离虚轴不够远、不能忽略，故**不能**把系统近似为二阶系统。\n\n**六、稳态误差。** 系统为 1 型，$r(t)=2+3t$ 的阶跃部分误差为零，斜坡部分用题给开环传函计算：\n$$K_v=\\lim_{s\\to0}sG(s)=\\dfrac{75.6\\times4}{2\\times15}=\\dfrac{252}{25}=10.08,\\qquad e_{ss}=\\dfrac{3}{K_v}=\\dfrac{3}{10.08}=\\dfrac{25}{84}\\approx0.298.$$",
-   "notes": "上方文字答案已改正；原答案图中求 $e_{ss}$ 时用错开环传函，把 $K_v$ 写成了 $2.864$、$e_{ss}$ 写成了 $1.05$。根轨迹、稳定性、$s=-9$ 时的 $K$ 与另两极点均对。文字解析已按特征方程重画根轨迹图。"
-  },
-  {
-   "no": 4,
-   "score": null,
-   "cats": [
-    "频域分析 / Bode 图绘制",
-    "频域分析 / 截止频率与相角裕度"
-   ],
-   "stem": "已知：\n$$G_C(s)=\\frac{500(s+2)(s+3)}{s(0.8s+2)(s+10)(s+50)}$$\n求：\n\n1、绘制该系统的 Bode 图；\n\n2、求该系统的截止频率 $\\omega_C$ 和相角裕度 $\\gamma$。",
-   "figures": [],
-   "answerImages": [
-    "img/a2023-4-1.png",
-    "img/a2023-4-2.png"
-   ],
-   "answer": "（1）将传递函数化为时间常数形式：\n$$G_C(s)=\\frac{3(1+s/2)(1+s/3)}{s(1+s/2.5)(1+s/10)(1+s/50)}.$$\n转折频率依次为 $2,2.5,3,10,50\\,\\mathrm{rad/s}$，幅频渐近线各段斜率依次为\n$$-20,\\quad0,\\quad-20,\\quad0,\\quad-20,\\quad-40\\quad(\\mathrm{dB/dec}).$$\n相频曲线从 $-90^\\circ$ 出发，先上升、后下降，最终趋于 $-180^\\circ$。完整图见下方文字解析。\n\n（2）按幅频渐近线估算：\n$$\\boxed{\\omega_C\\approx12.5\\,\\mathrm{rad/s},\\qquad\\gamma\\approx103.3^\\circ.}$$\n若用实际幅频曲线求交点，数值校核为 $\\omega_C\\approx8.20\\,\\mathrm{rad/s}$、$\\gamma\\approx114.5^\\circ$；这与折线估算是两组不同精度的结果。",
-   "explanation": "**一、化为标准形式，找转折频率。**\n\n把各因子中的常数提出，得低频系数 $500\\times2\\times3/(2\\times10\\times50)=3$，所以\n$$G_C(s)=\\frac{3(1+s/2)(1+s/3)}{s(1+s/2.5)(1+s/10)(1+s/50)}.$$\n积分环节使低频斜率为 $-20\\,\\mathrm{dB/dec}$。两个零点的转折频率为 $2,3$，三个惯性环节的转折频率为 $2.5,10,50\\,\\mathrm{rad/s}$。\n\n**二、画幅频渐近线。**\n\n记 $L_a(\\omega)$ 为对数幅频渐近线，单位为 dB。低频段为\n$$L_a(\\omega)=20\\lg3-20\\lg\\omega,$$\n因此先标出 $\\omega=1\\,\\mathrm{rad/s}$ 时约 $9.54\\,\\mathrm{dB}$，画斜率为 $-20\\,\\mathrm{dB/dec}$ 的直线。频率增大时，每遇到一个零点，斜率增加 $20$；每遇到一个极点，斜率减少 $20\\,\\mathrm{dB/dec}$。依次得到：\n\n$0<\\omega<2$：斜率 $-20$；$2<\\omega<2.5$：斜率 $0$；$2.5<\\omega<3$：斜率 $-20$。\n\n$3<\\omega<10$：斜率 $0$；$10<\\omega<50$：斜率 $-20$；$\\omega>50$：斜率 $-40\\,\\mathrm{dB/dec}$。\n\n各折点连续连接，其近似坐标为\n$$\\begin{array}{c|rrrrr}\n\\omega\\ (\\mathrm{rad/s})&2&2.5&3&10&50\\\\\nL_a(\\omega)\\ (\\mathrm{dB})&3.52&3.52&1.94&1.94&-12.04\n\\end{array}$$\n\n**三、画相频曲线。**\n\n各环节相角相加：\n$$\\phi(\\omega)=-90^\\circ+\\arctan\\frac\\omega2+\\arctan\\frac\\omega3-\\arctan\\frac\\omega{2.5}-\\arctan\\frac\\omega{10}-\\arctan\\frac\\omega{50}.$$\n相角以度为单位，取以下近似值描点：\n$$\\begin{array}{c|rrrr}\n\\omega\\ (\\mathrm{rad/s})&1&3&10&50\\\\\n\\phi(\\omega)&-73.66^\\circ&-59.02^\\circ&-70.28^\\circ&-126.6^\\circ\n\\end{array}$$\n结合 $\\phi(0^+)=-90^\\circ$、$\\phi(\\infty)=-180^\\circ$，平滑连线。注意低频先上升，不能从 $-90^\\circ$ 开始就向下画。\n\n下图按考试作图方式绘制：横轴为对数频率，幅频用渐近折线，相频用平滑曲线；虚线是转折频率和裕度的辅助线。图中 $m$ 为各段斜率，所标 $\\omega_C\\approx12.5\\,\\mathrm{rad/s}$ 与 $\\gamma\\approx103.3^\\circ$ 均对应本问的折线估算。\n\n![Bode图：幅频渐近线、相频曲线与估算裕度|720](img/solution-202304-bode.svg)\n\n**四、由幅频渐近线估算截止频率和相角裕度。**\n\n在 $\\omega=10\\,\\mathrm{rad/s}$ 处，渐近幅值为 $1.25$，即 $1.94\\,\\mathrm{dB}$；之后以 $-20\\,\\mathrm{dB/dec}$ 下降。因此过零点在 $10<\\omega_C<50$ 内，且\n$$|G_C(j\\omega)|_a=\\frac{3(\\omega/2)(\\omega/3)}{\\omega(\\omega/2.5)(\\omega/10)}=\\frac{12.5}{\\omega}.$$\n令渐近幅值等于 $1$，得 $\\omega_C\\approx12.5\\,\\mathrm{rad/s}$。把这个估计频率代入相角公式：\n$$\\phi(12.5)\\approx-76.65^\\circ,$$\n$$\\boxed{\\gamma=180^\\circ+\\phi(\\omega_C)\\approx103.3^\\circ.}$$\n这里的截止频率和相角裕度均为基于幅频折线的估算。用实际幅频曲线校核时，得到 $\\omega_C\\approx8.20\\,\\mathrm{rad/s}$，此处 $\\phi\\approx-65.51^\\circ$，故 $\\gamma\\approx114.5^\\circ$。不要把一个方法的截止频率与另一个方法的相角裕度混用。",
-   "notes": "文字解析已补画正确的 Bode 图，主图采用幅频渐近线，并配上正确的相频曲线和估算裕度辅助线；实际曲线数值校核另列。保留的原答案扫描中，幅频折线及按其估算 $\\omega_C\\approx12.5\\,\\mathrm{rad/s}$、$\\gamma\\approx103.3^\\circ$ 的算法可用；相频草图的低频走势应纠正为先从 $-90^\\circ$ 上升，而非先下降。实际幅频曲线的穿越结果约为 $8.20\\,\\mathrm{rad/s}$、$114.5^\\circ$。"
-  },
-  {
-   "no": 5,
-   "score": null,
-   "cats": [
-    "离散系统 / 脉冲传递函数",
-    "离散系统 / 稳定性（朱利判据）",
-    "离散系统 / 差分方程"
-   ],
-   "stem": "系统结构图如下，求：\n\n[[fig:1]]\n\n1、求该系统的 $\\Phi(z)$ 传递函数；\n\n2、求系统稳定时的 $k$ 值范围；\n\n3、求该系统的差分方程；\n\n4、$k=2$ 时，若 $c(0)=0$、$c(1)=0.5$，求 $c(2)$ 及 $c(3)$ 的值。",
-   "figures": [
-    "img/q2023-5-1.png"
-   ],
-   "answerImages": [
-    "img/a2023-5-1.png",
-    "img/a2023-5-2.png",
-    "img/a2023-5-3.png"
-   ],
-   "answer": "以下按采样周期 $T=\\tau=1\\,\\mathrm s$、输入为单位阶跃 $r(n)=1(n)$ 作答。计算中保留 $e^{-2}$，最后用 $e^{-2}\\approx0.1353$ 取近似。\n\n（1）闭环脉冲传递函数：\n$$\\Phi(z)=\\frac{k[(1+e^{-2})z+1-3e^{-2}]}{4z^2+(k-4)(1+e^{-2})z+4e^{-2}+k(1-3e^{-2})}.$$\n\n（2）稳定范围：\n$$\\boxed{0<k<\\frac{4(1-e^{-2})}{1-3e^{-2}}}\\qquad\\text{（上界约为 }5.82\\text{）。}$$\n\n（3）差分方程：\n$$\\begin{aligned}\nc(n)&+\\left(\\frac k4-1\\right)(1+e^{-2})c(n-1)\\\\\n&+\\left[e^{-2}+\\frac k4(1-3e^{-2})\\right]c(n-2)\\\\\n&=\\frac k4(1+e^{-2})r(n-1)\\\\\n&\\quad+\\frac k4(1-3e^{-2})r(n-2).\n\\end{aligned}$$\n\n（4）取 $k=2$，从题给 $c(0)=0$、$c(1)=0.5$ 开始递推：\n$$c(2)=\\frac{5-3e^{-2}}4\\approx1.15,$$\n$$c(3)=\\frac{11-4e^{-2}-3e^{-4}}8\\approx1.30.$$\n两项数值均保留三位有效数字。",
-   "explanation": "以下按采样周期 $T=\\tau=1\\,\\mathrm s$、输入为单位阶跃 $r(n)=1(n)$ 作答。计算中保留 $e^{-2}$，最后用 $e^{-2}\\approx0.1353$ 取近似。\n\n**一、部分分式展开，查Z变换表。**\n\n记 $R(z)$、$C(z)$ 分别为输入、输出采样序列的Z变换，闭环脉冲传递函数为 $\\Phi(z)=C(z)/R(z)$。零阶保持器与对象合成后的开环脉冲传递函数为\n$$G(z)=(1-z^{-1})\\mathcal Z\\!\\left[\\frac{k}{s^2(s+2)}\\right].$$\n先作部分分式展开：\n$$\\frac1{s^2(s+2)}=\\frac1{2s^2}-\\frac1{4s}+\\frac1{4(s+2)}.$$\n由拉氏变换与Z变换对应表，取 $T=1\\,\\mathrm s$：\n$$\\begin{array}{c|c}\n\\text{拉氏变换}&\\text{Z变换}\\\\\n1/s^2&z/(z-1)^2\\\\\n1/s&z/(z-1)\\\\\n1/(s+2)&z/(z-e^{-2})\n\\end{array}$$\n所以\n$$G(z)=k\\frac{z-1}{z}\\left[\\frac{z}{2(z-1)^2}-\\frac{z}{4(z-1)}+\\frac{z}{4(z-e^{-2})}\\right]$$\n$$=\\frac{k[(1+e^{-2})z+1-3e^{-2}]}{4(z-1)(z-e^{-2})}.$$\n由单位负反馈关系 $\\Phi(z)=G(z)/[1+G(z)]$，得\n$$\\Phi(z)=\\frac{k[(1+e^{-2})z+1-3e^{-2}]}{4z^2+(k-4)(1+e^{-2})z+4e^{-2}+k(1-3e^{-2})}.$$\n\n**二、用二阶Jury判据求稳定范围。**\n\n将闭环分母除以 $4$，取首一特征多项式\n$$D(z)=z^2+\\left(\\frac k4-1\\right)(1+e^{-2})z+e^{-2}+\\frac k4(1-3e^{-2}).$$\n二阶Jury稳定条件为常数项绝对值小于 $1$，且 $D(1)>0$、$D(-1)>0$。分别代入：\n\n① $D(1)=\\dfrac{k(1-e^{-2})}{2}>0$，得 $k>0$。\n\n② $\\left|e^{-2}+\\dfrac k4(1-3e^{-2})\\right|<1$。在 $k>0$ 下，常数项为正，故\n$$k<\\frac{4(1-e^{-2})}{1-3e^{-2}}\\approx5.82.$$\n\n③ $D(-1)=2(1+e^{-2})-ke^{-2}>0$，得\n$$k<2(e^2+1)\\approx16.8.$$\n取交集：\n$$\\boxed{0<k<\\frac{4(1-e^{-2})}{1-3e^{-2}}}.$$\n\n**三、写出差分方程。**\n\n将 $C(z)/R(z)=\\Phi(z)$ 的分子、分母同除以 $z^2$，交叉相乘。利用 $z^{-1}$ 对应延迟一拍，得到\n$$\\begin{aligned}\nc(n)&+\\left(\\frac k4-1\\right)(1+e^{-2})c(n-1)\\\\\n&+\\left[e^{-2}+\\frac k4(1-3e^{-2})\\right]c(n-2)\\\\\n&=\\frac k4(1+e^{-2})r(n-1)\\\\\n&\\quad+\\frac k4(1-3e^{-2})r(n-2).\n\\end{aligned}$$\n\n**四、代入起始样本逐拍计算。**\n\n取 $k=2$，单位阶跃下 $r(0)=r(1)=r(2)=1$。差分方程化为\n$$\\begin{aligned}\nc(n)&=\\frac{1+e^{-2}}2c(n-1)\\\\\n&-\\frac{1-e^{-2}}2c(n-2)+1-e^{-2},\\qquad n\\ge2.\n\\end{aligned}$$\n从题给的 $c(0)=0$、$c(1)=0.5$ 出发：\n$$\\begin{aligned}\nc(2)&=\\frac{1+e^{-2}}4+1-e^{-2}\\\\\n&=\\frac{5-3e^{-2}}4\\approx1.15.\n\\end{aligned}$$\n继续代入未舍入的 $c(2)$：\n$$\\begin{aligned}\nc(3)&=\\frac{1+e^{-2}}2c(2)\\\\\n&-\\frac{1-e^{-2}}4+1-e^{-2}\\\\\n&=\\frac{11-4e^{-2}-3e^{-4}}8\\approx1.30.\n\\end{aligned}$$",
-   "notes": "题图只标周期 $\\tau$，第4问也未给输入；文字现明确采用 $T=\\tau=1\\,\\mathrm s$、单位阶跃这一解题条件，不声称漏条件时一律默认如此。第4问照用题给起始样本 $c(0)=0,c(1)=0.5$，未擅自改成零状态阶跃首拍。保留扫描中的 $0.26375$、$-11.135$ 为笔误；$c(2)$ 遗漏 $r(0)$ 项，$c(3)$ 的 $c(1)$ 项符号也错。文字从未提前舍入的 $e^{-2}$ 独立重算。"
-  },
-  {
-   "no": 6,
-   "score": null,
-   "cats": [
-    "非线性系统 / 描述函数法 / 自振分析",
-    "非线性系统 / 非线性环节等效"
-   ],
-   "stem": "系统结构图如下，求：\n\n[[fig:1]]\n\n[[fig:2]]\n\n1、$N_1$、$N_2$ 等效的非线性环节 $N$；\n\n2、当 $k=10$ 时，是否产生自振，如果产生自振，求出对应的频率和振幅；\n\n3、当该系统不自振时，求 $k$ 的范围。",
-   "figures": [
-    "img/q2023-6-1.png",
-    "img/q2023-6-2.png"
-   ],
-   "answerImages": [
-    "img/a2023-6-1.png",
-    "img/a2023-6-2.png"
-   ],
-   "answer": "1. 串联等效为带死区继电特性：输入 $>0.5$ 输出 $2$，$|x|<0.5$ 输出 $0$，$<-0.5$ 输出 $-2$（死区 $0.5$、幅值 $2$ 的继电器）。\n\n2. $\\omega=1\\,\\mathrm{rad/s}$ 处 $|G(j1)|=\\dfrac k2=5$；由 $N(A)|G(j1)|=1$ 得 $A_1\\approx12.72$，$A_2\\approx0.5004>0.5$；$A_2$ 为不稳定交点舍去，**产生自振**，频率 $1\\,\\mathrm{rad/s}$，非线性环节输入振幅约 $12.72$（描述函数近似）。\n\n3. $0<k<\\dfrac\\pi4$ 时描述函数法预测无自振交点。",
-   "explanation": "以下使用描述函数的基波近似，振幅 $A$ 指等效非线性环节输入的正弦振幅。$N_1$ 在未饱和区输出为输入的 $2$ 倍，$N_2$ 的输入阈值为 $1$，故串联等效死区为 $h=0.5$、继电输出幅值为 $M=2$。\n\n线性部分 $G(s)=k/[s(s+1)^2]$，相位条件给出\n$$-90^\\circ-2\\arctan\\omega=-180^\\circ\\Rightarrow\\omega=1,\\qquad |G(j1)|=k/2.$$\n对于 $A>h$，\n$$N(A)=\\dfrac{4M}{\\pi A}\\sqrt{1-\\left(\\dfrac hA\\right)^2}.$$\n当 $k=10$ 时，令 $N(A)k/2=1$。记 $q=(2Mk/\\pi)^2=(40/\\pi)^2$，则\n$$A^4-q A^2+qh^2=0,\\qquad A^2=\\dfrac{q\\pm\\sqrt{q^2-4qh^2}}2.$$\n两根为 $A_1\\approx12.72$ 和 $A_2\\approx0.5004$。小根仍严格大于死区边界 $0.5$，不是恰好等于 $0.5$；按幅值扰动判别，小根对应不稳定交点，大根对应稳定自振，频率约 $1\\,\\mathrm{rad/s}$。\n\n描述函数在 $A=\\sqrt2 h$ 时达到最大值 $N_{\\max}=2M/(\\pi h)$，故两曲线无交点的条件为\n$$\\frac k2<\\frac1{N_{\\max}}=\\frac{\\pi h}{2M}=\\frac\\pi8,$$\n即 $0<k<\\pi/4$。临界值 $k=\\pi/4$ 为相切情形，不包含在无交点区间内。",
-   "notes": "原答案的等效非线性特性、自振大振幅及无交点参数范围在描述函数近似下可用。上方文字补充精度及适用范围：不稳定小振幅约 $0.5004$，原图写 $0.5$ 是粗略舍入，不能理解为恰在死区边界；大振幅约 $12.72$。$0<k<\\pi/4$ 是描述函数曲线无交点的范围，不含相切临界值。",
-   "errataLevel": "ok"
-  },
-  {
-   "no": 7,
-   "score": null,
-   "cats": [
-    "状态空间 / 状态转移矩阵",
-    "状态空间 / 传递函数矩阵",
-    "状态空间 / 能控性与能观性"
-   ],
-   "stem": "$$A=\\begin{bmatrix}-2&1&0\\\\0&-2&0\\\\0&0&-1\\end{bmatrix},\\quad B=\\begin{bmatrix}0\\\\1\\\\1\\end{bmatrix},\\quad C=\\begin{bmatrix}0&1&0\\end{bmatrix}$$\n\n1、求 $e^{At}$ 状态转移矩阵；\n\n2、求该系统的 $G(s)$ 传递函数；\n\n3、求该系统的能控能观性。",
-   "figures": [],
-   "answerImages": [
-    "img/a2023-7-1.png",
-    "img/a2023-7-2.png"
-   ],
-   "answer": "1. $e^{At}=\\begin{bmatrix}e^{-2t}&te^{-2t}&0\\\\0&e^{-2t}&0\\\\0&0&e^{-t}\\end{bmatrix}$。\n\n2. $G(s)=C(sI-A)^{-1}B=\\dfrac1{s+2}$。\n\n3. 约旦标准型判据：**完全能控**；**不完全能观**。",
-   "explanation": "$(sI-A)^{-1}=\\begin{bmatrix}\\frac1{s+2}&\\frac1{(s+2)^2}&0\\\\0&\\frac1{s+2}&0\\\\0&0&\\frac1{s+1}\\end{bmatrix}$，逐项拉氏反变换。\n\n能控：$B$ 中与每个约旦块最后一行对应的元素（1、1）不为 0。能观：$C$ 中与每个约旦块第一列对应的元素存在 0。",
-   "notes": "已核对：正确。$e^{At}$、$G(s)=1/(s+2)$、完全能控、不完全能观均对。",
-   "errataLevel": "ok"
-  },
-  {
-   "no": 8,
-   "score": null,
-   "cats": [
-    "状态空间 / 稳定性分析",
-    "状态空间 / 状态反馈极点配置"
-   ],
-   "stem": "$$A=\\begin{bmatrix}3&-2\\\\4&3\\end{bmatrix},\\quad B=\\begin{bmatrix}0\\\\1\\end{bmatrix},\\quad C=\\begin{bmatrix}1&0\\end{bmatrix}$$\n\n1、当 $x_e=0$ 时，求系统的稳定性；\n\n2、系统是否可以通过状态反馈达到完全稳定；\n\n3、若 2 成立的条件下，求该系统的极点要为 $-2\\pm3j$ 时的对应状态反馈矩阵。",
-   "figures": [],
-   "answerImages": [
-    "img/a2023-8-1.png"
-   ],
-   "answer": "1. $|\\lambda I-A|=\\lambda^2-6\\lambda+17=0$，特征根 $\\lambda=3\\pm2\\sqrt2\\,j$，实部为正，**不稳定**。\n\n2. $\\operatorname{rank}[B\\ AB]=2$，完全能控，可以通过状态反馈镇定。\n\n3. 采用状态反馈 $u=-kx$，则 $k=[k_1\\ k_2]=[-13\\ \\ 10]$。",
-   "explanation": "1. 开环特征多项式（注意二次项系数为正）\n$$\\lvert\\lambda I-A\\rvert=\\begin{vmatrix}\\lambda-3&2\\\\-4&\\lambda-3\\end{vmatrix}=(\\lambda-3)^2+8=\\lambda^2-6\\lambda+17.$$\n判别式 $36-68=-32$，根为 $\\lambda=3\\pm2\\sqrt2\\,j$，实部为正，平衡点 $x_e=0$ **不稳定**。\n\n2. $AB=\\begin{bmatrix}3&-2\\\\4&3\\end{bmatrix}\\begin{bmatrix}0\\\\1\\end{bmatrix}=\\begin{bmatrix}-2\\\\3\\end{bmatrix}$，\n$$Q_c=[B\\ AB]=\\begin{bmatrix}0&-2\\\\1&3\\end{bmatrix},\\quad\\operatorname{rank}Q_c=2,$$\n系统完全能控，可以通过状态反馈任意配置极点，从而镇定。\n\n3. 设 $u=-kx=-k_1x_1-k_2x_2$，则\n$$A-Bk=\\begin{bmatrix}3&-2\\\\4-k_1&3-k_2\\end{bmatrix},$$\n$$\\lvert\\lambda I-A+Bk\\rvert=\\lambda^2+(k_2-6)\\lambda+\\bigl[-3(k_2-3)-2(k_1-4)\\bigr].$$\n期望多项式 $(\\lambda+2)^2+9=\\lambda^2+4\\lambda+13$。比较系数：\n$$k_2-6=4\\Rightarrow k_2=10,$$\n$$-3k_2+9-2k_1+8=13\\Rightarrow -30+17-2k_1=13\\Rightarrow k_1=-13.$$\n故 $k=[k_1\\ k_2]=[-13\\ \\ 10]$。",
-   "notes": "上方文字答案已改正；原答案图中开环特征方程被写成 $-\\lambda^2-6\\lambda+17=0$（少了正的 $\\lambda^2$），随后的根是按正确方程 $\\lambda^2-6\\lambda+17=0$ 解的。特征根、能控性、$k=[-13\\ \\ 10]$ 全部正确。"
-  }
- ]
+  "year": 2023,
+  "questionPages": "47–50",
+  "answerPages": "170–180",
+  "questions": [
+    {
+      "no": 1,
+      "score": null,
+      "cats": [
+        "建模 / 机械系统 / 微分方程与传递函数",
+        "状态空间 / 建立状态空间表达式"
+      ],
+      "stem": "系统如下图所示（弹簧刚度 $K$、黏性阻尼系数 $C$、质量 $m$）。为明确符号，以下按 $g(t)$ 为向下外加力、$f(t)$ 为质量块向下位移来建模，以静平衡位置为位移零点。求：\n\n[[fig:1]]\n\n1、该系统的微分方程；\n\n2、由外力到位移的传递函数；\n\n3、状态空间方程表达式。",
+      "figures": [
+        "img/q2023-1-1.png"
+      ],
+      "answerImages": [
+        "img/a2023-1-1.png"
+      ],
+      "answer": "取向下为正，$f(t)$ 为相对静平衡位置的位移，$g(t)$ 为外加力；$m,K,C$ 分别为质量、弹簧刚度和黏性阻尼系数。\n\n1. 微分方程：$m\\ddot f(t)+C\\dot f(t)+Kf(t)=g(t)$。\n\n2. 零初始条件下，$\\Phi(s)=\\dfrac{F(s)}{G(s)}=\\dfrac{1}{ms^2+Cs+K}$。\n\n3. 取 $x_1=f(t),\\ x_2=\\dot f(t)$，输入 $u=g(t)$，输出 $y=f(t)$：\n$$\\dot{\\boldsymbol{x}}=A\\boldsymbol{x}+Bu,\\qquad y=C_y\\boldsymbol{x}+Du,$$\n$$A=\\begin{bmatrix}0&1\\\\-K/m&-C/m\\end{bmatrix},\\quad B=\\begin{bmatrix}0\\\\1/m\\end{bmatrix},\\quad C_y=\\begin{bmatrix}1&0\\end{bmatrix},\\quad D=0.$$\n这里 $C_y$ 为输出矩阵，区别于阻尼系数 $C$。",
+      "explanation": "1. **列微分方程。** 设质量为 $m$，弹簧刚度为 $K$，黏性阻尼系数为 $C$。取向下为正，$f(t)$ 为相对静平衡位置的位移，$g(t)$ 为向下外加力。静平衡时重力与静态弹簧力已抵消，因此增量弹簧力为 $-Kf(t)$，阻尼力为 $-C\\dot f(t)$。由牛顿第二定律，\n$$m\\ddot f(t)=g(t)-C\\dot f(t)-Kf(t),$$\n即\n$$m\\ddot f(t)+C\\dot f(t)+Kf(t)=g(t).$$\n\n2. **求由力到位移的传递函数。** 定义 $F(s)=\\mathcal L\\{f(t)\\}$、$G(s)=\\mathcal L\\{g(t)\\}$。在零初始条件下作拉普拉斯变换：\n$$(ms^2+Cs+K)F(s)=G(s),$$\n故\n$$\\Phi(s)=\\frac{F(s)}{G(s)}=\\frac{1}{ms^2+Cs+K}.$$\n\n3. **建立状态空间方程。** 取位移和速度为状态：$x_1=f(t)$、$x_2=\\dot f(t)$，输入 $u=g(t)$，输出 $y=f(t)$。由状态定义及微分方程逐行得到\n$$\\dot x_1=x_2,$$\n$$\\dot x_2=-\\frac Km x_1-\\frac Cm x_2+\\frac1m u,\\qquad y=x_1.$$\n因此状态矩阵第一行系数为 $[0,1]$，第二行系数为 $[-K/m,-C/m]$；输入只直接作用于第二个状态方程。完整矩阵为\n$$\\dot{\\boldsymbol{x}}=A\\boldsymbol{x}+Bu,\\qquad y=C_y\\boldsymbol{x}+Du,$$\n$$A=\\begin{bmatrix}0&1\\\\-K/m&-C/m\\end{bmatrix},\\quad B=\\begin{bmatrix}0\\\\1/m\\end{bmatrix},\\quad C_y=\\begin{bmatrix}1&0\\end{bmatrix},\\quad D=0.$$\n这里 $C_y$ 是输出矩阵，不是阻尼系数 $C$；由该实现也可验证 $C_y(sI-A)^{-1}B=1/(ms^2+Cs+K)$。",
+      "notes": "原解的 $k=K$，原解用作阻尼系数的字母 $f=C$，不是位移 $f(t)$。原解未明确其位移及状态符号的定义；微分方程和传递函数在相应符号对应下成立。\n\n原图第一行是 $[0,0]$，即 $A_{12}=0$（应为 $1$），与其标量式 $\\dot x_1=x_2$ 矛盾；照该矩阵及所印输入、输出矩阵计算，传递函数为零。正确状态矩阵的第一行必须是 $[0,1]$。\n\n不能仅凭原解将 $1/m$ 放在输出矩阵就判错。若采用缩放状态 $z_1=mf(t)$、$z_2=m\\dot f(t)$，输入仍为 $u=g(t)$、输出为 $y=f(t)$，一组完整的正确实现是\n$$A_z=\\begin{bmatrix}0&1\\\\-K/m&-C/m\\end{bmatrix},\\quad B_z=\\begin{bmatrix}0\\\\1\\end{bmatrix},\\quad C_{y,z}=\\begin{bmatrix}1/m&0\\end{bmatrix},\\quad D=0.$$\n这里 $A_z=(mI)A(mI)^{-1}$ 中的 $A$ 是文字解中已经正确建立的物理状态矩阵，不是原图第一行印为 $[0,0]$ 的错误矩阵。两种正确实现的传递函数均为 $1/(ms^2+Cs+K)$。"
+    },
+    {
+      "no": 2,
+      "score": null,
+      "cats": [
+        "时域分析 / 二阶系统性能指标",
+        "时域分析 / 稳态误差 / 复合控制"
+      ],
+      "stem": "系统结构图如下（按用户提供的新图重绘）。该系统的无阻尼振荡频率为 $2\\,\\mathrm{rad/s}$；误差为外环比较点的 $E(s)=R(s)-K_dY(s)$，不是 $R(s)-Y(s)$。各环节初始状态为零，求：\n\n[[fig:1]]\n\n1、$G_c(s)=0$ 时，系统在单位阶跃输入下的稳态误差 $e_{ss}=0.4$，求参数 $K_t$、$K_d$，并计算此时输出的最大超调量 $\\sigma\\%$ 和调节时间 $t_s\\ (\\Delta=\\pm5\\%)$；\n\n2、当 $e_{ss}=0$ 时，求 $G_c(s)$ 的形式。",
+      "figures": [
+        "img/q2023-2-1.png"
+      ],
+      "answerImages": [
+        "img/a2023-2-1.png",
+        "img/a2023-2-2.png"
+      ],
+      "answer": "1. $K_t=1.92$，$K_d=2.88$，阻尼比 $\\zeta=413/600\\approx0.6883$。相对于输出终值的最大超调量为 $\\sigma\\%\\approx5.07\\%$；按 $5\\%$ 带常用公式（$3.5/\\zeta\\omega_n$），$t_s\\approx2.54\\,\\mathrm{s}$（若取粗略式 $3/\\zeta\\omega_n$ 则约为 $2.18\\,\\mathrm{s}$）。\n\n2. 延续第1问参数与单位阶跃输入，稳态无差要求\n$$G_c(0)=\\dfrac{2}{3}.$$\n最简可取比例前馈 $G_c(s)=\\dfrac23$。",
+      "explanation": "**1．化简结构，求输出与误差传递函数。**\n令 $U(s)$ 为惯性环节 $1/(1.2s+1)$ 的输出。积分器与内反馈 $K_t$ 化简后为 $1/(s+K_t)$，因此\n$$E=R-K_dY,\\qquad U=\\frac{E}{1.2s+1},\\qquad Y=\\frac{U+G_cR}{s+K_t}.$$\n消去 $U,E$，记\n$$D(s)=(1.2s+1)(s+K_t)+K_d=1.2s^2+(1+1.2K_t)s+K_t+K_d,$$\n得到\n$$\\Phi(s)=\\frac{Y(s)}{R(s)}=\\frac{1+(1.2s+1)G_c(s)}{D(s)},$$\n$$\\Phi_e(s)=\\frac{E(s)}{R(s)}=\\frac{(1.2s+1)[s+K_t-K_dG_c(s)]}{D(s)}.$$\n\n**2．第1问：求反馈参数、超调量和调节时间。**\n$G_c=0$ 时，将 $D(s)$ 除以 $1.2$，与 $s^2+2\\zeta\\omega_ns+\\omega_n^2$ 比较。由 $\\omega_n=2$，得\n$$K_t+K_d=1.2\\omega_n^2=4.8.$$\n单位阶跃输入的稳态误差为\n$$e_{ss}=\\lim_{s\\to0}\\Phi_e(s)=\\frac{K_t}{K_t+K_d}=0.4.$$\n联立可得 $K_t=1.92$、$K_d=2.88$。此时 $D(s)=1.2s^2+3.304s+4.8$，二阶系数均为正，闭环稳定，终值定理适用。进一步有\n$$2\\zeta\\omega_n=\\frac{3.304}{1.2},\\qquad \\zeta=\\frac{413}{600}\\approx0.6883.$$\n相对于输出终值，最大超调量为\n$$\\sigma\\%=100e^{-\\pi\\zeta/\\sqrt{1-\\zeta^2}}\\%\\approx5.07\\%.$$\n对 $\\Delta=\\pm5\\%$，采用重大及经典教材常用近似公式（$3.5/\\zeta\\omega_n$）：\n$$t_s\\approx\\frac{3.5}{\\zeta\\omega_n}=\\frac{3.5}{(413/600)\\times2}\\approx2.54\\,\\mathrm{s}.$$\n（注：若按部分工程手册粗略公式 $3/(\\zeta\\omega_n)$ 计算，则约为 $2.18\\,\\mathrm{s}$）。\n\n**3．第2问：求阶跃稳态无差的前馈环节。**\n沿用第1问参数与单位阶跃输入。设前馈环节稳定、分子阶次不高于分母，且 $G_c(0)$ 有限；整体响应稳定时，由终值定理\n$$e_{ss}=\\Phi_e(0)=\\frac{K_t-K_dG_c(0)}{K_t+K_d}=0,$$\n因此\n$$G_c(0)=\\frac{K_t}{K_d}=\\frac23.$$\n只约束直流增益，解并不唯一，最简可取比例环节 $G_c(s)=2/3$；它不改变已稳定的特征分母。\n\n（若额外要求 $E/R\\equiv0$，理想全补偿才为 $G_c(s)=(s+1.92)/2.88$，含理想微分，条件强于本问。）",
+      "notes": "文字已按用户提供的新图重算。保留的原答案扫描对应旧图，不是新图的配套解答；其中 $k_a=0.4$、超调量、调节时间及 $G_c=s+0.4$ 均不能套用于现图。扫描还将0型单位反馈的阶跃稳态误差误写为 $1/K_p$（应为 $1/(1+K_p)$），且未使用 $\\omega_n=2$ 条件。",
+      "errataLevel": "severe",
+      "figureWidths": [
+        560
+      ]
+    },
+    {
+      "no": 3,
+      "score": null,
+      "cats": [
+        "根轨迹 / 常规根轨迹绘制",
+        "时域分析 / 稳态误差 / 静态误差系数",
+        "根轨迹 / 主导极点与降阶"
+      ],
+      "stem": "$$G(s)=\\frac{K(s+4)}{s(s+2)(s+15)}$$\n\n1、绘制其根轨迹；\n\n2、若要求系统稳定，求 $K$ 的开环增益范围；\n\n3、$s_1=-9$ 时，系统是否可视为二阶系统？当 $r(t)=2+3t$ 时，求此时对应的稳态误差？",
+      "figures": [],
+      "answerImages": [
+        "img/a2023-3-1.png",
+        "img/a2023-3-2.png",
+        "img/a2023-3-3.png"
+      ],
+      "answer": "开环极点 $0,-2,-15$，零点 $-4$；实轴根轨迹 $(-15,-4)\\cup(-2,0)$；渐近线 $\\sigma_a=-6.5$，倾角 $\\pm90^\\circ$；分离点 $d\\approx-1.14$（$K\\approx4.75$）；与虚轴无交点，$K>0$ 时系统恒稳定。$s_1=-9$ 时 $K=75.6$，另两极点 $-4\\pm j4.195$；因 $9/4=2.25<5$，**不能**视为二阶系统。$r(t)=2+3t$ 时 $K_v=\\dfrac{252}{25}=10.08$，$e_{ss}=\\dfrac{3}{K_v}=\\dfrac{25}{84}\\approx0.298$。",
+      "explanation": "**一、开环极零点与实轴。** $G(s)=\\dfrac{K(s+4)}{s(s+2)(s+15)}$，开环极点 $0,-2,-15$，零点 $-4$，$n-m=2$。实轴根轨迹位于奇数个实极、零点右侧，即 $(-15,-4)\\cup(-2,0)$。渐近线\n$$\\sigma_a=\\dfrac{0-2-15-(-4)}{2}=-6.5,\\qquad \\varphi_a=\\pm90^\\circ,$$\n为过 $-6.5$ 的竖直线。\n\n**二、分离点。** 由 $K=-\\dfrac{s(s+2)(s+15)}{s+4}$，令 $\\dfrac{\\mathrm dK}{\\mathrm ds}=0$，得\n$$2s^3+29s^2+136s+120=0,$$\n实根 $s\\approx-1.14$（另两根为复数），位于 $(-2,0)$ 上，对应 $K\\approx4.75$。\n\n**三、虚轴交点与稳定范围。** 特征多项式\n$$D(s)=s(s+2)(s+15)+K(s+4)=s^3+17s^2+(30+K)s+4K.$$\n劳斯表\n$$\\begin{array}{c|cc}\ns^3 & 1 & 30+K\\\\\ns^2 & 17 & 4K\\\\\ns^1 & \\dfrac{17(30+K)-1\\times4K}{17}=\\dfrac{510+13K}{17} & 0\\\\\ns^0 & 4K &\n\\end{array}$$\n当 $K>0$ 时首列全为正（$\\dfrac{510+13K}{17}>0$、$4K>0$），故系统对一切 $K>0$ 稳定，与正虚轴无交点。\n\n**四、作图。** $-15$ 一支沿实轴向右趋于零点 $-4$；$0,-2$ 两支相向运动，在 $d\\approx-1.14$ 会合后离开实轴，成为共轭分支沿过 $-6.5$ 的 $\\pm90^\\circ$ 渐近线趋向无穷，全部位于左半平面。图见下。\n\n![根轨迹图|520](img/solution-202303-rootlocus.svg)\n\n**五、二阶近似判断。** 由幅值条件\n$$K=\\dfrac{|s|\\,|s+2|\\,|s+15|}{|s+4|}\\Big|_{s=-9}=\\dfrac{9\\times7\\times6}{5}=75.6.$$\n由根之和（$-17$）得另两根实部为 $\\dfrac{-17+9}{2}=-4$；由根之积（$4K$）得它们满足 $s^2+8s+33.6=0$，即\n$$r_{2,3}=-4\\pm j4.195.$$\n共轭极点实部 $4$ 与实极点 $9$ 之比 $\\dfrac{9}{4}=2.25<5$，实极点离虚轴不够远、不能忽略，故**不能**把系统近似为二阶系统。\n\n**六、稳态误差。** 系统为 1 型，$r(t)=2+3t$ 的阶跃部分误差为零，斜坡部分用题给开环传函计算：\n$$K_v=\\lim_{s\\to0}sG(s)=\\dfrac{75.6\\times4}{2\\times15}=\\dfrac{252}{25}=10.08,\\qquad e_{ss}=\\dfrac{3}{K_v}=\\dfrac{3}{10.08}=\\dfrac{25}{84}\\approx0.298.$$",
+      "notes": "上方文字答案已改正；原答案图中求 $e_{ss}$ 时用错开环传函，把 $K_v$ 写成了 $2.864$、$e_{ss}$ 写成了 $1.05$。根轨迹、稳定性、$s=-9$ 时的 $K$ 与另两极点均对。文字解析已按特征方程重画根轨迹图。"
+    },
+    {
+      "no": 4,
+      "score": null,
+      "cats": [
+        "频域分析 / Bode 图绘制",
+        "频域分析 / 截止频率与相角裕度"
+      ],
+      "stem": "已知：\n$$G_C(s)=\\frac{500(s+2)(s+3)}{s(0.8s+2)(s+10)(s+50)}$$\n求：\n\n1、绘制该系统的 Bode 图；\n\n2、求该系统的截止频率 $\\omega_C$ 和相角裕度 $\\gamma$。",
+      "figures": [],
+      "answerImages": [
+        "img/a2023-4-1.png",
+        "img/a2023-4-2.png"
+      ],
+      "answer": "（1）将传递函数化为时间常数形式：\n$$G_C(s)=\\frac{3(1+s/2)(1+s/3)}{s(1+s/2.5)(1+s/10)(1+s/50)}.$$\n转折频率依次为 $2,2.5,3,10,50\\,\\mathrm{rad/s}$，幅频渐近线各段斜率依次为\n$$-20,\\quad0,\\quad-20,\\quad0,\\quad-20,\\quad-40\\quad(\\mathrm{dB/dec}).$$\n相频曲线从 $-90^\\circ$ 出发，先上升、后下降，最终趋于 $-180^\\circ$。完整图见下方文字解析。\n\n（2）按幅频渐近线估算：\n$$\\boxed{\\omega_C\\approx12.5\\,\\mathrm{rad/s},\\qquad\\gamma\\approx103.3^\\circ.}$$\n若用实际幅频曲线求交点，数值校核为 $\\omega_C\\approx8.20\\,\\mathrm{rad/s}$、$\\gamma\\approx114.5^\\circ$；这与折线估算是两组不同精度的结果。",
+      "explanation": "**一、化为标准形式，找转折频率。**\n\n把各因子中的常数提出，得低频系数 $500\\times2\\times3/(2\\times10\\times50)=3$，所以\n$$G_C(s)=\\frac{3(1+s/2)(1+s/3)}{s(1+s/2.5)(1+s/10)(1+s/50)}.$$\n积分环节使低频斜率为 $-20\\,\\mathrm{dB/dec}$。两个零点的转折频率为 $2,3$，三个惯性环节的转折频率为 $2.5,10,50\\,\\mathrm{rad/s}$。\n\n**二、画幅频渐近线。**\n\n记 $L_a(\\omega)$ 为对数幅频渐近线，单位为 dB。低频段为\n$$L_a(\\omega)=20\\lg3-20\\lg\\omega,$$\n因此先标出 $\\omega=1\\,\\mathrm{rad/s}$ 时约 $9.54\\,\\mathrm{dB}$，画斜率为 $-20\\,\\mathrm{dB/dec}$ 的直线。频率增大时，每遇到一个零点，斜率增加 $20$；每遇到一个极点，斜率减少 $20\\,\\mathrm{dB/dec}$。依次得到：\n\n$0<\\omega<2$：斜率 $-20$；$2<\\omega<2.5$：斜率 $0$；$2.5<\\omega<3$：斜率 $-20$。\n\n$3<\\omega<10$：斜率 $0$；$10<\\omega<50$：斜率 $-20$；$\\omega>50$：斜率 $-40\\,\\mathrm{dB/dec}$。\n\n各折点连续连接，其近似坐标为\n$$\\begin{array}{c|rrrrr}\n\\omega\\ (\\mathrm{rad/s})&2&2.5&3&10&50\\\\\nL_a(\\omega)\\ (\\mathrm{dB})&3.52&3.52&1.94&1.94&-12.04\n\\end{array}$$\n\n**三、画相频曲线。**\n\n各环节相角相加：\n$$\\phi(\\omega)=-90^\\circ+\\arctan\\frac\\omega2+\\arctan\\frac\\omega3-\\arctan\\frac\\omega{2.5}-\\arctan\\frac\\omega{10}-\\arctan\\frac\\omega{50}.$$\n相角以度为单位，取以下近似值描点：\n$$\\begin{array}{c|rrrr}\n\\omega\\ (\\mathrm{rad/s})&1&3&10&50\\\\\n\\phi(\\omega)&-73.66^\\circ&-59.02^\\circ&-70.28^\\circ&-126.6^\\circ\n\\end{array}$$\n结合 $\\phi(0^+)=-90^\\circ$、$\\phi(\\infty)=-180^\\circ$，平滑连线。注意低频先上升，不能从 $-90^\\circ$ 开始就向下画。\n\n下图按考试作图方式绘制：横轴为对数频率，幅频用渐近折线，相频用平滑曲线；虚线是转折频率和裕度的辅助线。图中 $m$ 为各段斜率，所标 $\\omega_C\\approx12.5\\,\\mathrm{rad/s}$ 与 $\\gamma\\approx103.3^\\circ$ 均对应本问的折线估算。\n\n![Bode图：幅频渐近线、相频曲线与估算裕度|720](img/solution-202304-bode.svg)\n\n**四、由幅频渐近线估算截止频率和相角裕度。**\n\n在 $\\omega=10\\,\\mathrm{rad/s}$ 处，渐近幅值为 $1.25$，即 $1.94\\,\\mathrm{dB}$；之后以 $-20\\,\\mathrm{dB/dec}$ 下降。因此过零点在 $10<\\omega_C<50$ 内，且\n$$|G_C(j\\omega)|_a=\\frac{3(\\omega/2)(\\omega/3)}{\\omega(\\omega/2.5)(\\omega/10)}=\\frac{12.5}{\\omega}.$$\n令渐近幅值等于 $1$，得 $\\omega_C\\approx12.5\\,\\mathrm{rad/s}$。把这个估计频率代入相角公式：\n$$\\phi(12.5)\\approx-76.65^\\circ,$$\n$$\\boxed{\\gamma=180^\\circ+\\phi(\\omega_C)\\approx103.3^\\circ.}$$\n这里的截止频率和相角裕度均为基于幅频折线的估算。用实际幅频曲线校核时，得到 $\\omega_C\\approx8.20\\,\\mathrm{rad/s}$，此处 $\\phi\\approx-65.51^\\circ$，故 $\\gamma\\approx114.5^\\circ$。不要把一个方法的截止频率与另一个方法的相角裕度混用。",
+      "notes": "文字解析已补画正确的 Bode 图，主图采用幅频渐近线，并配上正确的相频曲线和估算裕度辅助线；实际曲线数值校核另列。保留的原答案扫描中，幅频折线及按其估算 $\\omega_C\\approx12.5\\,\\mathrm{rad/s}$、$\\gamma\\approx103.3^\\circ$ 的算法可用；相频草图的低频走势应纠正为先从 $-90^\\circ$ 上升，而非先下降。实际幅频曲线的穿越结果约为 $8.20\\,\\mathrm{rad/s}$、$114.5^\\circ$。"
+    },
+    {
+      "no": 5,
+      "score": null,
+      "cats": [
+        "离散系统 / 脉冲传递函数",
+        "离散系统 / 稳定性（朱利判据）",
+        "离散系统 / 差分方程"
+      ],
+      "stem": "系统结构图如下，求：\n\n[[fig:1]]\n\n1、求该系统的 $\\Phi(z)$ 传递函数；\n\n2、求系统稳定时的 $k$ 值范围；\n\n3、求该系统的差分方程；\n\n4、$k=2$ 时，若 $c(0)=0$、$c(1)=0.5$，求 $c(2)$ 及 $c(3)$ 的值。",
+      "figures": [
+        "img/q2023-5-1.png"
+      ],
+      "answerImages": [
+        "img/a2023-5-1.png",
+        "img/a2023-5-2.png",
+        "img/a2023-5-3.png"
+      ],
+      "answer": "以下按采样周期 $T=\\tau=1\\,\\mathrm s$、输入为单位阶跃 $r(n)=1(n)$ 作答。计算中保留 $e^{-2}$，最后用 $e^{-2}\\approx0.1353$ 取近似。\n\n（1）闭环脉冲传递函数：\n$$\\Phi(z)=\\frac{k[(1+e^{-2})z+1-3e^{-2}]}{4z^2+(k-4)(1+e^{-2})z+4e^{-2}+k(1-3e^{-2})}.$$\n\n（2）稳定范围：\n$$\\boxed{0<k<\\frac{4(1-e^{-2})}{1-3e^{-2}}}\\qquad\\text{（上界约为 }5.82\\text{）。}$$\n\n（3）差分方程：\n$$\\begin{aligned}\nc(n)&+\\left(\\frac k4-1\\right)(1+e^{-2})c(n-1)\\\\\n&+\\left[e^{-2}+\\frac k4(1-3e^{-2})\\right]c(n-2)\\\\\n&=\\frac k4(1+e^{-2})r(n-1)\\\\\n&\\quad+\\frac k4(1-3e^{-2})r(n-2).\n\\end{aligned}$$\n\n（4）取 $k=2$，从题给 $c(0)=0$、$c(1)=0.5$ 开始递推：\n$$c(2)=\\frac{5-3e^{-2}}4\\approx1.15,$$\n$$c(3)=\\frac{11-4e^{-2}-3e^{-4}}8\\approx1.30.$$\n两项数值均保留三位有效数字。",
+      "explanation": "以下按采样周期 $T=\\tau=1\\,\\mathrm s$、输入为单位阶跃 $r(n)=1(n)$ 作答。计算中保留 $e^{-2}$，最后用 $e^{-2}\\approx0.1353$ 取近似。\n\n**一、部分分式展开，查Z变换表。**\n\n记 $R(z)$、$C(z)$ 分别为输入、输出采样序列的Z变换，闭环脉冲传递函数为 $\\Phi(z)=C(z)/R(z)$。零阶保持器与对象合成后的开环脉冲传递函数为\n$$G(z)=(1-z^{-1})\\mathcal Z\\!\\left[\\frac{k}{s^2(s+2)}\\right].$$\n先作部分分式展开：\n$$\\frac1{s^2(s+2)}=\\frac1{2s^2}-\\frac1{4s}+\\frac1{4(s+2)}.$$\n由拉氏变换与Z变换对应表，取 $T=1\\,\\mathrm s$：\n$$\\begin{array}{c|c}\n\\text{拉氏变换}&\\text{Z变换}\\\\\n1/s^2&z/(z-1)^2\\\\\n1/s&z/(z-1)\\\\\n1/(s+2)&z/(z-e^{-2})\n\\end{array}$$\n所以\n$$G(z)=k\\frac{z-1}{z}\\left[\\frac{z}{2(z-1)^2}-\\frac{z}{4(z-1)}+\\frac{z}{4(z-e^{-2})}\\right]$$\n$$=\\frac{k[(1+e^{-2})z+1-3e^{-2}]}{4(z-1)(z-e^{-2})}.$$\n由单位负反馈关系 $\\Phi(z)=G(z)/[1+G(z)]$，得\n$$\\Phi(z)=\\frac{k[(1+e^{-2})z+1-3e^{-2}]}{4z^2+(k-4)(1+e^{-2})z+4e^{-2}+k(1-3e^{-2})}.$$\n\n**二、用二阶Jury判据求稳定范围。**\n\n将闭环分母除以 $4$，取首一特征多项式\n$$D(z)=z^2+\\left(\\frac k4-1\\right)(1+e^{-2})z+e^{-2}+\\frac k4(1-3e^{-2}).$$\n二阶Jury稳定条件为常数项绝对值小于 $1$，且 $D(1)>0$、$D(-1)>0$。分别代入：\n\n① $D(1)=\\dfrac{k(1-e^{-2})}{2}>0$，得 $k>0$。\n\n② $\\left|e^{-2}+\\dfrac k4(1-3e^{-2})\\right|<1$。在 $k>0$ 下，常数项为正，故\n$$k<\\frac{4(1-e^{-2})}{1-3e^{-2}}\\approx5.82.$$\n\n③ $D(-1)=2(1+e^{-2})-ke^{-2}>0$，得\n$$k<2(e^2+1)\\approx16.8.$$\n取交集：\n$$\\boxed{0<k<\\frac{4(1-e^{-2})}{1-3e^{-2}}}.$$\n\n**三、写出差分方程。**\n\n将 $C(z)/R(z)=\\Phi(z)$ 的分子、分母同除以 $z^2$，交叉相乘。利用 $z^{-1}$ 对应延迟一拍，得到\n$$\\begin{aligned}\nc(n)&+\\left(\\frac k4-1\\right)(1+e^{-2})c(n-1)\\\\\n&+\\left[e^{-2}+\\frac k4(1-3e^{-2})\\right]c(n-2)\\\\\n&=\\frac k4(1+e^{-2})r(n-1)\\\\\n&\\quad+\\frac k4(1-3e^{-2})r(n-2).\n\\end{aligned}$$\n\n**四、代入起始样本逐拍计算。**\n\n取 $k=2$，单位阶跃下 $r(0)=r(1)=r(2)=1$。差分方程化为\n$$\\begin{aligned}\nc(n)&=\\frac{1+e^{-2}}2c(n-1)\\\\\n&-\\frac{1-e^{-2}}2c(n-2)+1-e^{-2},\\qquad n\\ge2.\n\\end{aligned}$$\n从题给的 $c(0)=0$、$c(1)=0.5$ 出发：\n$$\\begin{aligned}\nc(2)&=\\frac{1+e^{-2}}4+1-e^{-2}\\\\\n&=\\frac{5-3e^{-2}}4\\approx1.15.\n\\end{aligned}$$\n继续代入未舍入的 $c(2)$：\n$$\\begin{aligned}\nc(3)&=\\frac{1+e^{-2}}2c(2)\\\\\n&-\\frac{1-e^{-2}}4+1-e^{-2}\\\\\n&=\\frac{11-4e^{-2}-3e^{-4}}8\\approx1.30.\n\\end{aligned}$$",
+      "notes": "题图只标周期 $\\tau$，第4问也未给输入；文字现明确采用 $T=\\tau=1\\,\\mathrm s$、单位阶跃这一解题条件，不声称漏条件时一律默认如此。第4问照用题给起始样本 $c(0)=0,c(1)=0.5$，未擅自改成零状态阶跃首拍。保留扫描中的 $0.26375$、$-11.135$ 为笔误；$c(2)$ 遗漏 $r(0)$ 项，$c(3)$ 的 $c(1)$ 项符号也错。文字从未提前舍入的 $e^{-2}$ 独立重算。"
+    },
+    {
+      "no": 6,
+      "score": null,
+      "cats": [
+        "非线性系统 / 描述函数法 / 自振分析",
+        "非线性系统 / 非线性环节等效"
+      ],
+      "stem": "系统结构图如下，求：\n\n[[fig:1]]\n\n[[fig:2]]\n\n1、$N_1$、$N_2$ 等效的非线性环节 $N$；\n\n2、当 $k=10$ 时，是否产生自振，如果产生自振，求出对应的频率和振幅；\n\n3、当该系统不自振时，求 $k$ 的范围。",
+      "figures": [
+        "img/q2023-6-1.png",
+        "img/q2023-6-2.png"
+      ],
+      "answerImages": [
+        "img/a2023-6-1.png",
+        "img/a2023-6-2.png"
+      ],
+      "answer": "1. 串联等效为带死区继电特性：输入 $>0.5$ 输出 $2$，$|x|<0.5$ 输出 $0$，$<-0.5$ 输出 $-2$（死区 $0.5$、幅值 $2$ 的继电器）。\n\n2. $\\omega=1\\,\\mathrm{rad/s}$ 处 $|G(j1)|=\\dfrac k2=5$；由 $N(A)|G(j1)|=1$ 得 $A_1\\approx12.72$，$A_2\\approx0.5004>0.5$；$A_2$ 为不稳定交点舍去，**产生自振**，频率 $1\\,\\mathrm{rad/s}$，非线性环节输入振幅约 $12.72$（描述函数近似）。\n\n3. $0<k<\\dfrac\\pi4$ 时描述函数法预测无自振交点。",
+      "explanation": "以下使用描述函数的基波近似，振幅 $A$ 指等效非线性环节输入的正弦振幅。$N_1$ 在未饱和区输出为输入的 $2$ 倍，$N_2$ 的输入阈值为 $1$，故串联等效死区为 $h=0.5$、继电输出幅值为 $M=2$。\n\n线性部分 $G(s)=k/[s(s+1)^2]$，相位条件给出\n$$-90^\\circ-2\\arctan\\omega=-180^\\circ\\Rightarrow\\omega=1,\\qquad |G(j1)|=k/2.$$\n对于 $A>h$，\n$$N(A)=\\dfrac{4M}{\\pi A}\\sqrt{1-\\left(\\dfrac hA\\right)^2}.$$\n当 $k=10$ 时，令 $N(A)k/2=1$。记 $q=(2Mk/\\pi)^2=(40/\\pi)^2$，则\n$$A^4-q A^2+qh^2=0,\\qquad A^2=\\dfrac{q\\pm\\sqrt{q^2-4qh^2}}2.$$\n两根为 $A_1\\approx12.72$ 和 $A_2\\approx0.5004$。小根仍严格大于死区边界 $0.5$，不是恰好等于 $0.5$；按幅值扰动判别，小根对应不稳定交点，大根对应稳定自振，频率约 $1\\,\\mathrm{rad/s}$。\n\n描述函数在 $A=\\sqrt2 h$ 时达到最大值 $N_{\\max}=2M/(\\pi h)$，故两曲线无交点的条件为\n$$\\frac k2<\\frac1{N_{\\max}}=\\frac{\\pi h}{2M}=\\frac\\pi8,$$\n即 $0<k<\\pi/4$。临界值 $k=\\pi/4$ 为相切情形，不包含在无交点区间内。",
+      "notes": "原答案的等效非线性特性、自振大振幅及无交点参数范围在描述函数近似下可用。上方文字补充精度及适用范围：不稳定小振幅约 $0.5004$，原图写 $0.5$ 是粗略舍入，不能理解为恰在死区边界；大振幅约 $12.72$。$0<k<\\pi/4$ 是描述函数曲线无交点的范围，不含相切临界值。",
+      "errataLevel": "ok"
+    },
+    {
+      "no": 7,
+      "score": null,
+      "cats": [
+        "状态空间 / 状态转移矩阵",
+        "状态空间 / 传递函数矩阵",
+        "状态空间 / 能控性与能观性"
+      ],
+      "stem": "$$A=\\begin{bmatrix}-2&1&0\\\\0&-2&0\\\\0&0&-1\\end{bmatrix},\\quad B=\\begin{bmatrix}0\\\\1\\\\1\\end{bmatrix},\\quad C=\\begin{bmatrix}0&1&0\\end{bmatrix}$$\n\n1、求 $e^{At}$ 状态转移矩阵；\n\n2、求该系统的 $G(s)$ 传递函数；\n\n3、求该系统的能控能观性。",
+      "figures": [],
+      "answerImages": [
+        "img/a2023-7-1.png",
+        "img/a2023-7-2.png"
+      ],
+      "answer": "1. $e^{At}=\\begin{bmatrix}e^{-2t}&te^{-2t}&0\\\\0&e^{-2t}&0\\\\0&0&e^{-t}\\end{bmatrix}$。\n\n2. $G(s)=C(sI-A)^{-1}B=\\dfrac1{s+2}$。\n\n3. 约旦标准型判据：**完全能控**；**不完全能观**。",
+      "explanation": "$(sI-A)^{-1}=\\begin{bmatrix}\\frac1{s+2}&\\frac1{(s+2)^2}&0\\\\0&\\frac1{s+2}&0\\\\0&0&\\frac1{s+1}\\end{bmatrix}$，逐项拉氏反变换。\n\n能控：$B$ 中与每个约旦块最后一行对应的元素（1、1）不为 0。能观：$C$ 中与每个约旦块第一列对应的元素存在 0。",
+      "notes": "已核对：正确。$e^{At}$、$G(s)=1/(s+2)$、完全能控、不完全能观均对。",
+      "errataLevel": "ok"
+    },
+    {
+      "no": 8,
+      "score": null,
+      "cats": [
+        "状态空间 / 稳定性分析",
+        "状态空间 / 状态反馈极点配置"
+      ],
+      "stem": "$$A=\\begin{bmatrix}3&-2\\\\4&3\\end{bmatrix},\\quad B=\\begin{bmatrix}0\\\\1\\end{bmatrix},\\quad C=\\begin{bmatrix}1&0\\end{bmatrix}$$\n\n1、当 $x_e=0$ 时，求系统的稳定性；\n\n2、系统是否可以通过状态反馈达到完全稳定；\n\n3、若 2 成立的条件下，求该系统的极点要为 $-2\\pm3j$ 时的对应状态反馈矩阵。",
+      "figures": [],
+      "answerImages": [
+        "img/a2023-8-1.png"
+      ],
+      "answer": "1. $|\\lambda I-A|=\\lambda^2-6\\lambda+17=0$，特征根 $\\lambda=3\\pm2\\sqrt2\\,j$，实部为正，**不稳定**。\n\n2. $\\operatorname{rank}[B\\ AB]=2$，完全能控，可以通过状态反馈镇定。\n\n3. 采用状态反馈 $u=-kx$，则 $k=[k_1\\ k_2]=[-13\\ \\ 10]$。",
+      "explanation": "1. 开环特征多项式（注意二次项系数为正）\n$$\\lvert\\lambda I-A\\rvert=\\begin{vmatrix}\\lambda-3&2\\\\-4&\\lambda-3\\end{vmatrix}=(\\lambda-3)^2+8=\\lambda^2-6\\lambda+17.$$\n判别式 $36-68=-32$，根为 $\\lambda=3\\pm2\\sqrt2\\,j$，实部为正，平衡点 $x_e=0$ **不稳定**。\n\n2. $AB=\\begin{bmatrix}3&-2\\\\4&3\\end{bmatrix}\\begin{bmatrix}0\\\\1\\end{bmatrix}=\\begin{bmatrix}-2\\\\3\\end{bmatrix}$，\n$$Q_c=[B\\ AB]=\\begin{bmatrix}0&-2\\\\1&3\\end{bmatrix},\\quad\\operatorname{rank}Q_c=2,$$\n系统完全能控，可以通过状态反馈任意配置极点，从而镇定。\n\n3. 设 $u=-kx=-k_1x_1-k_2x_2$，则\n$$A-Bk=\\begin{bmatrix}3&-2\\\\4-k_1&3-k_2\\end{bmatrix},$$\n$$\\lvert\\lambda I-A+Bk\\rvert=\\lambda^2+(k_2-6)\\lambda+\\bigl[-3(k_2-3)-2(k_1-4)\\bigr].$$\n期望多项式 $(\\lambda+2)^2+9=\\lambda^2+4\\lambda+13$。比较系数：\n$$k_2-6=4\\Rightarrow k_2=10,$$\n$$-3k_2+9-2k_1+8=13\\Rightarrow -30+17-2k_1=13\\Rightarrow k_1=-13.$$\n故 $k=[k_1\\ k_2]=[-13\\ \\ 10]$。",
+      "notes": "上方文字答案已改正；原答案图中开环特征方程被写成 $-\\lambda^2-6\\lambda+17=0$（少了正的 $\\lambda^2$），随后的根是按正确方程 $\\lambda^2-6\\lambda+17=0$ 解的。特征根、能控性、$k=[-13\\ \\ 10]$ 全部正确。"
+    }
+  ]
 }

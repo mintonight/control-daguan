@@ -37,7 +37,10 @@ def _fields(obj, where, req, opt, errs):
 
 def validate_file(path, seen_ids, seen_imgs):
     errs = []
-    rel = os.path.relpath(path)
+    try:
+        rel = os.path.relpath(path)
+    except ValueError:
+        rel = str(path)
     try:
         src = json.load(open(path, encoding='utf-8'))
     except (OSError, ValueError) as e:

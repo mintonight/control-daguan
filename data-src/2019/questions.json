@@ -1,168 +1,168 @@
 {
- "year": 2019,
- "contributor": "code Bot",
- "questionPages": "33–35",
- "answerPages": "132–140",
- "questions": [
-  {
-   "no": 1,
-   "score": 16,
-   "cats": [
-    "建模 / 结构图化简",
-    "建模 / 机电系统传递函数"
-   ],
-   "stem": "（16 分）位置随动控制系统如图 1 所示。其中角位移器 1 提供的给定转角 $\\theta_r(t)$ 为输入量，角位移器 2 检测的负载转角 $\\theta_y(t)$ 为输出量；角度误差检测器的传递系数是 $K$；电动机的传递系数为 $K_m$，电动机的机电时间常数为 $T_m$；电压放大器的放大增益为 $K_v$；减速齿轮系中齿轮的齿数分别是 $Z_1$ 和 $Z_2$。\n\n1、试画出系统的动态结构图；\n\n2、求出系统的闭环传递函数 $\\Theta_y(s)/\\Theta_r(s)$。\n\n[[fig:1]]",
-   "figures": [
-    "img/q2019-1-1.png"
-   ],
-   "answerImages": [
-    "img/a2019-1-1.png"
-   ],
-   "answer": "1. 动态结构：误差检测 $U_f=K(\\theta_r-\\theta_y)$，电压放大 $E=K_v U_f$，电动机 $\\dfrac{\\Theta_m}{E}=\\dfrac{K_m}{s(T_m s+1)}$，齿轮减速 $\\theta_y=\\dfrac{Z_1}{Z_2}\\theta_m$，单位负反馈闭合。\n\n2. $\\dfrac{\\Theta_y(s)}{\\Theta_r(s)}=\\dfrac{KK_v K_m Z_1}{Z_2 T_m s^2+Z_2 s+KK_v K_m Z_1}$。\n",
-   "explanation": "1. 各环节方程为\n$$U_f=K(\\theta_r-\\theta_y),\\qquad\nE=K_v U_f,\\qquad\n\\dfrac{\\Theta_m(s)}{E(s)}=\\dfrac{K_m}{s(T_m s+1)},\\qquad\n\\theta_y=\\dfrac{Z_1}{Z_2}\\theta_m.$$\n题干给出的误差检测系数是 $K$。画图时以比较点的正端接输入 $\\theta_r$，负端接输出 $\\theta_y$，前向依次串联四个方框；按此顺序作图：$\\theta_r$ 与 $\\theta_y$ 比较后经 $K$、$K_v$、$K_m/[s(T_m s+1)]$、$Z_1/Z_2$ 得到 $\\theta_y$。\n\n这里 $\\theta_m$ 是电动机轴转角，$U_f$ 为检测电压，$E$ 为电动机输入电压。\n\n2. 从检测器输出到负载的前向传递函数\n$$\\dfrac{\\Theta_y}{U_f}=\\dfrac{K_v K_m Z_1}{Z_2 s(T_m s+1)},$$\n再与误差检测 $K$ 构成单位负反馈，闭环\n$$\\dfrac{\\Theta_y(s)}{\\Theta_r(s)}=\\dfrac{KK_v K_m Z_1}{Z_2 T_m s^2+Z_2 s+KK_v K_m Z_1}.$$\n",
-   "notes": "文字答案与解析已改正；原图列写方程时把误差检测系数 $K$ 写成了 $L$，结构图已改回 $K$。闭环传递函数正确。"
-  },
-  {
-   "no": 2,
-   "score": null,
-   "cats": [
-    "时域分析 / 主导极点与性能估算",
-    "时域分析 / 稳态误差 / 静态误差系数"
-   ],
-   "stem": "某三阶无零点的系统，在 $r(t)=t$ 输入时，$e_{ss}=1.1$，且闭环存在主导极点 $s_{1,2}=-(1\\pm j)$ 时：\n\n1．求此三阶系统开环传函 $G(s)$；\n\n2．试用主导极点近似求系统的超调量和调节时间（$\\Delta=\\pm5\\%$）。",
-   "figures": [],
-   "answerImages": [
-    "img/a2019-2-1.png",
-    "img/a2019-2-2.png"
-   ],
-   "answer": "以下按单位负反馈、$e=r-y$ 解释所给稳态误差条件。\n\n1. $G(s)=\\dfrac{20}{s(s+6+\\sqrt{14})(s+6-\\sqrt{14})}\\approx\\dfrac{20}{s(s+9.74)(s+2.26)}$。\n\n2. 主导极点 $s=-(1\\pm j)$ 给出 $\\omega_n=\\sqrt{2}$、$\\zeta=\\sqrt{2}/2$，$\\sigma\\%\\approx 4.3\\%$，$t_s(5\\%)\\approx3.5\\,\\mathrm{s}$。第三极点在 $-10$，主导极点近似合理。\n",
-   "explanation": "以下按单位负反馈、$e=r-y$ 解释所给稳态误差条件。\n\n系统无零点、单位负反馈、I 型，可设 $G(s)=K/[s(s+a)(s+b)]$。\n\n1. $r(t)=t$ 时 $e_{ss}=ab/K=1.1$。主导极点 $s=-(1\\pm j)$ 给出因子 $s^2+2s+2$，故可写\n$$s(s+a)(s+b)+K=(s^2+2s+2)(s+c).$$\n比较系数：$a+b=c+2$，$ab=2c+2$，$K=2c$。再与 $ab/K=1.1$ 联立，得 $c=10$、$K=20$、$ab=22$、$a+b=12$，\n$$a,b=6\\pm\\sqrt{14}\\approx 9.74,\\;2.26.$$\n将 $K=20$ 代回，开环传递函数为：\n$$G(s)=\\frac{20}{s(s+6+\\sqrt{14})(s+6-\\sqrt{14})}\\approx\\dfrac{20}{s(s+9.74)(s+2.26)}.$$\n\n2. 主导极点对应 $\\omega_n=\\sqrt{2}$、$\\zeta=\\sqrt{2}/2$，\n$$\\sigma\\%=e^{-\\pi\\zeta/\\sqrt{1-\\zeta^2}}\\times 100\\%=e^{-\\pi}\\times 100\\%\\approx 4.3\\%,$$\n$t_s(5\\%)\\approx3.5/(\\zeta\\omega_n)=3.5\\,\\mathrm{s}$。第三极点在 $-c=-10$，到虚轴的距离约为主导极点实部的 10 倍，主导极点近似合理。\n\n\n此处调节时间采用主导二阶模型的工程估算系数3.5，不是三阶响应的精确最后入带时刻。",
-   "notes": "文字答案与解析已补全；原图保留了含 $K$ 的一般开环形式，并求得 $a\\approx9.74$、$b\\approx2.26$，但未补全 $K=20$ 及最终数值传递函数，并非把分子直接写成了 $1$。$\\sigma\\%$ 与主导极点近似的 $t_s$ 正确。"
-  },
-  {
-   "no": 3,
-   "score": null,
-   "cats": [
-    "根轨迹 / 常规根轨迹绘制",
-    "时域分析 / 稳态误差 / 静态误差系数"
-   ],
-   "stem": "单位负反馈开环传函 $G(s)=\\dfrac{k^*}{s(s+7.5)(s+6)}$\n\n1．画出根轨迹；\n\n2．是否可以通过改变 $k^*$ 的值，使系统在输入信号为 $r(t)=t$ 时 $e_{ss}\\ge15$？若不能，说明理由。",
-   "figures": [],
-   "answerImages": [
-    "img/a2019-3-1.png",
-    "img/a2019-3-2.png"
-   ],
-   "answer": "开环极点 $0,-6,-7.5$；实轴根轨迹 $(-\\infty,-7.5]\\cup[-6,0]$；渐近线 $\\sigma_a=-4.5$，倾角 $\\pm60^\\circ,180^\\circ$；分离点 $d\\approx-2.21$（$k^*\\approx44.3$）；虚轴交点 $\\pm j\\sqrt{45}\\approx\\pm j6.71$，对应 $k^*=607.5$。稳定范围 $0<k^*<607.5$。$r(t)=t$ 时 $K_v=k^*/45$、$e_{ss}=45/k^*$；要求 $e_{ss}\\ge15$ 得 $k^*\\le3$，故取 $0<k^*\\le3$ 即可。",
-   "explanation": "**一、极点与特征方程。** $G(s)=\\dfrac{k^*}{s(s+7.5)(s+6)}$，特征方程\n$$s^3+13.5s^2+45s+k^*=0.$$\n开环极点 $0,-6,-7.5$，无零点，$n-m=3$。\n\n**二、实轴与渐近线。** 实轴根轨迹 $(-\\infty,-7.5]\\cup[-6,0]$；\n$$\\sigma_a=\\dfrac{0-6-7.5}{3}=-4.5,\\qquad \\varphi_a=\\pm60^\\circ,\\ 180^\\circ.$$\n\n**三、分离点。** 由 $k^*=-(s^3+13.5s^2+45s)$，令 $\\dfrac{\\mathrm dk^*}{\\mathrm ds}=-(3s^2+27s+45)=0$，即 $s^2+9s+15=0$：\n$$s=\\dfrac{-9\\pm\\sqrt{21}}{2}\\approx-2.21,\\ -6.79.$$\n$-6.79$ 在 $(-7.5,-6)$ 内，不在根轨迹，舍去；分离点 $d\\approx-2.21$，$k^*\\approx44.3$。\n\n**四、虚轴交点。** 对 $s^3+13.5s^2+45s+k^*=0$ 列劳斯表：\n$$\\begin{array}{c|cc}\ns^3 & 1 & 45\\\\\ns^2 & 13.5 & k^*\\\\\ns^1 & \\dfrac{13.5\\times45-1\\times k^*}{13.5}=\\dfrac{607.5-k^*}{13.5} & 0\\\\\ns^0 & k^* &\n\\end{array}$$\n令 $s^1$ 行首项为零得 $k^*=607.5$；由 $s^2$ 行辅助方程 $13.5s^2+k^*=0$ 得 $s^2=-45$，即 $s=\\pm j\\sqrt{45}\\approx\\pm j6.71$。\n\n**五、作图。** $-7.5$ 一支沿实轴向左趋于 $-\\infty$；$-6,0$ 两支在 $d\\approx-2.21$ 会合后沿 $\\pm60^\\circ$ 渐近线进入右半平面，在 $k^*=607.5$ 时穿过虚轴。图见下。\n\n![根轨迹图|520](img/solution-201903-rootlocus.svg)\n\n**六、稳态误差条件。** 系统为 1 型，$r(t)=t$ 时\n$$K_v=\\lim_{s\\to0}sG(s)=\\dfrac{k^*}{7.5\\times6}=\\dfrac{k^*}{45},\\qquad e_{ss}=\\dfrac{1}{K_v}=\\dfrac{45}{k^*}.$$\n要求 $e_{ss}\\ge15$，即 $\\dfrac{45}{k^*}\\ge15$，得 $k^*\\le3$。又稳定性要求 $0<k^*<607.5$，取交集得\n$$0<k^*\\le3.$$\n故**可以**通过改变 $k^*$（取 $0<k^*\\le3$）使 $e_{ss}\\ge15$。",
-   "notes": "已核对：正确。按原卷印刷的 $e_{ss}\\ge 15$ 得到 $0<k^*\\le 3$，与稳定范围 $k^*<607.5$ 合取即可。若按常见题意理解为 $e_{ss}\\le 15$，则应为 $3\\le k^*<607.5$。原题输入写作 $\\gamma(t)=t$；“$e_{ss}\\ge 15$”照录原文。原答案仅有图片，现补文字解析并重画根轨迹图。",
-   "errataLevel": "ok"
-  },
-  {
-   "no": 4,
-   "score": null,
-   "cats": [
-    "频域分析 / Bode 图绘制",
-    "频域分析 / 奈氏判据"
-   ],
-   "stem": "单位负反馈开环传函 $G(s)=\\dfrac{k(1-s)}{s(s+1)}$\n\n1．试大致画出其开环对数幅频特性曲线；\n\n2．讨论当 $k=1$，$k>1$，$k<1$ 时，系统的稳定性。",
-   "figures": [],
-   "answerImages": [
-    "img/a2019-4-1.png",
-    "img/a2019-4-2.png"
-   ],
-   "answer": "1. $|G(j\\omega)|=k/\\omega$（$k>0$），对数幅频是斜率 $-20\\,\\mathrm{dB/dec}$ 的直线，在 $\\omega=k$ 处过 $0\\,\\mathrm{dB}$。\n\n![开环对数幅频|520](img/solution-201904-bode.png)\n\n2. 特征多项式 $s^2+(1-k)s+k$。$k=1$ 临界稳定；$k>1$ 不稳定；$0<k<1$ 渐近稳定；$k\\le0$ 不稳定。",
-   "explanation": "1. $G(s)=k(1-s)/[s(s+1)]$。\n$$|G(j\\omega)|=\\dfrac{|k|\\,|1-j\\omega|}{\\omega\\,|1+j\\omega|}=\\dfrac{|k|}{\\omega}.$$\n右半平面零点不改变幅频。$k>0$ 时 $L(\\omega)=20\\lg(k/\\omega)$，斜率恒为 $-20\\,\\mathrm{dB/dec}$，与 $0\\,\\mathrm{dB}$ 的交点是 $\\omega=k$。作图时横轴用 $\\omega/k$，交点落在 $1$。$k<0$ 时幅频形状相同，交点在 $\\omega=|k|$。\n\n![开环对数幅频|520](img/solution-201904-bode.png)\n\n2. 单位负反馈，\n$$1+G(s)=\\dfrac{s^2+(1-k)s+k}{s(s+1)}.$$\n劳斯表首列为 $1$、$1-k$、$k$。渐近稳定要求 $k>0$ 且 $1-k>0$，即 $0<k<1$。$k=1$ 时特征式为 $s^2+1$，极点 $\\pm j$，临界稳定。$k>1$ 时 $1-k<0$，不稳定。$k=0$ 时有极点 $s=0$。$k<0$ 时常数项为负，不稳定。",
-   "notes": "扫描的幅频直线和 $k=1$ 临界、$k>1$ 不稳定、$0<k<1$ 稳定与劳斯表一致。题目要求讨论 $k<1$，其中 $k\\le0$ 并不稳定；扫描没有把这一段单独写出。",
-   "errataLevel": "ok"
-  },
-  {
-   "no": 5,
-   "score": null,
-   "cats": [
-    "校正 / 串联超前校正",
-    "频域分析 / Bode 图绘制"
-   ],
-   "stem": "单位负反馈开环传函 $G(s)=\\dfrac{k}{s(s+1)(s+10)}$，用串联超前校正的方法，使系统在单位斜坡输入下 $e_{ss}=0.1$，相角裕度 $\\gamma>40^\\circ$。\n\n1．求超前校正传递函数；\n\n2．画出校正后系统的开环幅频特性曲线。",
-   "figures": [],
-   "answerImages": [
-    "img/a2019-5-1.png",
-    "img/a2019-5-2.png"
-   ],
-   "answer": "1. $K=100$，超前校正 $G_c(s)=\\dfrac{0.612s+1}{0.044s+1}$。精确校验：$|G_cG|=1$ 在 $\\omega\\approx 5.39$，相角裕度 $\\gamma\\approx 42.0^\\circ>40^\\circ$。\n\n2. 校正后开环幅频渐近线转折为 $1$、$1.63$、$10$、$22.7$，渐近线的过零频率约 $6.12$（精确幅频曲线的剪切频率约 $5.39$），中频斜率为 $-20\\,\\mathrm{dB/dec}$。\n\n在渐近线过零频率 $6.12$ 处计算相角，得 $\\gamma\\approx37.79^\\circ$。这是折线近似，不能与精确穿越 $\\omega\\approx5.39$ 处的 $\\gamma\\approx42.0^\\circ$ 当作同一个裕度。\n\n![校正后开环幅频|520](img/solution-201905-bode.png)",
-   "explanation": "单位负反馈、I 型，$K_v=K/10$。单位斜坡 $e_{ss}=10/K=0.1$，故 $K=100$，\n$$G(s)=\\dfrac{100}{s(s+1)(s+10)}=\\dfrac{10}{s(s+1)(0.1s+1)}.$$\n折线幅值在 $1<\\omega<10$ 上为 $10/\\omega^2$，$|G|=1$ 给出未校正剪切 $\\omega_c'=\\sqrt{10}$。该处 $\\arctan\\sqrt{10}+\\arctan(0.1\\sqrt{10})=90^\\circ$，渐近线算法的相角裕度为 $0^\\circ$（按精确 $|G|=1$ 解得 $\\omega_c\\approx 3.015$、$\\gamma\\approx 1.58^\\circ$），远小于 $40^\\circ$，需要超前校正。\n\n1. 取补偿角 $\\varphi_m=40^\\circ+20^\\circ=60^\\circ$（留出余量），\n$$\\alpha=\\dfrac{1+\\sin\\varphi_m}{1-\\sin\\varphi_m}\\approx 13.93$$\n，取 $\\alpha>1$ 表示超前网络的高低频增益比。由 $-20\\lg(10/\\omega_m^2)=10\\lg\\alpha$ 得 $\\omega_m=\\omega_c''=\\sqrt{10\\sqrt{\\alpha}}\\approx 6.11$，\n$T=1/(\\omega_m\\sqrt{\\alpha})\\approx 0.0439$，\n$$G_c(s)=\\dfrac{\\alpha T s+1}{T s+1}=\\dfrac{0.612s+1}{0.044s+1}.$$\n用该 $G_c$ 精确校验：$|G_c G|=1$ 出现在 $\\omega\\approx 5.39$，$\\gamma\\approx 42.0^\\circ>40^\\circ$。\n\n2. 校正后转折频率为 $1$、$1/0.612\\approx 1.63$、$10$、$1/0.044\\approx 22.7$，渐近线在 $1.63<\\omega<10$ 段为 $10(0.612\\omega)/\\omega^2$，故其过零频率为 $6.12$；精确幅频曲线的剪切频率仍为约 $5.39$，中频斜率为 $-20\\,\\mathrm{dB/dec}$，据此可画出开环对数幅频渐近线。\n\n\n对数幅频图的作图步骤：横轴为 $\\lg\\omega$，纵轴为 dB。低频渐近线为 $20-20\\lg\\omega$，按 $1,1/0.612,10,1/0.044$ 顺序转折，各段斜率依次为 $-20,-40,-20,-40,-60\\,\\mathrm{dB/dec}$；每个折点连续连接，并区分渐近线过零点 $6.12$ 与精确曲线穿越点约 $5.39$。\n\n在渐近线过零频率 $6.12$ 处计算相角，得 $\\gamma\\approx37.79^\\circ$。这是折线近似，不能与精确穿越 $\\omega\\approx5.39$ 处的 $\\gamma\\approx42.0^\\circ$ 当作同一个裕度。\n\n![校正后开环幅频|520](img/solution-201905-bode.png)",
-   "notes": "文字答案与解析已改正；原图 $K=100$ 及 $G_c=(0.612s+1)/(0.044s+1)$ 的设计可用，精确校验为 $\\omega_c\\approx5.38665\\,\\mathrm{rad/s}$、$\\gamma\\approx41.99869^\\circ>40^\\circ$。原图把 $\\alpha$ 公式写成了倒数，但数值 $13.93$ 正确；未校正的 $\\omega_c'=\\sqrt{10}$ 是渐近线过零频率，不能与不在同一频率上算出的 $\\gamma'=1.52^\\circ$ 混用。另需区分：校正后折线渐近线过零于约 $6.12$，不是图中标的 $5.36$；后者接近精确幅频曲线的剪切频率。"
-  },
-  {
-   "no": 6,
-   "score": null,
-   "cats": [
-    "非线性系统 / 描述函数法 / 自振分析"
-   ],
-   "stem": "求系统不存在自激振荡时的临界值 $\\dfrac ab$。\n\n[[fig:1]]",
-   "figures": [
-    "img/q2019-6-1.png"
-   ],
-   "answerImages": [
-    "img/a2019-6-1.png",
-    "img/a2019-6-2.png"
-   ],
-   "answer": "设 $a,b>0$，按描述函数谐波平衡近似判别自振。\n\n临界值 $\\dfrac{a}{b}=\\dfrac{4}{3\\pi}$。当 $a/b>4/(3\\pi)$ 时不存在自激振荡。\n",
-   "explanation": "设 $a,b>0$，按描述函数谐波平衡近似判别自振。\n\n死区–继电器（半宽 $a$、高度 $b$）的描述函数为\n$$N(A)=\\dfrac{4b}{\\pi A}\\sqrt{1-\\Bigl(\\dfrac{a}{A}\\Bigr)^2},\\qquad A\\ge a.$$\n$N$ 在 $A=a\\sqrt{2}$ 取到最大值 $N_{\\max}=2b/(\\pi a)$，因而 $-1/N$ 的最右端为 $-\\pi a/(2b)$。\n\n线性部分 $G(s)=4/[s(s+1)(s+2)]$。相角穿越 $\\omega_x=\\sqrt{2}$，$G(j\\omega_x)=-2/3$。不自振要求 $-1/N$ 的最右端仍在该交点左侧：\n$$-\\dfrac{\\pi a}{2b}<-\\dfrac{2}{3}\\Rightarrow\\dfrac{a}{b}>\\dfrac{4}{3\\pi}.$$\n临界值即 $a/b=4/(3\\pi)$。\n\n\n$A$ 为非线性输入正弦基波的振幅。$0\\le A<a$ 时非线性不动作、$N(A)=0$；$A\\ge a$ 时使用上式。求导令 $A=a\\sqrt2$ 得最大值；在临界比值处两条轨迹相切，不能把等号归入严格无交点的不自振区间。",
-   "notes": "文字答案与解析已改正；原图临界值 $a/b=4/(3\\pi)$ 正确。可选的 $N(A)$ 极值推导里符号有误，未传入终值。"
-  },
-  {
-   "no": 7,
-   "score": null,
-   "cats": [
-    "离散系统 / 脉冲传递函数",
-    "离散系统 / 时间响应"
-   ],
-   "stem": "[[fig:1]]\n\n1．试求系统闭环传递函数 $\\dfrac{C(z)}{R(z)}$；\n\n2．单位阶跃响应下，$c(0)$，$c(T)$，$c(2T)$，$c(3T)$ 的值。",
-   "figures": [
-    "img/q2019-7-1.png"
-   ],
-   "answerImages": [
-    "img/a2019-7-1.png",
-    "img/a2019-7-2.png"
-   ],
-   "answer": "取 $T=0.07\\,\\mathrm s$，零初始，令\n$$a=e^{-10T},\\quad b=T-(1-a)/10,\\quad d=(1-a)/10-Ta.$$\n\n1. 闭环脉冲传递函数为\n$$\\Phi(z)=\\frac{bz+d}{z^2+(b-1-a)z+a+d}\\approx\\frac{0.01966z+0.01558}{z^2-1.477z+0.5122}.$$\n\n2. 单位阶跃下，令 $c_n=c(nT)$，得\n$$c_0=0,\\quad c_1\\approx0.01966,\\quad c_2\\approx0.06427,\\quad c_3\\approx0.1201.$$\n计算中保留 $a=e^{-0.7}$，最后再将系数和样本取近似。",
-   "explanation": "题图采样周期 $T=0.07\\,\\mathrm s$，零阶保持器后对象为 $10/[s(s+10)]$。\n\n**1．求闭环脉冲传函。**\n零阶保持器与对象相乘后作部分分式：\n$$\\frac{10}{s^2(s+10)}=\\frac{1}{s^2}-\\frac{0.1}{s}+\\frac{0.1}{s+10}.$$\n令 $a=e^{-10T}$，查 Z 变换表并乘 $(1-z^{-1})$，\n$$G(z)=\\frac{bz+d}{(z-1)(z-a)},$$\n其中 $b=T-(1-a)/10$、$d=(1-a)/10-Ta$。代入单位负反馈公式，\n$$\\Phi(z)=\\frac{G(z)}{1+G(z)}=\\frac{bz+d}{z^2+(b-1-a)z+a+d}\\approx\\frac{0.01966z+0.01558}{z^2-1.477z+0.5122}.$$\n\n**2．利用差分方程逐拍求输出。**\n令 $c_n=c(nT)$、$r_n=r(nT)$，有\n$$c_n+(b-1-a)c_{n-1}+(a+d)c_{n-2}=br_{n-1}+dr_{n-2}.$$\n单位阶跃从 $n=0$ 开始，初始静止，故 $c_0=0$、$c_1=b$。继续代入得\n$$c_2=(1+a-b)b+b+d,$$\n$$c_3=(1+a-b)c_2-(a+d)b+b+d.$$\n保留 $a=e^{-0.7}$ 计算，最后取四位有效数字：\n$$c_0=0,\\quad c_1\\approx0.01966,\\quad c_2\\approx0.06427,\\quad c_3\\approx0.1201.$$",
-   "notes": "文字答案与解析已改正；原图中间把 $-0.1$ 写成了 $-0.1z$，但合式 $G(z)\\approx(0.02z+0.016)/[(z-1)(z-0.497)]$ 及按该系数得到的 $c(0)$–$c(3T)$ 可用。题面第 1 问写作 $G(z)/R(z)$，按题意应为 $C(z)/R(z)$。 主解现统一采用保留指数的同一模型，四位有效数字写最终系数与样本。原图较粗的 $(0.02z+0.016)/(z^2-1.477z+0.513)$ 及其 $0,0.02,0.06554,0.1225$ 是另一套舍入模型；两套结果不能混算，主解不再并列两套数值。"
-  },
-  {
-   "no": 8,
-   "score": null,
-   "cats": [
-    "状态空间 / 对角标准型",
-    "状态空间 / 传递函数矩阵"
-   ],
-   "stem": "（类似题）将下列状态空间化为对角标准型，并求其传递函数。\n\n$$\\dot x=\\begin{bmatrix}0&1&0\\\\0&0&1\\\\-6&-11&-6\\end{bmatrix}x+\\begin{bmatrix}0\\\\0\\\\1\\end{bmatrix}u,\\qquad y=\\begin{bmatrix}1&1&0\\end{bmatrix}x$$",
-   "figures": [],
-   "answerImages": [
-    "img/a2019-8-1.png",
-    "img/a2019-8-2.png"
-   ],
-   "answer": "采用坐标变换 $x=P\\tilde x$，对角型的状态方程为 $\\dot{\\tilde x}=\\tilde A\\tilde x+\\tilde Bu$，输出方程为 $y=\\tilde C\\tilde x+Du$，$D=0$。\n\n取 $P=\\begin{bmatrix}1&1&1\\\\-1&-2&-3\\\\1&4&9\\end{bmatrix}$，对角标准型（特征值 $-1,-2,-3$）为：\n$$\\tilde A=\\operatorname{diag}(-1,-2,-3),\\quad\n\\tilde B=\\begin{bmatrix}1/2\\\\-1\\\\1/2\\end{bmatrix},\\quad\n\\tilde C=\\begin{bmatrix}0&-1&-2\\end{bmatrix}.$$\n传递函数 $G(s)=\\dfrac{1}{(s+2)(s+3)}$（$s=-1$ 的模态不能观）。\n",
-   "explanation": "采用坐标变换 $x=P\\tilde x$，对角型的状态方程为 $\\dot{\\tilde x}=\\tilde A\\tilde x+\\tilde Bu$，输出方程为 $y=\\tilde C\\tilde x+Du$，$D=0$。\n\n$A$ 为能控标准型同伴矩阵，特征多项式 $s^3+6s^2+11s+6=(s+1)(s+2)(s+3)$，特征值 $-1,-2,-3$。模态矩阵按列取 $[1,\\lambda,\\lambda^2]^\\mathrm{T}$：\n$$P=\\begin{bmatrix}1&1&1\\\\-1&-2&-3\\\\1&4&9\\end{bmatrix},\\qquad\nP^{-1}=\\begin{bmatrix}3&5/2&1/2\\\\-3&-4&-1\\\\1&3/2&1/2\\end{bmatrix}.$$\n于是 $\\tilde A=P^{-1}AP=\\operatorname{diag}(-1,-2,-3)$，\n$$\\tilde B=P^{-1}B=\\begin{bmatrix}1/2\\\\-1\\\\1/2\\end{bmatrix},\\qquad\n\\tilde C=CP=\\begin{bmatrix}0&-1&-2\\end{bmatrix}.$$\n由对角型直接求传递函数：各模态贡献为 $\\tilde C_i\\tilde B_i/(s-\\lambda_i)$，\n$$G(s)=\\tilde C(sI-\\tilde A)^{-1}\\tilde B=\\dfrac{(-1)\\cdot(-1)}{s+2}+\\dfrac{(-2)\\cdot(1/2)}{s+3}\n=\\dfrac{1}{s+2}-\\dfrac{1}{s+3}=\\dfrac{1}{(s+2)(s+3)}.$$\n$\\tilde C$ 的第一元为 0，$s=-1$ 的模态不能观，不出现在 $G(s)$ 中。由原实现 $C(sI-A)^{-1}B$ 也可得到同一结果。\n",
-   "notes": "文字答案与解析已改正；原图对角标准型 $\\tilde A,\\tilde B,\\tilde C$ 完全正确，但未写出题面要求的传递函数 $G(s)=1/[(s+2)(s+3)]$。"
-  },
-  {
-   "no": 9,
-   "score": 20,
-   "cats": [
-    "状态空间 / 状态反馈极点配置",
-    "状态空间 / 能控性与能观性"
-   ],
-   "stem": "计算题（共 20 分）。已知系统状态方程为\n$$\\dot x=\\begin{bmatrix}-1&0&0\\\\0&0&1\\\\0&-3&1\\end{bmatrix}x+\\begin{bmatrix}0\\\\0\\\\1\\end{bmatrix}u$$\n试判断系统是否可以通过状态反馈分别配置以下两组特征值：（1）$\\{-2,-2,-1\\}$；（2）$\\{-2,-2,-3\\}$。若能配置，求出反馈阵。",
-   "figures": [],
-   "answerImages": [
-    "img/a2019-9-1.png",
-    "img/a2019-9-2.png"
-   ],
-   "answer": "",
-   "explanation": "",
-   "notes": "已核对：正确。$-1$ 不可控；（1）组 $\\{-2,-2,-1\\}$ 可配，$k_3=5$、$k_2=1$、$k_1$ 任意；（2）组不可配。",
-   "errataLevel": "ok"
-  }
- ]
+  "year": 2019,
+  "contributor": "code Bot",
+  "questionPages": "33–35",
+  "answerPages": "132–140",
+  "questions": [
+    {
+      "no": 1,
+      "score": 16,
+      "cats": [
+        "建模 / 结构图化简",
+        "建模 / 机电系统传递函数"
+      ],
+      "stem": "（16 分）位置随动控制系统如图 1 所示。其中角位移器 1 提供的给定转角 $\\theta_r(t)$ 为输入量，角位移器 2 检测的负载转角 $\\theta_y(t)$ 为输出量；角度误差检测器的传递系数是 $K$；电动机的传递系数为 $K_m$，电动机的机电时间常数为 $T_m$；电压放大器的放大增益为 $K_v$；减速齿轮系中齿轮的齿数分别是 $Z_1$ 和 $Z_2$。\n\n1、试画出系统的动态结构图；\n\n2、求出系统的闭环传递函数 $\\Theta_y(s)/\\Theta_r(s)$。\n\n[[fig:1]]",
+      "figures": [
+        "img/q2019-1-1.png"
+      ],
+      "answerImages": [
+        "img/a2019-1-1.png"
+      ],
+      "answer": "1. 动态结构：误差检测 $U_f=K(\\theta_r-\\theta_y)$，电压放大 $E=K_v U_f$，电动机 $\\dfrac{\\Theta_m}{E}=\\dfrac{K_m}{s(T_m s+1)}$，齿轮减速 $\\theta_y=\\dfrac{Z_1}{Z_2}\\theta_m$，单位负反馈闭合。\n\n2. $\\dfrac{\\Theta_y(s)}{\\Theta_r(s)}=\\dfrac{KK_v K_m Z_1}{Z_2 T_m s^2+Z_2 s+KK_v K_m Z_1}$。\n",
+      "explanation": "1. 各环节方程为\n$$U_f=K(\\theta_r-\\theta_y),\\qquad\nE=K_v U_f,\\qquad\n\\dfrac{\\Theta_m(s)}{E(s)}=\\dfrac{K_m}{s(T_m s+1)},\\qquad\n\\theta_y=\\dfrac{Z_1}{Z_2}\\theta_m.$$\n题干给出的误差检测系数是 $K$。画图时以比较点的正端接输入 $\\theta_r$，负端接输出 $\\theta_y$，前向依次串联四个方框；按此顺序作图：$\\theta_r$ 与 $\\theta_y$ 比较后经 $K$、$K_v$、$K_m/[s(T_m s+1)]$、$Z_1/Z_2$ 得到 $\\theta_y$。\n\n这里 $\\theta_m$ 是电动机轴转角，$U_f$ 为检测电压，$E$ 为电动机输入电压。\n\n2. 从检测器输出到负载的前向传递函数\n$$\\dfrac{\\Theta_y}{U_f}=\\dfrac{K_v K_m Z_1}{Z_2 s(T_m s+1)},$$\n再与误差检测 $K$ 构成单位负反馈，闭环\n$$\\dfrac{\\Theta_y(s)}{\\Theta_r(s)}=\\dfrac{KK_v K_m Z_1}{Z_2 T_m s^2+Z_2 s+KK_v K_m Z_1}.$$\n",
+      "notes": "文字答案与解析已改正；原图列写方程时把误差检测系数 $K$ 写成了 $L$，结构图已改回 $K$。闭环传递函数正确。"
+    },
+    {
+      "no": 2,
+      "score": null,
+      "cats": [
+        "时域分析 / 主导极点与性能估算",
+        "时域分析 / 稳态误差 / 静态误差系数"
+      ],
+      "stem": "某三阶无零点的系统，在 $r(t)=t$ 输入时，$e_{ss}=1.1$，且闭环存在主导极点 $s_{1,2}=-(1\\pm j)$ 时：\n\n1．求此三阶系统开环传函 $G(s)$；\n\n2．试用主导极点近似求系统的超调量和调节时间（$\\Delta=\\pm5\\%$）。",
+      "figures": [],
+      "answerImages": [
+        "img/a2019-2-1.png",
+        "img/a2019-2-2.png"
+      ],
+      "answer": "以下按单位负反馈、$e=r-y$ 解释所给稳态误差条件。\n\n1. $G(s)=\\dfrac{20}{s(s+6+\\sqrt{14})(s+6-\\sqrt{14})}\\approx\\dfrac{20}{s(s+9.74)(s+2.26)}$。\n\n2. 主导极点 $s=-(1\\pm j)$ 给出 $\\omega_n=\\sqrt{2}$、$\\zeta=\\sqrt{2}/2$，$\\sigma\\%\\approx 4.3\\%$，$t_s(5\\%)\\approx3.5\\,\\mathrm{s}$。第三极点在 $-10$，主导极点近似合理。\n",
+      "explanation": "以下按单位负反馈、$e=r-y$ 解释所给稳态误差条件。\n\n系统无零点、单位负反馈、I 型，可设 $G(s)=K/[s(s+a)(s+b)]$。\n\n1. $r(t)=t$ 时 $e_{ss}=ab/K=1.1$。主导极点 $s=-(1\\pm j)$ 给出因子 $s^2+2s+2$，故可写\n$$s(s+a)(s+b)+K=(s^2+2s+2)(s+c).$$\n比较系数：$a+b=c+2$，$ab=2c+2$，$K=2c$。再与 $ab/K=1.1$ 联立，得 $c=10$、$K=20$、$ab=22$、$a+b=12$，\n$$a,b=6\\pm\\sqrt{14}\\approx 9.74,\\;2.26.$$\n将 $K=20$ 代回，开环传递函数为：\n$$G(s)=\\frac{20}{s(s+6+\\sqrt{14})(s+6-\\sqrt{14})}\\approx\\dfrac{20}{s(s+9.74)(s+2.26)}.$$\n\n2. 主导极点对应 $\\omega_n=\\sqrt{2}$、$\\zeta=\\sqrt{2}/2$，\n$$\\sigma\\%=e^{-\\pi\\zeta/\\sqrt{1-\\zeta^2}}\\times 100\\%=e^{-\\pi}\\times 100\\%\\approx 4.3\\%,$$\n$t_s(5\\%)\\approx3.5/(\\zeta\\omega_n)=3.5\\,\\mathrm{s}$。第三极点在 $-c=-10$，到虚轴的距离约为主导极点实部的 10 倍，主导极点近似合理。\n\n\n此处调节时间采用重大与经典教材主导二阶模型的工程估算系数 3.5（若按粗略式 3 计算则为 $3\\,\\mathrm{s}$），不是三阶响应的精确最后入带时刻。",
+      "notes": "文字答案与解析已补全；原图保留了含 $K$ 的一般开环形式，并求得 $a\\approx9.74$、$b\\approx2.26$，但未补全 $K=20$ 及最终数值传递函数，并非把分子直接写成了 $1$。$\\sigma\\%$ 与主导极点近似的 $t_s$ 正确。"
+    },
+    {
+      "no": 3,
+      "score": null,
+      "cats": [
+        "根轨迹 / 常规根轨迹绘制",
+        "时域分析 / 稳态误差 / 静态误差系数"
+      ],
+      "stem": "单位负反馈开环传函 $G(s)=\\dfrac{k^*}{s(s+7.5)(s+6)}$\n\n1．画出根轨迹；\n\n2．是否可以通过改变 $k^*$ 的值，使系统在输入信号为 $r(t)=t$ 时 $e_{ss}\\ge15$？若不能，说明理由。",
+      "figures": [],
+      "answerImages": [
+        "img/a2019-3-1.png",
+        "img/a2019-3-2.png"
+      ],
+      "answer": "开环极点 $0,-6,-7.5$；实轴根轨迹 $(-\\infty,-7.5]\\cup[-6,0]$；渐近线 $\\sigma_a=-4.5$，倾角 $\\pm60^\\circ,180^\\circ$；分离点 $d\\approx-2.21$（$k^*\\approx44.3$）；虚轴交点 $\\pm j\\sqrt{45}\\approx\\pm j6.71$，对应 $k^*=607.5$。稳定范围 $0<k^*<607.5$。$r(t)=t$ 时 $K_v=k^*/45$、$e_{ss}=45/k^*$；要求 $e_{ss}\\ge15$ 得 $k^*\\le3$，故取 $0<k^*\\le3$ 即可。",
+      "explanation": "**一、极点与特征方程。** $G(s)=\\dfrac{k^*}{s(s+7.5)(s+6)}$，特征方程\n$$s^3+13.5s^2+45s+k^*=0.$$\n开环极点 $0,-6,-7.5$，无零点，$n-m=3$。\n\n**二、实轴与渐近线。** 实轴根轨迹 $(-\\infty,-7.5]\\cup[-6,0]$；\n$$\\sigma_a=\\dfrac{0-6-7.5}{3}=-4.5,\\qquad \\varphi_a=\\pm60^\\circ,\\ 180^\\circ.$$\n\n**三、分离点。** 由 $k^*=-(s^3+13.5s^2+45s)$，令 $\\dfrac{\\mathrm dk^*}{\\mathrm ds}=-(3s^2+27s+45)=0$，即 $s^2+9s+15=0$：\n$$s=\\dfrac{-9\\pm\\sqrt{21}}{2}\\approx-2.21,\\ -6.79.$$\n$-6.79$ 在 $(-7.5,-6)$ 内，不在根轨迹，舍去；分离点 $d\\approx-2.21$，$k^*\\approx44.3$。\n\n**四、虚轴交点。** 对 $s^3+13.5s^2+45s+k^*=0$ 列劳斯表：\n$$\\begin{array}{c|cc}\ns^3 & 1 & 45\\\\\ns^2 & 13.5 & k^*\\\\\ns^1 & \\dfrac{13.5\\times45-1\\times k^*}{13.5}=\\dfrac{607.5-k^*}{13.5} & 0\\\\\ns^0 & k^* &\n\\end{array}$$\n令 $s^1$ 行首项为零得 $k^*=607.5$；由 $s^2$ 行辅助方程 $13.5s^2+k^*=0$ 得 $s^2=-45$，即 $s=\\pm j\\sqrt{45}\\approx\\pm j6.71$。\n\n**五、作图。** $-7.5$ 一支沿实轴向左趋于 $-\\infty$；$-6,0$ 两支在 $d\\approx-2.21$ 会合后沿 $\\pm60^\\circ$ 渐近线进入右半平面，在 $k^*=607.5$ 时穿过虚轴。图见下。\n\n![根轨迹图|520](img/solution-201903-rootlocus.svg)\n\n**六、稳态误差条件。** 系统为 1 型，$r(t)=t$ 时\n$$K_v=\\lim_{s\\to0}sG(s)=\\dfrac{k^*}{7.5\\times6}=\\dfrac{k^*}{45},\\qquad e_{ss}=\\dfrac{1}{K_v}=\\dfrac{45}{k^*}.$$\n要求 $e_{ss}\\ge15$，即 $\\dfrac{45}{k^*}\\ge15$，得 $k^*\\le3$。又稳定性要求 $0<k^*<607.5$，取交集得\n$$0<k^*\\le3.$$\n故**可以**通过改变 $k^*$（取 $0<k^*\\le3$）使 $e_{ss}\\ge15$。",
+      "notes": "已核对：正确。按原卷印刷的 $e_{ss}\\ge 15$ 得到 $0<k^*\\le 3$，与稳定范围 $k^*<607.5$ 合取即可。若按常见题意理解为 $e_{ss}\\le 15$，则应为 $3\\le k^*<607.5$。原题输入写作 $\\gamma(t)=t$；“$e_{ss}\\ge 15$”照录原文。原答案仅有图片，现补文字解析并重画根轨迹图。",
+      "errataLevel": "ok"
+    },
+    {
+      "no": 4,
+      "score": null,
+      "cats": [
+        "频域分析 / Bode 图绘制",
+        "频域分析 / 奈氏判据"
+      ],
+      "stem": "单位负反馈开环传函 $G(s)=\\dfrac{k(1-s)}{s(s+1)}$\n\n1．试大致画出其开环对数幅频特性曲线；\n\n2．讨论当 $k=1$，$k>1$，$k<1$ 时，系统的稳定性。",
+      "figures": [],
+      "answerImages": [
+        "img/a2019-4-1.png",
+        "img/a2019-4-2.png"
+      ],
+      "answer": "1. $|G(j\\omega)|=k/\\omega$（$k>0$），对数幅频是斜率 $-20\\,\\mathrm{dB/dec}$ 的直线，在 $\\omega=k$ 处过 $0\\,\\mathrm{dB}$。\n\n![开环对数幅频|520](img/solution-201904-bode.png)\n\n2. 特征多项式 $s^2+(1-k)s+k$。$k=1$ 临界稳定；$k>1$ 不稳定；$0<k<1$ 渐近稳定；$k\\le0$ 不稳定。",
+      "explanation": "1. $G(s)=k(1-s)/[s(s+1)]$。\n$$|G(j\\omega)|=\\dfrac{|k|\\,|1-j\\omega|}{\\omega\\,|1+j\\omega|}=\\dfrac{|k|}{\\omega}.$$\n右半平面零点不改变幅频。$k>0$ 时 $L(\\omega)=20\\lg(k/\\omega)$，斜率恒为 $-20\\,\\mathrm{dB/dec}$，与 $0\\,\\mathrm{dB}$ 的交点是 $\\omega=k$。作图时横轴用 $\\omega/k$，交点落在 $1$。$k<0$ 时幅频形状相同，交点在 $\\omega=|k|$。\n\n![开环对数幅频|520](img/solution-201904-bode.png)\n\n2. 单位负反馈，\n$$1+G(s)=\\dfrac{s^2+(1-k)s+k}{s(s+1)}.$$\n劳斯表首列为 $1$、$1-k$、$k$。渐近稳定要求 $k>0$ 且 $1-k>0$，即 $0<k<1$。$k=1$ 时特征式为 $s^2+1$，极点 $\\pm j$，临界稳定。$k>1$ 时 $1-k<0$，不稳定。$k=0$ 时有极点 $s=0$。$k<0$ 时常数项为负，不稳定。",
+      "notes": "扫描的幅频直线和 $k=1$ 临界、$k>1$ 不稳定、$0<k<1$ 稳定与劳斯表一致。题目要求讨论 $k<1$，其中 $k\\le0$ 并不稳定；扫描没有把这一段单独写出。",
+      "errataLevel": "ok"
+    },
+    {
+      "no": 5,
+      "score": null,
+      "cats": [
+        "校正 / 串联超前校正",
+        "频域分析 / Bode 图绘制"
+      ],
+      "stem": "单位负反馈开环传函 $G(s)=\\dfrac{k}{s(s+1)(s+10)}$，用串联超前校正的方法，使系统在单位斜坡输入下 $e_{ss}=0.1$，相角裕度 $\\gamma>40^\\circ$。\n\n1．求超前校正传递函数；\n\n2．画出校正后系统的开环幅频特性曲线。",
+      "figures": [],
+      "answerImages": [
+        "img/a2019-5-1.png",
+        "img/a2019-5-2.png"
+      ],
+      "answer": "1. $K=100$，超前校正 $G_c(s)=\\dfrac{0.612s+1}{0.044s+1}$。精确校验：$|G_cG|=1$ 在 $\\omega\\approx 5.39$，相角裕度 $\\gamma\\approx 42.0^\\circ>40^\\circ$。\n\n2. 校正后开环幅频渐近线转折为 $1$、$1.63$、$10$、$22.7$，渐近线的过零频率约 $6.12$（精确幅频曲线的剪切频率约 $5.39$），中频斜率为 $-20\\,\\mathrm{dB/dec}$。\n\n在渐近线过零频率 $6.12$ 处计算相角，得 $\\gamma\\approx37.79^\\circ$。这是折线近似，不能与精确穿越 $\\omega\\approx5.39$ 处的 $\\gamma\\approx42.0^\\circ$ 当作同一个裕度。\n\n![校正后开环幅频|520](img/solution-201905-bode.png)",
+      "explanation": "单位负反馈、I 型，$K_v=K/10$。单位斜坡 $e_{ss}=10/K=0.1$，故 $K=100$，\n$$G(s)=\\dfrac{100}{s(s+1)(s+10)}=\\dfrac{10}{s(s+1)(0.1s+1)}.$$\n折线幅值在 $1<\\omega<10$ 上为 $10/\\omega^2$，$|G|=1$ 给出未校正剪切 $\\omega_c'=\\sqrt{10}$。该处 $\\arctan\\sqrt{10}+\\arctan(0.1\\sqrt{10})=90^\\circ$，渐近线算法的相角裕度为 $0^\\circ$（按精确 $|G|=1$ 解得 $\\omega_c\\approx 3.015$、$\\gamma\\approx 1.58^\\circ$），远小于 $40^\\circ$，需要超前校正。\n\n1. 取补偿角 $\\varphi_m=40^\\circ+20^\\circ=60^\\circ$（留出余量），\n$$\\alpha=\\dfrac{1+\\sin\\varphi_m}{1-\\sin\\varphi_m}\\approx 13.93$$\n，取 $\\alpha>1$ 表示超前网络的高低频增益比。由 $-20\\lg(10/\\omega_m^2)=10\\lg\\alpha$ 得 $\\omega_m=\\omega_c''=\\sqrt{10\\sqrt{\\alpha}}\\approx 6.11$，\n$T=1/(\\omega_m\\sqrt{\\alpha})\\approx 0.0439$，\n$$G_c(s)=\\dfrac{\\alpha T s+1}{T s+1}=\\dfrac{0.612s+1}{0.044s+1}.$$\n用该 $G_c$ 精确校验：$|G_c G|=1$ 出现在 $\\omega\\approx 5.39$，$\\gamma\\approx 42.0^\\circ>40^\\circ$。\n\n2. 校正后转折频率为 $1$、$1/0.612\\approx 1.63$、$10$、$1/0.044\\approx 22.7$，渐近线在 $1.63<\\omega<10$ 段为 $10(0.612\\omega)/\\omega^2$，故其过零频率为 $6.12$；精确幅频曲线的剪切频率仍为约 $5.39$，中频斜率为 $-20\\,\\mathrm{dB/dec}$，据此可画出开环对数幅频渐近线。\n\n\n对数幅频图的作图步骤：横轴为 $\\lg\\omega$，纵轴为 dB。低频渐近线为 $20-20\\lg\\omega$，按 $1,1/0.612,10,1/0.044$ 顺序转折，各段斜率依次为 $-20,-40,-20,-40,-60\\,\\mathrm{dB/dec}$；每个折点连续连接，并区分渐近线过零点 $6.12$ 与精确曲线穿越点约 $5.39$。\n\n在渐近线过零频率 $6.12$ 处计算相角，得 $\\gamma\\approx37.79^\\circ$。这是折线近似，不能与精确穿越 $\\omega\\approx5.39$ 处的 $\\gamma\\approx42.0^\\circ$ 当作同一个裕度。\n\n![校正后开环幅频|520](img/solution-201905-bode.png)",
+      "notes": "文字答案与解析已改正；原图 $K=100$ 及 $G_c=(0.612s+1)/(0.044s+1)$ 的设计可用，精确校验为 $\\omega_c\\approx5.38665\\,\\mathrm{rad/s}$、$\\gamma\\approx41.99869^\\circ>40^\\circ$。原图把 $\\alpha$ 公式写成了倒数，但数值 $13.93$ 正确；未校正的 $\\omega_c'=\\sqrt{10}$ 是渐近线过零频率，不能与不在同一频率上算出的 $\\gamma'=1.52^\\circ$ 混用。另需区分：校正后折线渐近线过零于约 $6.12$，不是图中标的 $5.36$；后者接近精确幅频曲线的剪切频率。"
+    },
+    {
+      "no": 6,
+      "score": null,
+      "cats": [
+        "非线性系统 / 描述函数法 / 自振分析"
+      ],
+      "stem": "求系统不存在自激振荡时的临界值 $\\dfrac ab$。\n\n[[fig:1]]",
+      "figures": [
+        "img/q2019-6-1.png"
+      ],
+      "answerImages": [
+        "img/a2019-6-1.png",
+        "img/a2019-6-2.png"
+      ],
+      "answer": "设 $a,b>0$，按描述函数谐波平衡近似判别自振。\n\n临界值 $\\dfrac{a}{b}=\\dfrac{4}{3\\pi}$。当 $a/b>4/(3\\pi)$ 时不存在自激振荡。\n",
+      "explanation": "设 $a,b>0$，按描述函数谐波平衡近似判别自振。\n\n死区–继电器（半宽 $a$、高度 $b$）的描述函数为\n$$N(A)=\\dfrac{4b}{\\pi A}\\sqrt{1-\\Bigl(\\dfrac{a}{A}\\Bigr)^2},\\qquad A\\ge a.$$\n$N$ 在 $A=a\\sqrt{2}$ 取到最大值 $N_{\\max}=2b/(\\pi a)$，因而 $-1/N$ 的最右端为 $-\\pi a/(2b)$。\n\n线性部分 $G(s)=4/[s(s+1)(s+2)]$。相角穿越 $\\omega_x=\\sqrt{2}$，$G(j\\omega_x)=-2/3$。不自振要求 $-1/N$ 的最右端仍在该交点左侧：\n$$-\\dfrac{\\pi a}{2b}<-\\dfrac{2}{3}\\Rightarrow\\dfrac{a}{b}>\\dfrac{4}{3\\pi}.$$\n临界值即 $a/b=4/(3\\pi)$。\n\n\n$A$ 为非线性输入正弦基波的振幅。$0\\le A<a$ 时非线性不动作、$N(A)=0$；$A\\ge a$ 时使用上式。求导令 $A=a\\sqrt2$ 得最大值；在临界比值处两条轨迹相切，不能把等号归入严格无交点的不自振区间。",
+      "notes": "文字答案与解析已改正；原图临界值 $a/b=4/(3\\pi)$ 正确。可选的 $N(A)$ 极值推导里符号有误，未传入终值。"
+    },
+    {
+      "no": 7,
+      "score": null,
+      "cats": [
+        "离散系统 / 脉冲传递函数",
+        "离散系统 / 时间响应"
+      ],
+      "stem": "[[fig:1]]\n\n1．试求系统闭环传递函数 $\\dfrac{C(z)}{R(z)}$；\n\n2．单位阶跃响应下，$c(0)$，$c(T)$，$c(2T)$，$c(3T)$ 的值。",
+      "figures": [
+        "img/q2019-7-1.png"
+      ],
+      "answerImages": [
+        "img/a2019-7-1.png",
+        "img/a2019-7-2.png"
+      ],
+      "answer": "取 $T=0.07\\,\\mathrm s$，零初始，令\n$$a=e^{-10T},\\quad b=T-(1-a)/10,\\quad d=(1-a)/10-Ta.$$\n\n1. 闭环脉冲传递函数为\n$$\\Phi(z)=\\frac{bz+d}{z^2+(b-1-a)z+a+d}\\approx\\frac{0.01966z+0.01558}{z^2-1.477z+0.5122}.$$\n\n2. 单位阶跃下，令 $c_n=c(nT)$，得\n$$c_0=0,\\quad c_1\\approx0.01966,\\quad c_2\\approx0.06427,\\quad c_3\\approx0.1201.$$\n计算中保留 $a=e^{-0.7}$，最后再将系数和样本取近似。",
+      "explanation": "题图采样周期 $T=0.07\\,\\mathrm s$，零阶保持器后对象为 $10/[s(s+10)]$。\n\n**1．求闭环脉冲传函。**\n零阶保持器与对象相乘后作部分分式：\n$$\\frac{10}{s^2(s+10)}=\\frac{1}{s^2}-\\frac{0.1}{s}+\\frac{0.1}{s+10}.$$\n令 $a=e^{-10T}$，查 Z 变换表并乘 $(1-z^{-1})$，\n$$G(z)=\\frac{bz+d}{(z-1)(z-a)},$$\n其中 $b=T-(1-a)/10$、$d=(1-a)/10-Ta$。代入单位负反馈公式，\n$$\\Phi(z)=\\frac{G(z)}{1+G(z)}=\\frac{bz+d}{z^2+(b-1-a)z+a+d}\\approx\\frac{0.01966z+0.01558}{z^2-1.477z+0.5122}.$$\n\n**2．利用差分方程逐拍求输出。**\n令 $c_n=c(nT)$、$r_n=r(nT)$，有\n$$c_n+(b-1-a)c_{n-1}+(a+d)c_{n-2}=br_{n-1}+dr_{n-2}.$$\n单位阶跃从 $n=0$ 开始，初始静止，故 $c_0=0$、$c_1=b$。继续代入得\n$$c_2=(1+a-b)b+b+d,$$\n$$c_3=(1+a-b)c_2-(a+d)b+b+d.$$\n保留 $a=e^{-0.7}$ 计算，最后取四位有效数字：\n$$c_0=0,\\quad c_1\\approx0.01966,\\quad c_2\\approx0.06427,\\quad c_3\\approx0.1201.$$",
+      "notes": "文字答案与解析已改正；原图中间把 $-0.1$ 写成了 $-0.1z$，但合式 $G(z)\\approx(0.02z+0.016)/[(z-1)(z-0.497)]$ 及按该系数得到的 $c(0)$–$c(3T)$ 可用。题面第 1 问写作 $G(z)/R(z)$，按题意应为 $C(z)/R(z)$。 主解现统一采用保留指数的同一模型，四位有效数字写最终系数与样本。原图较粗的 $(0.02z+0.016)/(z^2-1.477z+0.513)$ 及其 $0,0.02,0.06554,0.1225$ 是另一套舍入模型；两套结果不能混算，主解不再并列两套数值。"
+    },
+    {
+      "no": 8,
+      "score": null,
+      "cats": [
+        "状态空间 / 对角标准型",
+        "状态空间 / 传递函数矩阵"
+      ],
+      "stem": "（类似题）将下列状态空间化为对角标准型，并求其传递函数。\n\n$$\\dot x=\\begin{bmatrix}0&1&0\\\\0&0&1\\\\-6&-11&-6\\end{bmatrix}x+\\begin{bmatrix}0\\\\0\\\\1\\end{bmatrix}u,\\qquad y=\\begin{bmatrix}1&1&0\\end{bmatrix}x$$",
+      "figures": [],
+      "answerImages": [
+        "img/a2019-8-1.png",
+        "img/a2019-8-2.png"
+      ],
+      "answer": "采用坐标变换 $x=P\\tilde x$，对角型的状态方程为 $\\dot{\\tilde x}=\\tilde A\\tilde x+\\tilde Bu$，输出方程为 $y=\\tilde C\\tilde x+Du$，$D=0$。\n\n取 $P=\\begin{bmatrix}1&1&1\\\\-1&-2&-3\\\\1&4&9\\end{bmatrix}$，对角标准型（特征值 $-1,-2,-3$）为：\n$$\\tilde A=\\operatorname{diag}(-1,-2,-3),\\quad\n\\tilde B=\\begin{bmatrix}1/2\\\\-1\\\\1/2\\end{bmatrix},\\quad\n\\tilde C=\\begin{bmatrix}0&-1&-2\\end{bmatrix}.$$\n传递函数 $G(s)=\\dfrac{1}{(s+2)(s+3)}$（$s=-1$ 的模态不能观）。\n",
+      "explanation": "采用坐标变换 $x=P\\tilde x$，对角型的状态方程为 $\\dot{\\tilde x}=\\tilde A\\tilde x+\\tilde Bu$，输出方程为 $y=\\tilde C\\tilde x+Du$，$D=0$。\n\n$A$ 为能控标准型同伴矩阵，特征多项式 $s^3+6s^2+11s+6=(s+1)(s+2)(s+3)$，特征值 $-1,-2,-3$。模态矩阵按列取 $[1,\\lambda,\\lambda^2]^\\mathrm{T}$：\n$$P=\\begin{bmatrix}1&1&1\\\\-1&-2&-3\\\\1&4&9\\end{bmatrix},\\qquad\nP^{-1}=\\begin{bmatrix}3&5/2&1/2\\\\-3&-4&-1\\\\1&3/2&1/2\\end{bmatrix}.$$\n于是 $\\tilde A=P^{-1}AP=\\operatorname{diag}(-1,-2,-3)$，\n$$\\tilde B=P^{-1}B=\\begin{bmatrix}1/2\\\\-1\\\\1/2\\end{bmatrix},\\qquad\n\\tilde C=CP=\\begin{bmatrix}0&-1&-2\\end{bmatrix}.$$\n由对角型直接求传递函数：各模态贡献为 $\\tilde C_i\\tilde B_i/(s-\\lambda_i)$，\n$$G(s)=\\tilde C(sI-\\tilde A)^{-1}\\tilde B=\\dfrac{(-1)\\cdot(-1)}{s+2}+\\dfrac{(-2)\\cdot(1/2)}{s+3}\n=\\dfrac{1}{s+2}-\\dfrac{1}{s+3}=\\dfrac{1}{(s+2)(s+3)}.$$\n$\\tilde C$ 的第一元为 0，$s=-1$ 的模态不能观，不出现在 $G(s)$ 中。由原实现 $C(sI-A)^{-1}B$ 也可得到同一结果。\n",
+      "notes": "文字答案与解析已改正；原图对角标准型 $\\tilde A,\\tilde B,\\tilde C$ 完全正确，但未写出题面要求的传递函数 $G(s)=1/[(s+2)(s+3)]$。"
+    },
+    {
+      "no": 9,
+      "score": 20,
+      "cats": [
+        "状态空间 / 状态反馈极点配置",
+        "状态空间 / 能控性与能观性"
+      ],
+      "stem": "计算题（共 20 分）。已知系统状态方程为\n$$\\dot x=\\begin{bmatrix}-1&0&0\\\\0&0&1\\\\0&-3&1\\end{bmatrix}x+\\begin{bmatrix}0\\\\0\\\\1\\end{bmatrix}u$$\n试判断系统是否可以通过状态反馈分别配置以下两组特征值：（1）$\\{-2,-2,-1\\}$；（2）$\\{-2,-2,-3\\}$。若能配置，求出反馈阵。",
+      "figures": [],
+      "answerImages": [
+        "img/a2019-9-1.png",
+        "img/a2019-9-2.png"
+      ],
+      "answer": "",
+      "explanation": "",
+      "notes": "已核对：正确。$-1$ 不可控；（1）组 $\\{-2,-2,-1\\}$ 可配，$k_3=5$、$k_2=1$、$k_1$ 任意；（2）组不可配。",
+      "errataLevel": "ok"
+    }
+  ]
 }
