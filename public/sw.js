@@ -3,7 +3,7 @@
 
 // PRECACHE 由 tools/build_precache.py 在构建时写入，请勿手改
 const PRECACHE = {
-  "version": "9485807be546",
+  "version": "dcdb100a7704",
   "files": [
     "./",
     "./index.html",
@@ -113,8 +113,8 @@ const PRECACHE = {
     "./vendor/ts-fsrs/ts-fsrs.umd.js"
   ],
   "integrity": {
-    "./": "sha256-4jy+vNjj1Alq6SdTASg9JT4FpPalMgro2Xt6JKUMF4s=",
-    "./index.html": "sha256-4jy+vNjj1Alq6SdTASg9JT4FpPalMgro2Xt6JKUMF4s=",
+    "./": "sha256-q2g78el6GRXnmMH56NcgCTpx4hS9joJ4OlZ95eoRLBM=",
+    "./index.html": "sha256-q2g78el6GRXnmMH56NcgCTpx4hS9joJ4OlZ95eoRLBM=",
     "./app.css": "sha256-QG9Zf1bZtTz2QiLoBAfbst//S37zyoTZz0KnuFLNCNM=",
     "./manifest.webmanifest": "sha256-ZrcDxEM2u72u5QMKdyBVo4SHynb9/lcn4RctC2GcBco=",
     "./data/library.json": "sha256-2DRpWCtmtlNjbg8kixyltO4RHoNCbsBo2vfJDur1z1Q=",
