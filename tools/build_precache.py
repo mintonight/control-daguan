@@ -53,6 +53,7 @@ BLOCK = re.compile(r"const PRECACHE = \{.*?\};", re.S)
 
 
 def render(root, source):
+    source = source.replace("\r\n", "\n")
     if len(BLOCK.findall(source)) != 1:
         raise ValueError("expected exactly one generated PRECACHE block")
     logic = BLOCK.sub("const PRECACHE = null;", source)
@@ -72,10 +73,11 @@ def render(root, source):
 
 def build(root=ROOT):
     sw = root / "sw.js"
-    source = sw.read_text(encoding="utf-8")
+    source = sw.read_bytes().decode("utf-8").replace("\r\n", "\n")
     generated, manifest = render(root, source)
-    if generated != source:
-        sw.write_text(generated, encoding="utf-8")
+    generated_bytes = generated.replace("\r\n", "\n").encode("utf-8")
+    if sw.read_bytes() != generated_bytes:
+        sw.write_bytes(generated_bytes)
     return manifest
 
 
