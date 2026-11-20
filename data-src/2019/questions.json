@@ -19,7 +19,7 @@
         "img/a2019-1-1.png"
       ],
       "answer": "1. 动态结构：误差检测 $U_f=K(\\theta_r-\\theta_y)$，电压放大 $E=K_v U_f$，电动机 $\\dfrac{\\Theta_m}{E}=\\dfrac{K_m}{s(T_m s+1)}$，齿轮减速 $\\theta_y=\\dfrac{Z_1}{Z_2}\\theta_m$，单位负反馈闭合。\n\n2. $\\dfrac{\\Theta_y(s)}{\\Theta_r(s)}=\\dfrac{KK_v K_m Z_1}{Z_2 T_m s^2+Z_2 s+KK_v K_m Z_1}$。\n",
-      "explanation": "1. 各环节方程为\n$$U_f=K(\\theta_r-\\theta_y),\\qquad\nE=K_v U_f,\\qquad\n\\dfrac{\\Theta_m(s)}{E(s)}=\\dfrac{K_m}{s(T_m s+1)},\\qquad\n\\theta_y=\\dfrac{Z_1}{Z_2}\\theta_m.$$\n题干给出的误差检测系数是 $K$。画图时以比较点的正端接输入 $\\theta_r$，负端接输出 $\\theta_y$，前向依次串联四个方框；按此顺序作图：$\\theta_r$ 与 $\\theta_y$ 比较后经 $K$、$K_v$、$K_m/[s(T_m s+1)]$、$Z_1/Z_2$ 得到 $\\theta_y$。\n\n这里 $\\theta_m$ 是电动机轴转角，$U_f$ 为检测电压，$E$ 为电动机输入电压。\n\n2. 从检测器输出到负载的前向传递函数\n$$\\dfrac{\\Theta_y}{U_f}=\\dfrac{K_v K_m Z_1}{Z_2 s(T_m s+1)},$$\n再与误差检测 $K$ 构成单位负反馈，闭环\n$$\\dfrac{\\Theta_y(s)}{\\Theta_r(s)}=\\dfrac{KK_v K_m Z_1}{Z_2 T_m s^2+Z_2 s+KK_v K_m Z_1}.$$\n",
+      "explanation": "1. 各环节方程为\n$$U_f=K(\\theta_r-\\theta_y),\\qquad\nE=K_v U_f,\\qquad\n\\dfrac{\\Theta_m(s)}{E(s)}=\\dfrac{K_m}{s(T_m s+1)},\\qquad\n\\theta_y=\\dfrac{Z_1}{Z_2}\\theta_m.$$\n题干给出的误差检测系数是 $K$。画图时以比较点的正端接输入 $\\theta_r$，负端接输出 $\\theta_y$，前向依次串联 $K$、$K_v$、$1/[s(T_m s+1)]$、$K_m$、$Z_1/Z_2$ 五个方框（其中电动机 $K_m/[s(T_m s+1)]$ 拆成 $1/[s(T_m s+1)]$ 与 $K_m$ 两个方框），输出为 $\\theta_y$。动态结构图如下：\n![系统动态结构图|760](img/solution-201901-block.png)\n\n这里 $\\theta_m$ 是电动机轴转角，$U_f$ 为检测电压，$E$ 为电动机输入电压。\n\n2. 从检测器输出到负载的前向传递函数\n$$\\dfrac{\\Theta_y}{U_f}=\\dfrac{K_v K_m Z_1}{Z_2 s(T_m s+1)},$$\n再与误差检测 $K$ 构成单位负反馈，闭环\n$$\\dfrac{\\Theta_y(s)}{\\Theta_r(s)}=\\dfrac{KK_v K_m Z_1}{Z_2 T_m s^2+Z_2 s+KK_v K_m Z_1}.$$\n",
       "notes": "文字答案与解析已改正；原图列写方程时把误差检测系数 $K$ 写成了 $L$，结构图已改回 $K$。闭环传递函数正确。"
     },
     {
