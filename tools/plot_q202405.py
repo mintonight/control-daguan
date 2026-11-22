@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Draw the pre-correction open-loop Bode magnitude of 2024 Q5 (G(s)=12/[(s+1)(s+3)(s+0.4)])."""
+"""Exam-style (hand-drawn look, no vertical guide lines) pre-correction Bode magnitude for 2024 Q5."""
 import math
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
@@ -7,13 +7,13 @@ from PIL import Image, ImageDraw, ImageFont
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "data-src/2024/img/solution-202405-bode-before.png"
 
-W, H = 1000, 610
-left, right, top, bottom = 105, 950, 70, 520
-logmin, logmax = -1.0, 1.0          # 0.1 .. 10 rad/s
-ymax, ymin = 25.0, -50.0            # dB
+W, H = 760, 480
+X0, Y0 = 150, 250
+SCALE, DEC, WMIN = 5.0, 200.0, 0.12
+F = "C:/Windows/Fonts/arial.ttf"
 
-def xmap(w): return left + (math.log10(w)-logmin)/(logmax-logmin)*(right-left)
-def ymap(db): return top + (ymax-db)/(ymax-ymin)*(bottom-top)
+def X(w):  return X0 + (math.log10(w)-math.log10(WMIN))*DEC
+def Y(db): return Y0 - SCALE*db
 
 def L_asym(w):
     db = 20.0
@@ -22,90 +22,47 @@ def L_asym(w):
     if w > 3.0: db -= 20*math.log10(w/3.0)
     return db
 
-def mag_db(w):
-    return 20*math.log10(12.0/(math.hypot(w,1)*math.hypot(w,3)*math.hypot(w,0.4)))
-
 img = Image.new("RGB", (W, H), "white")
 d = ImageDraw.Draw(img)
-FNT = "C:/Windows/Fonts/msyh.ttc"
 def font(sz, bold=False):
-    return ImageFont.truetype("C:/Windows/Fonts/msyhbd.ttc" if bold else FNT, sz)
+    try: return ImageFont.truetype("C:/Windows/Fonts/arialbd.ttf" if bold else F, sz)
+    except Exception: return ImageFont.truetype(F, sz)
+f22 = font(22); f20 = font(20); f19 = font(19)
+BLACK=(20,20,20)
 
-title_f = font(26, True)
-lab_f = font(20)
-tick_f = font(17)
-small_f = font(17)
+def arrow(x1,y1,x2,y2,w=2,ah=11):
+    d.line([(x1,y1),(x2,y2)], fill=BLACK, width=int(round(w)))
+    ang=math.atan2(y2-y1,x2-x1)
+    for s in (+1,-1):
+        xx=x2-ah*math.cos(ang-s*0.42); yy=y2-ah*math.sin(ang-s*0.42)
+        d.line([(x2,y2),(xx,yy)], fill=BLACK, width=int(round(w)))
 
-GRID=(220,226,232); AX=(40,40,40); DOT=(120,125,132); DASH=(150,155,162)
+arrow(X0, 430, X0, 78, 2.4)
+arrow(X0, Y0, 605, Y0, 2.4)
 
-# grid
-for w in [0.1,0.2,0.4,1,2,3,5,10]:
-    x=xmap(w); d.line([(x,top),(x,bottom)], fill=GRID, width=1)
-for db in [20,10,0,-10,-20,-30,-40]:
-    y=ymap(db); d.line([(left,y),(right,y)], fill=GRID, width=1)
-# axes
-d.line([(left,top),(left,bottom)], fill=AX, width=2)
-d.line([(left,bottom),(right,bottom)], fill=AX, width=2)
-# 0 dB line
-y0=ymap(0); d.line([(left,y0),(right,y0)], fill=(90,90,90), width=1)
+wpts=[WMIN,0.4,1,3,9]
+pts=[(X(w),Y(L_asym(w))) for w in wpts]
+for i in range(len(pts)-1):
+    d.line([pts[i],pts[i+1]], fill=BLACK, width=3)
 
-# ticks
-for w,lab in [(0.1,"0.1"),(0.4,"0.4"),(1,"1"),(2,"2"),(3,"3"),(10,"10")]:
-    x=xmap(w); d.line([(x,bottom),(x,bottom+6)], fill=AX, width=1)
-    tw=d.textlength(lab,font=tick_f); d.text((x-tw/2,bottom+10), lab, font=tick_f, fill=AX)
-for db in [20,10,0,-10,-20,-30,-40]:
-    y=ymap(db); d.line([(left-6,y),(left,y)], fill=AX, width=1)
-    lab=str(db); tw=d.textlength(lab,font=tick_f); d.text((left-10-tw,y-9), lab, font=tick_f, fill=AX)
+d.text((X0+12, 60), "L(ω)/dB", font=f22, fill=BLACK)
+d.text((566, Y0-32), "ω/(rad/s)", font=f22, fill=BLACK)
+d.text((X0-16, Y(20)-12), "20dB", font=f20, fill=BLACK, anchor="ra")
+d.text((X0-16, Y(-20)-12), "-20dB", font=f20, fill=BLACK, anchor="ra")
 
-# asymptote (piecewise linear in log w)
-pts=[(xmap(w),ymap(L_asym(w))) for w in [0.1,0.4,1,3,10]]
-d.line(pts, fill=AX, width=3)
-# exact curve dotted
-n=400; prev=None
-for i in range(n+1):
-    w=10**(logmin+(logmax-logmin)*i/n); p=(xmap(w),ymap(mag_db(w)))
-    if prev: d.line([prev,p], fill=DOT, width=2)
-    prev=p
+for w,lab in [(0.4,"0.4"),(1,"1"),(3,"3")]:
+    x=X(w); d.line([(x,Y0),(x,Y0+7)], fill=BLACK, width=2)
+    d.text((x, Y0+12), lab, font=f20, fill=BLACK, anchor="ma")
 
-# vertical dashed construction lines at corners and wc=2
-def vdash(w, ytop=None, ybot=None):
-    x=xmap(w); yt=ytop if ytop is not None else top; yb=ybot if ybot is not None else bottom
-    yy=yt
-    while yy<yb:
-        d.line([(x,yy),(x,min(yy+8,yb))], fill=DASH, width=1); yy+=14
-for w in [0.4,1,3]:
-    vdash(w, ymap(L_asym(w)), bottom)
-vdash(2, ymap(0), bottom)
-# mark wc=2 point
-xc=xmap(2); yc=ymap(0); r=5
-d.ellipse([xc-r,yc-r,xc+r,yc+r], fill="white", outline=AX, width=2)
-tw=d.textlength("ωc=2",font=tick_f); d.text((xc-tw/2,bottom+30), "ωc=2", font=tick_f, fill=(20,90,160))
+def slope_arrow(w1, w2, frac=0.5):
+    wa = w1*(w2/w1)**(frac-0.14); wb = w1*(w2/w1)**(frac+0.14)
+    arrow(X(wa), Y(L_asym(wa)), X(wb), Y(L_asym(wb)), 1.8, 9)
+slope_arrow(WMIN, 0.4); slope_arrow(0.4, 1); slope_arrow(1, 3); slope_arrow(3, 9)
 
-
-# slope labels
-def slopetext(w, db, text, dy=-18):
-    x=xmap(w); y=ymap(db)+dy; tw=d.textlength(text,font=small_f)
-    d.text((x-tw/2,y), text, font=small_f, fill=(30,30,30))
-slopetext(0.18, L_asym(0.18), "0 dB/dec")
-slopetext(math.sqrt(0.4*1), (L_asym(0.4)+L_asym(1))/2, "−20 dB/dec")
-slopetext(math.sqrt(1*3), (L_asym(1)+L_asym(3))/2, "−40 dB/dec")
-slopetext(math.sqrt(3*10), (L_asym(3)+L_asym(10))/2, "−60 dB/dec")
-
-# axis labels + title
-def centered(text, y, fnt, fill=AX):
-    tw=d.textlength(text,font=fnt); d.text(((left+right)/2-tw/2, y), text, font=fnt, fill=fill)
-centered("ω / (rad/s)", bottom+52, lab_f)
-tw=d.textlength("校正前开环对数幅频特性",font=title_f); d.text(((left+right)/2-tw/2, 16), "校正前开环对数幅频特性", font=title_f, fill=AX)
-# rotated ylabel
-yl=Image.new("RGBA",(340,34),(255,255,255,0)); yd=ImageDraw.Draw(yl)
-yd.text((0,0),"L(ω) / dB",font=lab_f,fill=AX)
-yl=yl.rotate(90,expand=True)
-img.paste(yl,(18,int((top+bottom)/2-170)),yl)
-
-# legend (dashed construction note + line styles)
-lx, ly = right-250, top+6
-d.line([(lx,ly+6),(lx+42,ly+6)], fill=AX, width=3); d.text((lx+50,ly-4),"渐近线",font=small_f,fill=AX)
-d.line([(lx,ly+34),(lx+42,ly+34)], fill=DOT, width=2); d.text((lx+50,ly+24),"精确幅频",font=small_f,fill=AX)
+d.text((172, 112), "0dB/dec", font=f19, fill=BLACK)
+d.text((300, 118), "-20dB/dec", font=f19, fill=BLACK)
+d.text((452, 232), "-40dB/dec", font=f19, fill=BLACK)
+d.text((492, 348), "-60dB/dec", font=f19, fill=BLACK)
 
 img.save(OUT)
 print("saved", OUT, img.size)
