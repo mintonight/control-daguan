@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Exam-style (hand-drawn look, no vertical guide lines) pre-correction Bode magnitude for 2024 Q5."""
+"""Exam-style (hand-drawn look) pre-correction Bode magnitude for 2024 Q5, with dashed guides at 0.4/1/3."""
 import math
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
@@ -45,6 +45,14 @@ pts=[(X(w),Y(L_asym(w))) for w in wpts]
 for i in range(len(pts)-1):
     d.line([pts[i],pts[i+1]], fill=BLACK, width=3)
 
+def vdash(x, y1=92, y2=440, dash=6, gap=6):
+    y=y1
+    while y<y2:
+        d.line([(x,y),(x,min(y+dash,y2))], fill=(70,70,70), width=1)
+        y+=dash+gap
+for w in (0.4,1,3):
+    vdash(X(w))
+
 d.text((X0+12, 60), "L(ω)/dB", font=f22, fill=BLACK)
 d.text((566, Y0-32), "ω/(rad/s)", font=f22, fill=BLACK)
 d.text((X0-16, Y(20)-12), "20dB", font=f20, fill=BLACK, anchor="ra")
@@ -61,7 +69,7 @@ slope_arrow(WMIN, 0.4); slope_arrow(0.4, 1); slope_arrow(1, 3); slope_arrow(3, 9
 
 d.text((172, 112), "0dB/dec", font=f19, fill=BLACK)
 d.text((300, 118), "-20dB/dec", font=f19, fill=BLACK)
-d.text((452, 232), "-40dB/dec", font=f19, fill=BLACK)
+d.text((452, 218), "-40dB/dec", font=f19, fill=BLACK)
 d.text((492, 348), "-60dB/dec", font=f19, fill=BLACK)
 
 img.save(OUT)
