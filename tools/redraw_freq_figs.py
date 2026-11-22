@@ -183,5 +183,46 @@ def fig_2026_4():
     text(d, pp.X(1.0) + 10, pp.Y(phi(1.0)) + 16, "-225°", 18, anchor="lm")
     save(img, "data-src/2026/img/solution-202604-bode.png")
 
+
+# ------------------------------------------------ 2026 Q4 separate figures ---
+def _single_system(rel, order, title, ylab_pt):
+    W, H = 760, 820
+    img = Image.new("RGB", (W, H), "white"); d = ImageDraw.Draw(img)
+    text(d, 150, 16, title, 20, anchor="la")
+    pm = Panel(d, 150, 80, 540, 300, 0.05, 20, -88, 62)
+    y0 = pm.axes("", "L(ω)/dB",
+                 xticks=[(0.1, "0.1"), (1, "1"), (10, "10")],
+                 yticks=[(50, "50"), (25, "25"), (0, "0"), (-25, "-25"), (-50, "-50"), (-75, "-75")],
+                 axis_val=0)
+    L0 = -20*order*math.log10(0.05)
+    segs = build_segments(0.05, L0, -20*order, [(1.0, -20*order - 20)])
+    def mag(w):
+        s = 1j*w
+        return 20*math.log10(abs(1/((s**order)*(s + 1))))
+    pm.curve(mag)
+    pm.polyline(verts(pm, segs, [0.05, 1.0, 20.0]), 3)
+    pm.vdash(1.0, y0, pm.Y(0) - 6)
+    for w, lab in [(0.26, "-%d" % (20*order)), (6.0, "-%d" % (20*order + 20))]:
+        pm.slope_label(w, piecewise(segs, w), lab, off=15, size=18, anchor="ms")
+    text(d, pm.X(0.06), pm.Y(58), "（斜率单位：dB/dec）", 15, fill=(80, 80, 80))
+    pp = Panel(d, 150, 470, 540, 290, 0.05, 20, -290, -80)
+    pp.axes("ω / (rad/s)", "φ/(°)",
+            xticks=[(0.1, "0.1"), (1, "1"), (10, "10")],
+            yticks=[(-100, "-100"), (-150, "-150"), (-200, "-200"), (-250, "-250")],
+            axis_val=-290)
+    def ph(w):
+        return -90*order - math.degrees(math.atan(w))
+    pp.line_curve(ph, width=3, color=BLACK, samples=420)
+    pp.vdash(1.0, pp.Y(-290), pp.Y(ph(1.0)) - 8)
+    pp.dot(1.0, ph(1.0), 4)
+    text(d, pp.X(1.0) + 10, pp.Y(ph(1.0)) - 8, ylab_pt, 18, anchor="lm")
+    save(img, rel)
+
+def fig_2026_4_split():
+    _single_system("data-src/2026/img/solution-202604-bode-before.png", 1,
+                   "串联积分前  Gb(s) = 1/[s(s+1)]", "-135°")
+    _single_system("data-src/2026/img/solution-202604-bode-after.png", 2,
+                   "串联积分后  Gi(s) = 1/[s²(s+1)]", "-225°")
+
 if __name__ == "__main__":
-    fig_2019_4(); fig_2019_5(); fig_2021_4(); fig_2025_4(); fig_2026_4()
+    fig_2019_4(); fig_2019_5(); fig_2021_4(); fig_2025_4(); fig_2026_4_split()
