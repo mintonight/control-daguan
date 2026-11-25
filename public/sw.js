@@ -3,7 +3,7 @@
 
 // PRECACHE 由 tools/build_precache.py 在构建时写入，请勿手改
 const PRECACHE = {
-  "version": "8a5017748ebb",
+  "version": "2d311fe6d96c",
   "files": [
     "./",
     "./index.html",
@@ -113,9 +113,9 @@ const PRECACHE = {
     "./vendor/ts-fsrs/ts-fsrs.umd.js"
   ],
   "integrity": {
-    "./": "sha256-q2g78el6GRXnmMH56NcgCTpx4hS9joJ4OlZ95eoRLBM=",
-    "./index.html": "sha256-q2g78el6GRXnmMH56NcgCTpx4hS9joJ4OlZ95eoRLBM=",
-    "./app.css": "sha256-QG9Zf1bZtTz2QiLoBAfbst//S37zyoTZz0KnuFLNCNM=",
+    "./": "sha256-JNcG52ORpJ3kRucY6GkhoYek8KrhayXP3Mj764oG894=",
+    "./index.html": "sha256-JNcG52ORpJ3kRucY6GkhoYek8KrhayXP3Mj764oG894=",
+    "./app.css": "sha256-9IH/yjA71/XlYIvXpjxlpfRLV+HNqhVueAu3ocM5Jks=",
     "./manifest.webmanifest": "sha256-ZrcDxEM2u72u5QMKdyBVo4SHynb9/lcn4RctC2GcBco=",
     "./data/library.json": "sha256-2DRpWCtmtlNjbg8kixyltO4RHoNCbsBo2vfJDur1z1Q=",
     "./icons/apple-touch-icon.png": "sha256-4RVXCKLZWslYZ3BlffqZQEVSL6FXFfp4snZcrJCkYMI=",
@@ -144,7 +144,7 @@ const PRECACHE = {
     "./src/ui/markdown.js": "sha256-M50uwueavR2DHo6stv2T7WFFXWvIzlnqWJ7wY4Emrfs=",
     "./src/ui/note-markdown.js": "sha256-B/eXuz31VOgZ9WiwVajr1T3UJ1g4B2yxIhm3Dz8iVuw=",
     "./src/ui/notes-editor.js": "sha256-qub7EVgNYhyOEFxTVqi9D5Grwdjl+xNu0B/ZxMzCk7A=",
-    "./src/ui/pwa.js": "sha256-Olq1qg/V+9R46HqqQm66VQAGEgF/J4pmof3MGvVa6gM=",
+    "./src/ui/pwa.js": "sha256-qHg7LFQiJFDoaYhtLrTO8I2wgq9TcFNd1cJlQ2nVmeo=",
     "./src/ui/settings.js": "sha256-7oZ6t/9dVkbbtGPwuJtHJbz6/3YsC2DUfPnGKr0GDWU=",
     "./src/ui/view.js": "sha256-PreYQ1uyqPpWTNXkVL0yjE/T5+1TOhePeAAkb6Nbl6Y=",
     "./vendor/dompurify/LICENSE": "sha256-z8d0m5b2O9McPEK1xHG/dWgUBT6EfBDz6wA0F7xSPTA=",
@@ -222,88 +222,186 @@ const PRECACHE = {
   }
 };
 
-const SHELL = 'cdg-shell-' + PRECACHE.version;
-const RUNTIME = 'cdg-runtime';
+// CacheStorage is origin-wide. A legacy worker's cdg-* cleanup must not match these names.
+const PREFIX = 'control-daguan:' + encodeURIComponent(new URL(self.registration.scope).pathname) + ':';
+const SHELL = PREFIX + 'shell-' + PRECACHE.version;
+const RUNTIME = PREFIX + 'runtime';
+const LEGACY_RUNTIME = 'cdg-runtime';
+const shellURLs = new Map(PRECACHE.files.map(path => [new URL(path, self.registration.scope).href, path]));
+const inScope = url => url.href.startsWith(self.registration.scope);
+const runtimeURL = url => inScope(url) && (url.pathname.includes('/data/questions/') || url.pathname.includes('/img/'));
+let repairing;
+
+async function missingShell() {
+  const cache = await caches.open(SHELL);
+  const found = await Promise.all(PRECACHE.files.map(async path => (await cache.match(new URL(path, self.registration.scope)))?.ok));
+  return PRECACHE.files.filter((_, i) => !found[i]);
+}
+
+// Repair only absent files. addAll is atomic, and a failed repair never deletes a working shell.
+function repairShell() {
+  if (!repairing) repairing = (async () => {
+    const missing = await missingShell();
+    if (missing.length) {
+      const cache = await caches.open(SHELL);
+      await cache.addAll(missing.map(path => new Request(new URL(path, self.registration.scope), {
+        cache: 'reload', integrity: PRECACHE.integrity[path],
+      })));
+    }
+  })().finally(() => { repairing = null; });
+  return repairing;
+}
+
+async function migrateRuntime() {
+  if (!(await caches.has(LEGACY_RUNTIME))) return;
+  const legacy = await caches.open(LEGACY_RUNTIME), target = await caches.open(RUNTIME);
+  for (const req of await legacy.keys()) {
+    if (!runtimeURL(new URL(req.url)) || await target.match(req)) continue;
+    const response = await legacy.match(req);
+    // On quota failure the untouched legacy copy remains available through read-through below.
+    if (response?.ok) try { await target.put(req, response); } catch { /* Legacy copy remains the fallback. */ }
+  }
+}
+
+async function runtimeMatch(req) {
+  const hit = await (await caches.open(RUNTIME)).match(req);
+  if (hit || !(await caches.has(LEGACY_RUNTIME))) return hit;
+  return (await caches.open(LEGACY_RUNTIME)).match(req);
+}
+
+async function offlineStatus() {
+  const urls = new Map();
+  for (const name of [LEGACY_RUNTIME, RUNTIME]) {
+    if (!(await caches.has(name))) continue;
+    const cache = await caches.open(name);
+    for (const req of await cache.keys()) {
+      if (!runtimeURL(new URL(req.url))) continue;
+      const response = await cache.match(req);
+      if (response?.ok) urls.set(req.url, (await response.blob()).size);
+    }
+  }
+  return { shellReady: !(await missingShell()).length, version: PRECACHE.version,
+    bytes: [...urls.values()].reduce((a, b) => a + b, 0), files: urls.size };
+}
+
+async function cacheRuntime(rawURL) {
+  const url = new URL(rawURL, self.registration.scope);
+  if (!runtimeURL(url) || url.search || url.hash) throw new Error('不是本应用的离线资源');
+  // Worker-owned fetch bypasses stale-while-revalidate. Await the write and read it back before acknowledging.
+  const response = await fetch(new Request(url, { cache: 'reload' }));
+  if (!response.ok) throw new Error(`下载失败 HTTP ${response.status}`);
+  const cache = await caches.open(RUNTIME);
+  await cache.put(url, response);
+  const saved = await cache.match(url);
+  if (!saved?.ok) throw new Error('缓存写入后未能读回');
+  if (url.pathname.endsWith('.json')) return { json: await saved.json() };
+  await saved.blob();
+  return {};
+}
+
+async function verifyRuntime(urls) {
+  if (!Array.isArray(urls) || urls.length > 2000) throw new Error('离线清单无效');
+  const cache = await caches.open(RUNTIME), missing = [];
+  for (const raw of urls) {
+    const url = new URL(raw, self.registration.scope);
+    if (!runtimeURL(url)) throw new Error('离线清单包含范围外资源');
+    const response = await cache.match(url);
+    if (!response?.ok) missing.push(raw);
+    else await response.blob();
+  }
+  return { missing };
+}
+
+async function clearRuntime() {
+  await caches.delete(RUNTIME);
+  // Do not resurrect a user's cleared downloads on the next migration; never touch a foreign scope.
+  if (await caches.has(LEGACY_RUNTIME)) {
+    const cache = await caches.open(LEGACY_RUNTIME);
+    for (const req of await cache.keys()) if (runtimeURL(new URL(req.url))) await cache.delete(req);
+  }
+  return offlineStatus();
+}
 
 self.addEventListener('install', event => {
-  event.waitUntil((async () => {
-    const cache = await caches.open(SHELL);
-    try {
-      await cache.addAll(PRECACHE.files.map(url => new Request(url, {
-        cache: 'reload', integrity: PRECACHE.integrity[url],
-      })));
-    } catch (error) {
-      await caches.delete(SHELL);
-      throw error;
-    }
-  })());
+  event.waitUntil(repairShell().catch(async error => { await caches.delete(SHELL); throw error; }));
 });
 
 self.addEventListener('activate', event => {
   event.waitUntil((async () => {
+    await migrateRuntime();
     const keys = await caches.keys();
-    await Promise.all(keys
-      .filter(k => k.startsWith('cdg-') && k !== SHELL && k !== RUNTIME)
-      .map(k => caches.delete(k)));
+    await Promise.all(keys.filter(k => k.startsWith(PREFIX + 'shell-') && k !== SHELL).map(k => caches.delete(k)));
+    // Keep all legacy caches: an older installation at another scope can still need them.
     await self.clients.claim();
   })());
 });
 
 self.addEventListener('message', event => {
-  const type = event.data && event.data.type;
-  if (type === 'SKIP_WAITING') self.skipWaiting();
+  const type = event.data?.type;
+  if (type === 'SKIP_WAITING') { self.skipWaiting(); return; }
+  const port = event.ports[0];
+  if (!port || !['ENSURE_OFFLINE', 'OFFLINE_STATUS', 'CACHE_RUNTIME', 'VERIFY_RUNTIME', 'CLEAR_RUNTIME'].includes(type)) return;
+  // Same-origin pages outside this registration's scope cannot ask it to change caches.
+  if (!event.source?.url || !inScope(new URL(event.source.url))) return;
+  event.waitUntil((async () => {
+    try {
+      let result;
+      if (type === 'ENSURE_OFFLINE') { await repairShell(); await migrateRuntime(); result = await offlineStatus(); }
+      else if (type === 'OFFLINE_STATUS') result = await offlineStatus();
+      else if (type === 'CLEAR_RUNTIME') result = await clearRuntime();
+      else if (type === 'VERIFY_RUNTIME') result = await verifyRuntime(event.data.urls);
+      else result = await cacheRuntime(event.data.url);
+      port.postMessage({ ok: true, ...result });
+    } catch (error) { port.postMessage({ ok: false, error: String(error.message || error) }); }
+  })());
 });
 
 self.addEventListener('fetch', event => {
   const req = event.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
-  // 跨域请求（含 api.github.com、Gist）一律不拦截、不缓存
-  if (url.origin !== self.location.origin) return;
-
+  // No interception of GitHub/Gist, another origin or another app scope.
+  if (!inScope(url)) return;
   if (req.mode === 'navigate') {
+    // This also repairs a lost shell when the worker script itself has not changed.
+    event.waitUntil(repairShell().catch(() => {}));
     event.respondWith(networkFirstNav(req));
-    return;
-  }
-
-  const path = url.pathname;
-  if (path.includes('/data/questions/') || path.includes('/img/')) {
-    event.respondWith(staleWhileRevalidate(req));
-    return;
-  }
-
-  event.respondWith(cacheFirst(req));
+  } else if (runtimeURL(url)) event.respondWith(staleWhileRevalidate(req, event));
+  else event.respondWith(cacheFirst(req));
 });
 
 async function networkFirstNav(req) {
   try {
-    return await fetch(req);
-  } catch {
-    const hit = await caches.match(req) ||
-      await caches.match('./index.html', { ignoreSearch: true }) ||
-      await caches.match('./');
-    return hit || new Response('离线不可用', { status: 503, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
-  }
+    const response = await fetch(req);
+    if (response.ok) return response;
+  } catch { /* Fall back to the verified shell. */ }
+  const cache = await caches.open(SHELL);
+  const hit = await cache.match(req) || await cache.match(new URL('./index.html', self.registration.scope));
+  return hit || new Response('离线入口资源暂不可用，请联网重新打开以自动修复。学习记录不会因此被清除。', {
+    status: 503, headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+  });
 }
 
-async function staleWhileRevalidate(req) {
-  const cache = await caches.open(RUNTIME);
-  const cached = await cache.match(req);
-  const fetching = fetch(req).then(async res => {
-    if (res && res.ok) await cache.put(req, res.clone());
-    return res;
+async function staleWhileRevalidate(req, event) {
+  const cached = await runtimeMatch(req);
+  const fetching = fetch(req).then(async response => {
+    if (response.ok) await (await caches.open(RUNTIME)).put(req, response.clone());
+    return response;
   }).catch(() => undefined);
-  if (cached) return cached;
-  const fresh = await fetching;
-  return fresh || new Response('', { status: 503, statusText: 'offline' });
+  event.waitUntil(fetching.then(() => {}));
+  return cached || await fetching || new Response('', { status: 503, statusText: 'offline' });
 }
 
 async function cacheFirst(req) {
-  const cached = await caches.match(req);
+  const cache = await caches.open(SHELL), cached = await cache.match(req);
   if (cached) return cached;
+  const path = shellURLs.get(req.url);
   try {
-    return await fetch(req);
+    const response = await fetch(path ? new Request(req, { cache: 'reload', integrity: PRECACHE.integrity[path] }) : req);
+    if (path && response.ok) await cache.put(req, response.clone());
+    return response;
   } catch {
-    return new Response('', { status: 503, statusText: 'offline' });
+    // A newer deployment may no longer serve this version's bytes. The page can still load online and offer its update.
+    try { return await fetch(req); } catch { return new Response('', { status: 503, statusText: 'offline' }); }
   }
 }

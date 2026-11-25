@@ -15,6 +15,7 @@ from verify_support import idle
 
 ROOT = Path(__file__).resolve().parents[1]
 PREFIX = '/control-daguan/'
+CACHE_PREFIX = 'control-daguan:%2Fcontrol-daguan%2F:'
 
 
 class UpgradeHandler(SimpleHTTPRequestHandler):
@@ -122,7 +123,7 @@ async def verify_upgrade(pw, ok):
             new_source = (ROOT / 'public/sw.js').read_text(encoding='utf-8')
             (site / 'sw.js').write_text(new_source, encoding='utf-8')
             manifest = build(site)
-            new_key = 'cdg-shell-' + manifest['version']
+            new_key = CACHE_PREFIX + 'shell-' + manifest['version']
             ok('旧 SW 升级到当前构建产物：字节完全匹配且缓存版本不同', new_key != old_key and (site / 'sw.js').read_bytes() == (ROOT / 'public/sw.js').read_bytes(), new_key)
 
             for mode in ['missing', 'interrupted', 'mismatch']:
@@ -145,10 +146,10 @@ async def verify_upgrade(pw, ok):
             ok('成功安装等待激活：整个候选缓存与生成清单哈希一致，旧缓存未变', state == 'installed' and staged == expected and before == await snapshot(page, old_key), f'{len(staged)} assets')
             async with page.expect_navigation(wait_until='domcontentloaded'):
                 await page.locator('#updateToast').click()
-            await page.wait_for_function("keys => caches.keys().then(names => names.includes(keys.newKey) && !names.includes(keys.oldKey))", arg={'newKey': new_key, 'oldKey': old_key})
+            await page.wait_for_function("keys => caches.keys().then(names => names.includes(keys.newKey) && names.includes(keys.oldKey))", arg={'newKey': new_key, 'oldKey': old_key})
             await idle(page)
-            preserved = await page.evaluate("() => caches.open('cdg-runtime').then(c => c.match('data/questions/upgrade-sentinel.json')).then(r => r && r.text())")
-            ok('同源点击更新：当前版本激活、旧壳清除、原运行时缓存保留', preserved == 'preserve runtime', preserved)
+            preserved = await page.evaluate("name => caches.open(name).then(c => c.match('data/questions/upgrade-sentinel.json')).then(r => r && r.text())", CACHE_PREFIX + 'runtime')
+            ok('同源点击更新：当前版本激活、旧共享壳不误删、旧共享缓存保留、当前 scope 下载无损迁移', preserved == 'preserve runtime', preserved)
             server.shutdown()
             page, errors = await cold_launch(context, page, base)
             cached = await snapshot(page, new_key)

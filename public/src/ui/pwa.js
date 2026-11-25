@@ -1,13 +1,15 @@
 /* 安装（PWA）、Service Worker 注册与更新提示、离线下载。 */
 import { $ } from './dom.js';
+import { after } from '../core/timers.js';
 
-const RUNTIME = 'cdg-runtime';
 const IMG_RE = /img\/[A-Za-z0-9._/-]+/g;
 
 let deferred = null;
 let hooks = { getLib: null, flush: async () => {} };
 let waitingToReload = false;
 let sizeLabel = '';
+let registrationTask, maintenance;
+let shellReady = false;
 
 function isStandalone() {
   return matchMedia('(display-mode: standalone)').matches || !!navigator.standalone;
@@ -41,29 +43,67 @@ function updateSum() {
   parts.push(sizeLabel || '未下载');
   el.textContent = parts.join(' · ');
 }
-async function runtimeSize() {
-  if (!('caches' in window)) return 0;
-  if (!(await caches.has(RUNTIME))) return 0;
-  const cache = await caches.open(RUNTIME);
-  let n = 0;
-  for (const req of await cache.keys()) {
-    const res = await cache.match(req);
-    if (res) n += (await res.blob()).size;
-  }
-  return n;
+function deadline(promise, ms, message) {
+  return new Promise((resolve, reject) => {
+    const cancel = after(ms, () => reject(new Error(message)), { idle: false });
+    promise.then(value => { cancel(); resolve(value); }, error => { cancel(); reject(error); });
+  });
 }
-async function refreshSize() {
+async function controlledWorker() {
+  if (!registrationTask) throw new Error('浏览器不支持离线功能');
+  const reg = await deadline(registrationTask, 20000, '离线功能未就绪，请联网重试');
+  const valid = () => navigator.serviceWorker.controller?.scriptURL === new URL('sw.js', reg.scope).href;
+  if (valid()) return navigator.serviceWorker.controller;
+  await new Promise((resolve, reject) => {
+    const changed = () => { if (valid()) { cleanup(); resolve(); } };
+    const cancel = after(20000, () => { cleanup(); reject(new Error('离线功能未就绪，请等更新完成后重试')); }, { idle: false });
+    const cleanup = () => { cancel(); navigator.serviceWorker.removeEventListener('controllerchange', changed); };
+    navigator.serviceWorker.addEventListener('controllerchange', changed);
+    changed();
+  });
+  return navigator.serviceWorker.controller;
+}
+async function workerCall(type, payload = {}, worker) {
+  const target = worker || await controlledWorker();
+  const channel = new MessageChannel();
   try {
-    const n = await runtimeSize();
-    sizeLabel = n ? fmtBytes(n) : '未下载';
+    return await deadline(new Promise((resolve, reject) => {
+      channel.port1.onmessage = event => event.data?.ok ? resolve(event.data) : reject(new Error(event.data?.error || '离线缓存操作失败'));
+      target.postMessage({ type, ...payload }, [channel.port2]);
+    }), 30000, '离线缓存核验超时，请联网重试');
+  } finally { channel.port1.close(); }
+}
+async function storageLabel() {
+  try { return await navigator.storage?.persisted?.() ? '已获持久存储保护' : '浏览器仍可能回收缓存'; }
+  catch { return '存储保护状态未知'; }
+}
+async function showHealth(ready, error = '') {
+  shellReady = ready;
+  const el = $('#offlineHealth');
+  if (el) el.textContent = `${ready ? '离线入口：已核验' : '离线入口：未就绪'} · ${error || await storageLabel()}`;
+}
+async function refreshSize(status) {
+  try {
+    status = status || await workerCall('OFFLINE_STATUS');
+    sizeLabel = status.bytes ? fmtBytes(status.bytes) : '未下载';
     const el = $('#offlineSize');
-    if (el) el.textContent = n ? `离线缓存：${fmtBytes(n)}` : '离线缓存：未下载';
+    if (el) el.textContent = status.bytes ? `离线缓存：${fmtBytes(status.bytes)}（${status.files} 个文件）` : '离线缓存：未下载';
     const clear = $('#offlineClearBtn');
-    if (clear) clear.disabled = !n;
-  } catch {
-    sizeLabel = '';
+    if (clear) clear.disabled = !status.bytes;
+    await showHealth(status.shellReady);
+  } catch (error) {
+    sizeLabel = '状态未知';
+    await showHealth(false, error.message);
   }
   updateSum();
+}
+function maintainOffline() {
+  if (!maintenance) maintenance = workerCall('ENSURE_OFFLINE').then(refreshSize).catch(async error => {
+    await showHealth(false, error.message);
+    // Old assets may no longer be on the server; a new complete worker can replace them.
+    registrationTask?.then(reg => reg.update()).catch(() => {});
+  }).finally(() => { maintenance = null; });
+  return maintenance;
 }
 
 async function promptInstall() {
@@ -109,55 +149,52 @@ async function mapPool(items, limit, fn) {
 async function downloadAll() {
   const lib = hooks.getLib && hooks.getLib();
   if (!lib || !lib.questions) { setProg('题库尚未加载完成，请稍后再试。'); return; }
+  // Ask only after the user's explicit offline-download gesture, never at startup.
+  const protection = navigator.storage?.persist?.().catch(() => false);
   const btn = $('#offlineDlBtn'), bar = $('#offlineBar'), wrap = $('#offlineProg'), text = $('#offlineProgText');
   if (btn) btn.disabled = true;
   if (wrap) wrap.hidden = false;
-  const urls = new Set();
-  collectFrom(lib, urls);
-  lib.questions.forEach(q => urls.add(`data/questions/${q.id}.json`));
-  const list = [...urls];
-  let done = 0, failed = 0;
-  const totalGuess = list.length;
-  const tick = (total) => {
-    const n = total || totalGuess;
-    if (bar) bar.style.width = Math.min(100, Math.round(done / n * 100)) + '%';
-    if (text) text.textContent = failed ? `正在下载 ${done} / ${n}（失败 ${failed}）` : `正在下载 ${done} / ${n}`;
-  };
-  tick();
-  const seen = new Set(list);
-  const addExtra = [];
-  await mapPool(list, 6, async url => {
-    try {
-      const r = await fetch(url);
-      if (!r.ok) throw 0;
-      if (url.endsWith('.json')) {
-        try {
-          const more = new Set();
-          collectFrom(await r.json(), more);
-          more.forEach(u => { if (!seen.has(u)) { seen.add(u); addExtra.push(u); } });
-        } catch {}
-      } else {
-        await r.blob();
-      }
-    } catch { failed++; }
-    done++; tick();
-  });
-  const extra = addExtra.slice();
-  const total = list.length + extra.length;
-  tick(total);
-  await mapPool(extra, 6, async url => {
-    try {
-      const r = await fetch(url);
-      if (!r.ok) throw 0;
-      await r.blob();
-    } catch { failed++; }
-    done++; tick(total);
-  });
-  await refreshSize();
-  if (text) text.textContent = failed ? `已缓存，其中 ${failed} 个文件失败。` : `已全部缓存（${sizeLabel || fmtBytes(await runtimeSize())}）。`;
-  if (bar) bar.style.width = '100%';
-  if (btn) btn.disabled = false;
+  setProg('正在核验离线入口…');
+  try {
+    const worker = await controlledWorker();
+    const status = await workerCall('ENSURE_OFFLINE', {}, worker);
+    if (!status.shellReady) throw new Error('离线入口不完整，请先完成应用更新');
+    const urls = new Set();
+    collectFrom(lib, urls);
+    lib.questions.forEach(q => urls.add(`data/questions/${q.id}.json`));
+    const list = [...urls], seen = new Set(list), extra = [], failed = [];
+    let done = 0, total = list.length;
+    const tick = () => {
+      if (bar) bar.style.width = Math.min(100, Math.round(done / total * 100)) + '%';
+      if (text) text.textContent = `正在下载并核验 ${done} / ${total}${failed.length ? `（失败 ${failed.length}）` : ''}`;
+    };
+    const download = async url => {
+      try {
+        const result = await workerCall('CACHE_RUNTIME', { url }, worker);
+        if (result.json) {
+          const more = new Set(); collectFrom(result.json, more);
+          more.forEach(path => { if (!seen.has(path)) { seen.add(path); extra.push(path); } });
+        }
+      } catch (error) { failed.push(`${url}：${error.message}`); }
+      done++; tick();
+    };
+    tick();
+    await mapPool(list, 6, download);
+    total += extra.length; tick();
+    await mapPool(extra, 6, download);
+    await protection;
+    const verified = await workerCall('VERIFY_RUNTIME', { urls: [...seen] }, worker);
+    await refreshSize();
+    if (verified.missing.length) throw new Error(`最终核验发现 ${verified.missing.length} 个文件缺失，请联网重试`);
+    if (!shellReady) throw new Error('入口核验失败，尚不能保证离线使用');
+    if (text) text.textContent = failed.length ? `下载未完成：${failed.length} 个文件失败，已有缓存已保留。可联网重试。${failed[0]}` : `已全部缓存并逐项核验（${total} 个文件，${sizeLabel}）。`;
+    if (bar) bar.style.width = `${Math.round((total - failed.length) / total * 100)}%`;
+  } catch (error) {
+    setProg(`离线下载失败：${error.message}。已有缓存和学习记录未清除。`);
+    await showHealth(shellReady, error.message);
+  } finally { if (btn) btn.disabled = false; }
 }
+
 function setProg(msg) {
   const wrap = $('#offlineProg'), text = $('#offlineProgText');
   if (wrap) wrap.hidden = false;
@@ -165,12 +202,11 @@ function setProg(msg) {
 }
 
 async function clearRuntime() {
-  if ('caches' in window && await caches.has(RUNTIME)) await caches.delete(RUNTIME);
+  await refreshSize(await workerCall('CLEAR_RUNTIME'));
   const bar = $('#offlineBar'), text = $('#offlineProgText'), wrap = $('#offlineProg');
   if (bar) bar.style.width = '0%';
   if (wrap) wrap.hidden = true;
   if (text) text.textContent = '';
-  await refreshSize();
 }
 
 function bindUI() {
@@ -188,7 +224,7 @@ function bindUI() {
     $('#offlineClearBtn').hidden = false;
   });
   $('#offlineClearYes')?.addEventListener('click', async () => {
-    await clearRuntime();
+    try { await clearRuntime(); } catch (error) { setProg(`清除失败：${error.message}`); }
     $('#offlineClearConfirm').hidden = true;
     $('#offlineClearBtn').hidden = false;
   });
@@ -204,7 +240,7 @@ function registerSW() {
       else w.postMessage({ type: 'SKIP_WAITING' });
     });
   };
-  navigator.serviceWorker.register('sw.js', { scope: './' }).then(reg => {
+  registrationTask = navigator.serviceWorker.register('sw.js', { scope: './' }).then(reg => {
     if (reg.waiting) {
       if (navigator.serviceWorker.controller) showUpdateToast();
       else reg.waiting.postMessage({ type: 'SKIP_WAITING' });
@@ -212,11 +248,15 @@ function registerSW() {
     onInstalled(reg.installing);
     reg.addEventListener('updatefound', () => onInstalled(reg.installing));
     document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') reg.update().catch(() => {});
+      if (document.visibilityState === 'visible') { reg.update().catch(() => {}); maintainOffline(); }
     });
-  }).catch(() => {});
+    return reg;
+  });
+  registrationTask.catch(error => showHealth(false, `注册失败：${error.message}`));
+  addEventListener('online', maintainOffline);
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (waitingToReload) location.reload();
+    else maintainOffline();
   });
 }
 
@@ -235,11 +275,11 @@ try {
 
 bindUI();
 updateInstallUI();
-refreshSize();
 registerSW();
+refreshSize();
 
 /** getLib()：当前题库（离线下载用）；flush()：更新前先把未保存的笔记写入 */
 export function startPWA(opts) {
   if (opts) Object.assign(hooks, opts);
-  refreshSize();
+  maintainOffline();
 }

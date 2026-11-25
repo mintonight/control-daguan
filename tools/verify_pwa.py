@@ -12,6 +12,7 @@ from playwright.async_api import async_playwright
 from verify_support import idle
 from build_precache import build
 from verify_sw_update import verify_upgrade
+from verify_pwa_resilience import verify_resilience, PREFIX as CACHE_PREFIX, RUNTIME
 ROOT = Path(__file__).resolve().parents[1]
 PREFIX = '/control-daguan'
 R = []
@@ -74,10 +75,10 @@ async def cached_urls(page):
     }""")
 
 async def runtime_count(page):
-    return await page.evaluate("""async () => {
-      if (!(await caches.has('cdg-runtime'))) return 0;
-      return (await (await caches.open('cdg-runtime')).keys()).length;
-    }""")
+    return await page.evaluate("""async name => {
+      if (!(await caches.has(name))) return 0;
+      return (await (await caches.open(name)).keys()).length;
+    }""", RUNTIME)
 
 async def open_offline_sec(page):
     if not await page.locator('#settings').is_visible():
@@ -240,10 +241,10 @@ async def main():
         ok('新版本 SW 等待时显示「有新版本，点击更新」', '有新版本' in (await pg.locator('#updateToast').inner_text()))
         async with pg.expect_navigation(wait_until='domcontentloaded'):
             await pg.locator('#updateToast').click()
-        await pg.wait_for_function("version => caches.keys().then(keys => keys.includes('cdg-shell-' + version) && keys.filter(k => k.startsWith('cdg-shell-')).length === 1)", arg=updated['version'])
+        await pg.wait_for_function("version => caches.keys().then(keys => keys.includes('control-daguan:%2Fcontrol-daguan%2F:shell-' + version) && keys.filter(k => k.startsWith('control-daguan:%2Fcontrol-daguan%2F:shell-')).length === 1)", arg=updated['version'])
         await pg.wait_for_function("getComputedStyle(document.documentElement).getPropertyValue('--cdg-asset-update').trim() === 'item10'")
         keys = await pg.evaluate('() => caches.keys()')
-        ok('点击更新后新 CSS 与新的壳缓存生效', 'cdg-shell-' + updated['version'] in keys, keys)
+        ok('点击更新后新 CSS 与新的壳缓存生效', CACHE_PREFIX + 'shell-' + updated['version'] in keys, keys)
 
         # --- 可安装性 ---
         # 回到在线、已控制的页面
@@ -298,6 +299,7 @@ async def main():
         ok('页面无 JavaScript 错误', not page_errs, str(page_errs[:5]))
         await ctx.close()
         await verify_upgrade(pw, ok)
+        await verify_resilience(pw, ok)
     finally:
         httpd.shutdown()
         shutil.rmtree(tmp, ignore_errors=True)
@@ -305,4 +307,5 @@ async def main():
     print(f'{sum(1 for r in R if r[1])}/{len(R)} passed')
     sys.exit(0 if all(r[1] for r in R) else 1)
 
-asyncio.run(main())
+if __name__ == '__main__':
+    asyncio.run(main())
