@@ -13,6 +13,7 @@ from verify_support import idle
 from build_precache import build
 from verify_sw_update import verify_upgrade
 from verify_pwa_resilience import verify_resilience, PREFIX as CACHE_PREFIX, RUNTIME
+from verify_pwa_protocol import verify_protocol_upgrades
 ROOT = Path(__file__).resolve().parents[1]
 PREFIX = '/control-daguan'
 R = []
@@ -300,6 +301,7 @@ async def main():
         await ctx.close()
         await verify_upgrade(pw, ok)
         await verify_resilience(pw, ok)
+        await verify_protocol_upgrades(pw, ok)
     finally:
         httpd.shutdown()
         shutil.rmtree(tmp, ignore_errors=True)

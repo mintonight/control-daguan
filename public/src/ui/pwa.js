@@ -8,7 +8,9 @@ let deferred = null;
 let hooks = { getLib: null, flush: async () => {} };
 let waitingToReload = false;
 let sizeLabel = '';
-let registrationTask, maintenance;
+let registrationTask, maintenance, connecting, verifiedWorker;
+let hooksReady;
+const readyToHandoff = new Promise(resolve => { hooksReady = resolve; });
 let shellReady = false;
 
 function isStandalone() {
@@ -49,32 +51,101 @@ function deadline(promise, ms, message) {
     promise.then(value => { cancel(); resolve(value); }, error => { cancel(); reject(error); });
   });
 }
-async function controlledWorker() {
+function rawCall(type, payload, target, { timeout = 30000, progress } = {}) {
+  return new Promise((resolve, reject) => {
+    const channel = new MessageChannel();
+    let cancel;
+    const finish = (error, value) => {
+      cancel?.(); channel.port1.close();
+      if (error) reject(error); else resolve(value);
+    };
+    const arm = () => {
+      cancel?.();
+      cancel = after(timeout, () => finish(new Error(type === 'OFFLINE_HELLO' ? '离线服务未响应版本协商' : `离线操作未响应（${type}）`)), { idle: false });
+    };
+    channel.port1.onmessage = event => {
+      if (event.data?.progress) { arm(); progress?.(event.data.progress); return; }
+      if (event.data?.ok) finish(null, event.data);
+      else finish(new Error(event.data?.error || '离线缓存操作失败'));
+    };
+    arm();
+    try { target.postMessage({ type, ...payload }, [channel.port2]); }
+    catch (error) { finish(error); }
+  });
+}
+async function compatible(worker) {
+  if (!worker || worker.state === 'redundant') return false;
+  try { return (await rawCall('OFFLINE_HELLO', {}, worker, { timeout: 2000 })).protocol === 2; }
+  catch { return false; }
+}
+function waitForWorker(reg, previous) {
+  return new Promise((resolve, reject) => {
+    const watched = new Set();
+    const stop = () => {
+      cancel(); reg.removeEventListener('updatefound', changed);
+      navigator.serviceWorker.removeEventListener('controllerchange', changed);
+      watched.forEach(worker => worker.removeEventListener('statechange', changed));
+    };
+    const changed = () => {
+      const worker = reg.installing || reg.waiting || reg.active;
+      if (!worker || worker === previous) {
+        if ([...watched].some(item => item.state === 'redundant')) { stop(); reject(new Error('新版离线服务安装失败，旧缓存已保留，请检查网络后重试')); }
+        return;
+      }
+      if (!watched.has(worker)) { watched.add(worker); worker.addEventListener('statechange', changed); }
+      if (['installed', 'activating', 'activated'].includes(worker.state)) { stop(); resolve(worker); }
+      else if (worker.state === 'redundant') { stop(); reject(new Error('新版离线服务安装失败，旧缓存已保留，请联网重试')); }
+    };
+    const cancel = after(30000, () => { stop(); reject(new Error('新版离线服务尚未安装完成，请保持联网后重试')); }, { idle: false });
+    reg.addEventListener('updatefound', changed);
+    navigator.serviceWorker.addEventListener('controllerchange', changed);
+    changed();
+  });
+}
+async function connectWorker() {
   if (!registrationTask) throw new Error('浏览器不支持离线功能');
-  const reg = await deadline(registrationTask, 20000, '离线功能未就绪，请联网重试');
-  const valid = () => navigator.serviceWorker.controller?.scriptURL === new URL('sw.js', reg.scope).href;
-  if (valid()) return navigator.serviceWorker.controller;
-  await new Promise((resolve, reject) => {
-    const changed = () => { if (valid()) { cleanup(); resolve(); } };
-    const cancel = after(20000, () => { cleanup(); reject(new Error('离线功能未就绪，请等更新完成后重试')); }, { idle: false });
+  const reg = await deadline(registrationTask, 20000, '离线服务注册未完成，请联网重试');
+  const previous = navigator.serviceWorker.controller;
+  if (await compatible(previous)) return previous;
+  setProg(previous ? '正在升级旧版离线服务，已有缓存和学习记录将保留…' : '正在等待离线服务安装与核验…');
+  if (!reg.installing && !await compatible(reg.waiting)) {
+    try { await deadline(reg.update(), 20000, '离线服务更新连接超时'); }
+    catch (error) { throw new Error(`无法更新旧版离线服务：${error.message}。请保持联网重试`); }
+  }
+  const worker = await waitForWorker(reg, previous);
+  if (!await compatible(worker)) throw new Error('等待中的离线服务版本过旧，请联网完成应用更新后重试');
+  if (previous) { await readyToHandoff; await hooks.flush(); }
+  const controlled = new Promise((resolve, reject) => {
+    const changed = () => { if (navigator.serviceWorker.controller === worker) { cleanup(); resolve(); } };
+    const cancel = after(20000, () => { cleanup(); reject(new Error('新版离线服务未接管页面，请重新打开应用')); }, { idle: false });
     const cleanup = () => { cancel(); navigator.serviceWorker.removeEventListener('controllerchange', changed); };
     navigator.serviceWorker.addEventListener('controllerchange', changed);
     changed();
   });
+  worker.postMessage({ type: 'SKIP_WAITING' });
+  await controlled;
+  if (!await compatible(navigator.serviceWorker.controller)) throw new Error('离线服务接管后版本校验失败');
   return navigator.serviceWorker.controller;
 }
-async function workerCall(type, payload = {}, worker) {
-  const target = worker || await controlledWorker();
-  const channel = new MessageChannel();
-  try {
-    return await deadline(new Promise((resolve, reject) => {
-      channel.port1.onmessage = event => event.data?.ok ? resolve(event.data) : reject(new Error(event.data?.error || '离线缓存操作失败'));
-      target.postMessage({ type, ...payload }, [channel.port2]);
-    }), 30000, '离线缓存核验超时，请联网重试');
-  } finally { channel.port1.close(); }
+async function controlledWorker() {
+  if (verifiedWorker && verifiedWorker === navigator.serviceWorker.controller && verifiedWorker.state === 'activated') return verifiedWorker;
+  if (!connecting) connecting = connectWorker().then(worker => { verifiedWorker = worker; return worker; }).finally(() => { connecting = null; });
+  return connecting;
 }
+async function workerCall(type, payload = {}, worker, progress) {
+  const target = worker || await controlledWorker();
+  try { return await rawCall(type, payload, target, { progress }); }
+  catch (error) {
+    if (target !== navigator.serviceWorker.controller || target.state === 'redundant') {
+      verifiedWorker = null;
+      return rawCall(type, payload, await controlledWorker(), { progress });
+    }
+    throw error;
+  }
+}
+
 async function storageLabel() {
-  try { return await navigator.storage?.persisted?.() ? '已获持久存储保护' : '浏览器仍可能回收缓存'; }
+  try { return await deadline(Promise.resolve(navigator.storage?.persisted?.()), 2000, '存储保护状态未知') ? '已获持久存储保护' : '浏览器仍可能回收缓存'; }
   catch { return '存储保护状态未知'; }
 }
 async function showHealth(ready, error = '') {
@@ -85,14 +156,15 @@ async function showHealth(ready, error = '') {
 async function refreshSize(status) {
   try {
     status = status || await workerCall('OFFLINE_STATUS');
-    sizeLabel = status.bytes ? fmtBytes(status.bytes) : '未下载';
+    sizeLabel = status.files ? (status.bytes ? fmtBytes(status.bytes) : `${status.files} 个文件`) : '未下载';
     const el = $('#offlineSize');
-    if (el) el.textContent = status.bytes ? `离线缓存：${fmtBytes(status.bytes)}（${status.files} 个文件）` : '离线缓存：未下载';
+    if (el) el.textContent = status.files ? `离线缓存：${sizeLabel}` : '离线缓存：未下载';
     const clear = $('#offlineClearBtn');
-    if (clear) clear.disabled = !status.bytes;
+    if (clear) clear.disabled = !status.files;
     await showHealth(status.shellReady);
   } catch (error) {
     sizeLabel = '状态未知';
+    const el = $('#offlineSize'); if (el) el.textContent = '离线缓存：状态未知（已有缓存未清除）';
     await showHealth(false, error.message);
   }
   updateSum();
@@ -120,7 +192,7 @@ function showUpdateToast() {
 }
 
 async function applyUpdate() {
-  try { await hooks.flush(); } catch {}
+  try { await hooks.flush(); } catch (error) { setProg(`更新前保存失败：${error.message}，已暂停更新`); return; }
   waitingToReload = true;
   const reg = await navigator.serviceWorker.getRegistration();
   if (reg && reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
@@ -150,14 +222,14 @@ async function downloadAll() {
   const lib = hooks.getLib && hooks.getLib();
   if (!lib || !lib.questions) { setProg('题库尚未加载完成，请稍后再试。'); return; }
   // Ask only after the user's explicit offline-download gesture, never at startup.
-  const protection = navigator.storage?.persist?.().catch(() => false);
+  navigator.storage?.persist?.().then(() => showHealth(shellReady)).catch(() => {});
   const btn = $('#offlineDlBtn'), bar = $('#offlineBar'), wrap = $('#offlineProg'), text = $('#offlineProgText');
   if (btn) btn.disabled = true;
   if (wrap) wrap.hidden = false;
   setProg('正在核验离线入口…');
   try {
     const worker = await controlledWorker();
-    const status = await workerCall('ENSURE_OFFLINE', {}, worker);
+    const status = await workerCall('ENSURE_OFFLINE', {}, worker, progress => setProg(`正在修复离线入口 ${progress.done} / ${progress.total}：${progress.url}`));
     if (!status.shellReady) throw new Error('离线入口不完整，请先完成应用更新');
     const urls = new Set();
     collectFrom(lib, urls);
@@ -182,14 +254,14 @@ async function downloadAll() {
     await mapPool(list, 6, download);
     total += extra.length; tick();
     await mapPool(extra, 6, download);
-    await protection;
     const verified = await workerCall('VERIFY_RUNTIME', { urls: [...seen] }, worker);
     await refreshSize();
-    if (verified.missing.length) throw new Error(`最终核验发现 ${verified.missing.length} 个文件缺失，请联网重试`);
+    if (verified.missing.length) throw new Error(`${failed.length ? failed[0] + '；' : ''}最终核验发现 ${verified.missing.length} 个文件缺失，请联网重试`);
     if (!shellReady) throw new Error('入口核验失败，尚不能保证离线使用');
-    if (text) text.textContent = failed.length ? `下载未完成：${failed.length} 个文件失败，已有缓存已保留。可联网重试。${failed[0]}` : `已全部缓存并逐项核验（${total} 个文件，${sizeLabel}）。`;
+    if (text) text.textContent = failed.length ? `下载未完成：${failed.length} 个文件失败，已有缓存已保留。可联网重试。${failed[0]}` : `已全部缓存并逐项核验（${total} 个文件）。`;
     if (bar) bar.style.width = `${Math.round((total - failed.length) / total * 100)}%`;
   } catch (error) {
+    if (verifiedWorker && verifiedWorker === navigator.serviceWorker.controller) await refreshSize();
     setProg(`离线下载失败：${error.message}。已有缓存和学习记录未清除。`);
     await showHealth(shellReady, error.message);
   } finally { if (btn) btn.disabled = false; }
@@ -255,6 +327,8 @@ function registerSW() {
   registrationTask.catch(error => showHealth(false, `注册失败：${error.message}`));
   addEventListener('online', maintainOffline);
   navigator.serviceWorker.addEventListener('controllerchange', () => {
+    verifiedWorker = null;
+    const banner = $('#updateToast'); if (banner) banner.hidden = true;
     if (waitingToReload) location.reload();
     else maintainOffline();
   });
@@ -281,5 +355,6 @@ refreshSize();
 /** getLib()：当前题库（离线下载用）；flush()：更新前先把未保存的笔记写入 */
 export function startPWA(opts) {
   if (opts) Object.assign(hooks, opts);
+  hooksReady();
   maintainOffline();
 }

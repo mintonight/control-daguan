@@ -70,11 +70,11 @@ async def verify_resilience(pw, ok):
             except asyncio.TimeoutError:
                 responded = False
             migration = await pa.evaluate("""async runtime => {
-                const own = await (await caches.open(runtime)).match('/control-daguan/img/migration-marker');
-                return {own: own && await own.text(), foreign: !!await (await caches.open('cdg-runtime')).match('/mirror/img/foreign-marker')};
+                const own = await fetch('/control-daguan/img/migration-marker');
+                return {own: own.ok && await own.text(), foreign: !!await (await caches.open('cdg-runtime')).match('/mirror/img/foreign-marker')};
             }""", RUNTIME)
             migration['responded'] = responded
-            ok('旧下载按 scope 无损迁移，不删除其他 scope 的共享数据', migration['responded'] and migration['own'] == 'legacy own' and migration['foreign'], migration)
+            ok('旧下载按 scope 直接可读，不以批量迁移阻塞且保留其他 scope 数据', migration['responded'] and migration['own'] == 'legacy own' and migration['foreign'], migration)
             keys = await pa.evaluate('caches.keys()')
             original = next(k for k in keys if 'shell-' in k)
             pb = await ctx.new_page()

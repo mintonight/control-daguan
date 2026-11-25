@@ -21,6 +21,6 @@ track(Promise.all([loadLibrary(), store.init()]).then(async () => {
   store.restoreDrafts();
   readURL(); bind(); bindSettings({ render }); render();
   if (store.migrated) toast('学习记录已迁移到 IndexedDB');
-  await store.initSync();
   startPWA({ getLib: () => lib, flush: async () => { flushNotes(); await store.persist(); } });
+  await store.initSync();
 }), 'boot').catch(() => { setHTML($('#cards'), html`<div class="empty">静态文件读取失败，请刷新重试。</div>`); });

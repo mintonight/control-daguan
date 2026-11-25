@@ -9,7 +9,7 @@ const source = readFileSync(new URL('../public/sw.js', import.meta.url), 'utf8')
 function platform() {
   const stores = new Map(), events = new Map();
   const key = req => typeof req === 'string' ? new URL(req, base).href : req.url || req.href;
-  const faults = {put: false, missing: false};
+  const faults = {put: false, missing: false, body: false, timeout: false};
   let network = async () => new Response('fresh');
   const caches = {
     has: async name => stores.has(name),
@@ -19,7 +19,11 @@ function platform() {
       if (!stores.has(name)) stores.set(name, new Map());
       const data = stores.get(name);
       const cache = {
-        match: async req => data.get(key(req))?.clone(),
+        match: async req => {
+          const response = data.get(key(req))?.clone();
+          if (response && faults.body) response.blob = () => {throw new Error('must not read image blobs');};
+          return response;
+        },
         delete: async req => data.delete(key(req)),
         keys: async () => [...data.keys()].map(url => new Request(url)),
         put: async (req, response) => { if (faults.put) throw new Error('QuotaExceededError'); data.set(key(req), response.clone()); },
@@ -35,7 +39,7 @@ function platform() {
       return cache;
     },
   };
-  const context = vm.createContext({URL, Request, Response, Map, Promise, caches, fetch: req => network(req), self: {
+  const context = vm.createContext({URL, Request, Response, Map, Promise, AbortSignal: {timeout: ms => faults.timeout ? AbortSignal.abort(new DOMException('timeout', 'TimeoutError')) : AbortSignal.timeout(ms)}, caches, fetch: req => req.signal?.aborted ? Promise.reject(req.signal.reason) : faults.missing ? Promise.resolve(new Response('', {status:404})) : network(req), self: {
     registration: {scope: base}, addEventListener: (name, fn) => events.set(name, fn), clients: {claim: async () => {}},
   }});
   vm.runInContext(source, context);
@@ -57,13 +61,14 @@ test('worker acknowledges a download only after a readable cache write; quota er
   await assert.rejects(app.run("cacheRuntime('../other/img/test.png')"), /不是本应用/);
 });
 
-test('migration is repeatable, preserves foreign downloads and never overwrites a newer scoped copy', async () => {
+test('legacy read-through is repeatable, scoped, and prefers an existing current copy', async () => {
   const app = platform();
   const legacy = await app.caches.open('cdg-runtime'), scoped = await app.caches.open(prefix+'runtime');
   await legacy.put(base+'img/old.png', new Response('old'));
   await legacy.put('https://example.test/mirror/img/foreign.png', new Response('foreign'));
   await scoped.put(base+'img/old.png', new Response('new'));
-  await app.run('migrateRuntime()'); await app.run('migrateRuntime()');
+  await app.run("runtimeMatch(new Request(self.registration.scope+'img/old.png'))");
+  await app.run("runtimeMatch(new Request(self.registration.scope+'img/old.png'))");
   assert.equal(await (await scoped.match(base+'img/old.png')).text(), 'new');
   assert.equal((await legacy.keys()).length, 2);
   assert.equal((await scoped.keys()).length, 1);
@@ -74,7 +79,7 @@ test('failed shell recovery retains working files and a subsequent retry repairs
   const shellName = app.run('SHELL'), cache = await app.caches.open(shellName);
   await cache.put(base+'index.html', new Response('working entry'));
   app.faults.missing = true;
-  await assert.rejects(app.run('repairShell()'), /missing shell asset/);
+  await assert.rejects(app.run('repairShell()'), /HTTP 404/);
   assert.equal(await (await cache.match(base+'index.html')).text(), 'working entry');
   app.faults.missing = false;
   await app.run('repairShell()');
@@ -97,13 +102,13 @@ test('cached runtime responses keep their background update alive until its cach
   assert.equal(await (await (await app.caches.open(prefix+'runtime')).match(req)).text(), 'updated');
 });
 
-test('explicit cache clearing is scoped and cannot resurrect cleared legacy files on migration', async () => {
+test('explicit cache clearing is scoped and cannot resurrect cleared legacy files', async () => {
   const app = platform(), legacy = await app.caches.open('cdg-runtime');
   await legacy.put(base+'img/old.png', new Response('own'));
   await legacy.put('https://example.test/mirror/img/foreign.png', new Response('foreign'));
-  await app.run('migrateRuntime()');
+  await app.run("cacheRuntime('img/old.png')");
   await app.run('clearRuntime()');
-  await app.run('migrateRuntime()');
+  assert.equal(await app.run("runtimeMatch(new Request(self.registration.scope+'img/old.png'))"), undefined);
   assert.equal(await legacy.match(base+'img/old.png'), undefined);
   assert.equal(await (await legacy.match('https://example.test/mirror/img/foreign.png')).text(), 'foreign');
   assert.equal((await (await app.caches.open(prefix+'runtime')).keys()).length, 0);
@@ -118,4 +123,30 @@ test('final download verification detects files lost after their individual succ
   const result = await app.run("verifyRuntime(['img/one.png','img/two.png'])");
   assert.equal(result.missing.length, 1);
   assert.equal(result.missing[0], 'img/one.png');
+});
+
+test('protocol hello answers without scanning, repairing or migrating cached resources', async () => {
+  const app = platform();
+  app.faults.missing = true;
+  app.caches.keys = () => {throw new Error('bulk cache work must not gate hello');};
+  let result, work;
+  app.events.get('message')({data:{type:'OFFLINE_HELLO'}, source:{url:base}, ports:[{postMessage: value => {result=value;}}], waitUntil: promise => {work=promise;}});
+  await work;
+  assert.equal(result.ok, true);
+  assert.equal(result.protocol, 2);
+});
+
+test('cache status and final verification do not decode every cached image body', async () => {
+  const app = platform();
+  await app.run("cacheRuntime('img/one.png')");
+  app.faults.body = true;
+  const status = await app.run('offlineStatus()');
+  assert.equal(status.files, 1);
+  assert.equal((await app.run("verifyRuntime(['img/one.png'])")).missing.length, 0);
+});
+
+test('a stalled resource reports its URL and resource timeout, not a protocol timeout', async () => {
+  const app = platform();
+  app.faults.timeout = true;
+  await assert.rejects(app.run("cacheRuntime('img/stalled.png')"), /img\/stalled.png：单个资源下载超时/);
 });

@@ -3,7 +3,7 @@
 
 // PRECACHE 由 tools/build_precache.py 在构建时写入，请勿手改
 const PRECACHE = {
-  "version": "2d311fe6d96c",
+  "version": "a0453e5c958f",
   "files": [
     "./",
     "./index.html",
@@ -113,8 +113,8 @@ const PRECACHE = {
     "./vendor/ts-fsrs/ts-fsrs.umd.js"
   ],
   "integrity": {
-    "./": "sha256-JNcG52ORpJ3kRucY6GkhoYek8KrhayXP3Mj764oG894=",
-    "./index.html": "sha256-JNcG52ORpJ3kRucY6GkhoYek8KrhayXP3Mj764oG894=",
+    "./": "sha256-AnB7lKYMUDgC6WGzy10vLYq4biV6Jouo6Gk2tAf30e0=",
+    "./index.html": "sha256-AnB7lKYMUDgC6WGzy10vLYq4biV6Jouo6Gk2tAf30e0=",
     "./app.css": "sha256-9IH/yjA71/XlYIvXpjxlpfRLV+HNqhVueAu3ocM5Jks=",
     "./manifest.webmanifest": "sha256-ZrcDxEM2u72u5QMKdyBVo4SHynb9/lcn4RctC2GcBco=",
     "./data/library.json": "sha256-2DRpWCtmtlNjbg8kixyltO4RHoNCbsBo2vfJDur1z1Q=",
@@ -132,7 +132,7 @@ const PRECACHE = {
     "./src/core/studyday.js": "sha256-VzhEix3jLy/Sl8lYGzWWTt7hD/Xig0OAbV0YZYx2Yrs=",
     "./src/core/timers.js": "sha256-epooyZa2dmQmIh4s8SGdcAiZL3mn+VlVhmGLUTGoLCc=",
     "./src/core/types.js": "sha256-soZ2AcysefOo+nY4Zio/9+Q+DDZFjXBwH1ByCMBhwcs=",
-    "./src/main.js": "sha256-YKPMs8pKk97ChPatb7eUDGOBYvZoccmflyWzxPTt6dQ=",
+    "./src/main.js": "sha256-SG8IU+unaIJlbd5sUuu1WQK8eMtkHRDUBICOMb9H3mg=",
     "./src/srs/fsrs.js": "sha256-mDKQEBqYyhVq8D/dmhCgqDAbmnubOq2RbfPexlGAioI=",
     "./src/store/kv.js": "sha256-VoI4k/uIBfijOfXhWAVPpnQQYyB7uoj/pzXu+1Z/jtQ=",
     "./src/store/library.js": "sha256-3M3bcOEePF2LpvpQEstv+CpPEw0T7/zz7hdWa1V+HzU=",
@@ -144,7 +144,7 @@ const PRECACHE = {
     "./src/ui/markdown.js": "sha256-M50uwueavR2DHo6stv2T7WFFXWvIzlnqWJ7wY4Emrfs=",
     "./src/ui/note-markdown.js": "sha256-B/eXuz31VOgZ9WiwVajr1T3UJ1g4B2yxIhm3Dz8iVuw=",
     "./src/ui/notes-editor.js": "sha256-qub7EVgNYhyOEFxTVqi9D5Grwdjl+xNu0B/ZxMzCk7A=",
-    "./src/ui/pwa.js": "sha256-qHg7LFQiJFDoaYhtLrTO8I2wgq9TcFNd1cJlQ2nVmeo=",
+    "./src/ui/pwa.js": "sha256-1DCPMSar0DcwXROH8RBsnSn9ch3iugfzOE9/hdSegnY=",
     "./src/ui/settings.js": "sha256-7oZ6t/9dVkbbtGPwuJtHJbz6/3YsC2DUfPnGKr0GDWU=",
     "./src/ui/view.js": "sha256-PreYQ1uyqPpWTNXkVL0yjE/T5+1TOhePeAAkb6Nbl6Y=",
     "./vendor/dompurify/LICENSE": "sha256-z8d0m5b2O9McPEK1xHG/dWgUBT6EfBDz6wA0F7xSPTA=",
@@ -232,35 +232,44 @@ const inScope = url => url.href.startsWith(self.registration.scope);
 const runtimeURL = url => inScope(url) && (url.pathname.includes('/data/questions/') || url.pathname.includes('/img/'));
 let repairing;
 
+const repairObservers = new Set();
 async function missingShell() {
   const cache = await caches.open(SHELL);
-  const found = await Promise.all(PRECACHE.files.map(async path => (await cache.match(new URL(path, self.registration.scope)))?.ok));
-  return PRECACHE.files.filter((_, i) => !found[i]);
+  const urls = new Set((await cache.keys()).map(req => req.url));
+  return PRECACHE.files.filter(path => !urls.has(new URL(path, self.registration.scope).href));
 }
-
-// Repair only absent files. addAll is atomic, and a failed repair never deletes a working shell.
-function repairShell() {
-  if (!repairing) repairing = (async () => {
-    const missing = await missingShell();
-    if (missing.length) {
-      const cache = await caches.open(SHELL);
-      await cache.addAll(missing.map(path => new Request(new URL(path, self.registration.scope), {
-        cache: 'reload', integrity: PRECACHE.integrity[path],
-      })));
-    }
-  })().finally(() => { repairing = null; });
-  return repairing;
-}
-
-async function migrateRuntime() {
-  if (!(await caches.has(LEGACY_RUNTIME))) return;
-  const legacy = await caches.open(LEGACY_RUNTIME), target = await caches.open(RUNTIME);
-  for (const req of await legacy.keys()) {
-    if (!runtimeURL(new URL(req.url)) || await target.match(req)) continue;
-    const response = await legacy.match(req);
-    // On quota failure the untouched legacy copy remains available through read-through below.
-    if (response?.ok) try { await target.put(req, response); } catch { /* Legacy copy remains the fallback. */ }
+async function fetchResource(request) {
+  try {
+    const response = await fetch(new Request(request, { signal: AbortSignal.timeout(15000) }));
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return response;
+  } catch (error) {
+    const path = new URL(request.url || request).pathname;
+    const detail = ['AbortError', 'TimeoutError'].includes(error.name) ? '单个资源下载超时' : request.integrity && error.message === 'Failed to fetch' ? '资源读取或完整性校验失败，请检查网络或完成应用更新' : error.message;
+    throw new Error(`${path}：${detail}`);
   }
+}
+// A slow/broken file has its own deadline. Successful repairs are retained even if another file fails.
+function repairShell(progress) {
+  if (progress) repairObservers.add(progress);
+  if (!repairing) repairing = (async () => {
+    const missing = await missingShell(), cache = await caches.open(SHELL), queue = [...missing], failures = [];
+    let done = 0;
+    await Promise.all(Array.from({ length: Math.min(6, queue.length) }, async () => {
+      while (queue.length) {
+        const path = queue.shift();
+        repairObservers.forEach(observer => observer({ done, total: missing.length, url: path }));
+        try {
+          const response = await fetchResource(new Request(new URL(path, self.registration.scope), { cache: 'reload', integrity: PRECACHE.integrity[path] }));
+          await cache.put(new URL(path, self.registration.scope), response);
+        } catch (error) { failures.push(error.message); }
+        done++;
+        repairObservers.forEach(observer => observer({ done, total: missing.length, url: path }));
+      }
+    }));
+    if (failures.length) throw new Error(`离线入口修复未完成（${failures.length} 个文件）：${failures[0]}`);
+  })().finally(() => { repairing = null; repairObservers.clear(); });
+  return repairing;
 }
 
 async function runtimeMatch(req) {
@@ -270,25 +279,20 @@ async function runtimeMatch(req) {
 }
 
 async function offlineStatus() {
-  const urls = new Map();
+  const urls = new Set();
   for (const name of [LEGACY_RUNTIME, RUNTIME]) {
     if (!(await caches.has(name))) continue;
-    const cache = await caches.open(name);
-    for (const req of await cache.keys()) {
-      if (!runtimeURL(new URL(req.url))) continue;
-      const response = await cache.match(req);
-      if (response?.ok) urls.set(req.url, (await response.blob()).size);
-    }
+    for (const req of await (await caches.open(name)).keys()) if (runtimeURL(new URL(req.url))) urls.add(req.url);
   }
-  return { shellReady: !(await missingShell()).length, version: PRECACHE.version,
-    bytes: [...urls.values()].reduce((a, b) => a + b, 0), files: urls.size };
+  // Counting cached URLs must not read/decode every image or wait for a migration/network repair.
+  return { shellReady: !(await missingShell()).length, version: PRECACHE.version, files: urls.size };
 }
 
 async function cacheRuntime(rawURL) {
   const url = new URL(rawURL, self.registration.scope);
   if (!runtimeURL(url) || url.search || url.hash) throw new Error('不是本应用的离线资源');
   // Worker-owned fetch bypasses stale-while-revalidate. Await the write and read it back before acknowledging.
-  const response = await fetch(new Request(url, { cache: 'reload' }));
+  const response = await fetchResource(new Request(url, { cache: 'reload' }));
   if (!response.ok) throw new Error(`下载失败 HTTP ${response.status}`);
   const cache = await caches.open(RUNTIME);
   await cache.put(url, response);
@@ -301,13 +305,11 @@ async function cacheRuntime(rawURL) {
 
 async function verifyRuntime(urls) {
   if (!Array.isArray(urls) || urls.length > 2000) throw new Error('离线清单无效');
-  const cache = await caches.open(RUNTIME), missing = [];
+  const cache = await caches.open(RUNTIME), present = new Set((await cache.keys()).map(req => req.url)), missing = [];
   for (const raw of urls) {
     const url = new URL(raw, self.registration.scope);
     if (!runtimeURL(url)) throw new Error('离线清单包含范围外资源');
-    const response = await cache.match(url);
-    if (!response?.ok) missing.push(raw);
-    else await response.blob();
+    if (!present.has(url.href)) missing.push(raw);
   }
   return { missing };
 }
@@ -328,7 +330,6 @@ self.addEventListener('install', event => {
 
 self.addEventListener('activate', event => {
   event.waitUntil((async () => {
-    await migrateRuntime();
     const keys = await caches.keys();
     await Promise.all(keys.filter(k => k.startsWith(PREFIX + 'shell-') && k !== SHELL).map(k => caches.delete(k)));
     // Keep all legacy caches: an older installation at another scope can still need them.
@@ -340,13 +341,14 @@ self.addEventListener('message', event => {
   const type = event.data?.type;
   if (type === 'SKIP_WAITING') { self.skipWaiting(); return; }
   const port = event.ports[0];
-  if (!port || !['ENSURE_OFFLINE', 'OFFLINE_STATUS', 'CACHE_RUNTIME', 'VERIFY_RUNTIME', 'CLEAR_RUNTIME'].includes(type)) return;
+  if (!port || !['OFFLINE_HELLO', 'ENSURE_OFFLINE', 'OFFLINE_STATUS', 'CACHE_RUNTIME', 'VERIFY_RUNTIME', 'CLEAR_RUNTIME'].includes(type)) return;
   // Same-origin pages outside this registration's scope cannot ask it to change caches.
   if (!event.source?.url || !inScope(new URL(event.source.url))) return;
   event.waitUntil((async () => {
     try {
       let result;
-      if (type === 'ENSURE_OFFLINE') { await repairShell(); await migrateRuntime(); result = await offlineStatus(); }
+      if (type === 'OFFLINE_HELLO') result = { protocol: 2, version: PRECACHE.version };
+      else if (type === 'ENSURE_OFFLINE') { await repairShell(progress => port.postMessage({ progress })); result = await offlineStatus(); }
       else if (type === 'OFFLINE_STATUS') result = await offlineStatus();
       else if (type === 'CLEAR_RUNTIME') result = await clearRuntime();
       else if (type === 'VERIFY_RUNTIME') result = await verifyRuntime(event.data.urls);
@@ -373,7 +375,7 @@ self.addEventListener('fetch', event => {
 async function networkFirstNav(req) {
   try {
     const response = await fetch(req);
-    if (response.ok) return response;
+    if (response.ok) return await (await caches.open(SHELL)).match(new URL('./index.html', self.registration.scope)) || response;
   } catch { /* Fall back to the verified shell. */ }
   const cache = await caches.open(SHELL);
   const hit = await cache.match(req) || await cache.match(new URL('./index.html', self.registration.scope));
