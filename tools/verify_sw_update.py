@@ -48,19 +48,24 @@ class UpgradeHandler(SimpleHTTPRequestHandler):
 
 
 async def update_state(page):
+    # A previous failed install, or the page's own update check, may already have a worker in flight.
+    # Listen to that worker first; identical script bytes also may not emit another updatefound.
     return await asyncio.wait_for(page.evaluate("""async () => {
       const registration = await navigator.serviceWorker.getRegistration();
-      const settled = new Promise(resolve => {
-        registration.addEventListener('updatefound', () => {
-          const worker = registration.installing;
-          const changed = () => {
-            if (worker.state === 'installed' || worker.state === 'redundant') resolve(worker.state);
-          };
-          worker.addEventListener('statechange', changed); changed();
-        }, {once: true});
+      const wait = worker => new Promise((resolve, reject) => {
+        if (!worker) { reject(new Error('no installing worker')); return; }
+        const changed = () => {
+          if (worker.state === 'installed' || worker.state === 'redundant') resolve(worker.state);
+        };
+        worker.addEventListener('statechange', changed);
+        changed();
+      });
+      if (registration.installing) return wait(registration.installing);
+      const found = new Promise((resolve, reject) => {
+        registration.addEventListener('updatefound', () => wait(registration.installing).then(resolve, reject), {once: true});
       });
       await registration.update();
-      return settled;
+      return registration.installing ? wait(registration.installing) : found;
     }"""), timeout=45)
 
 
@@ -127,6 +132,8 @@ async def verify_upgrade(pw, ok):
             ok('旧 SW 升级到当前构建产物：字节完全匹配且缓存版本不同', new_key != old_key and (site / 'sw.js').read_bytes() == (ROOT / 'public/sw.js').read_bytes(), new_key)
 
             for mode in ['missing', 'interrupted', 'mismatch']:
+                # Distinct script bytes force a new install attempt after the previous candidate failed.
+                (site / 'sw.js').write_text(new_source + f'\n// test-fault={mode}\n', encoding='utf-8')
                 server.faults[PREFIX + 'icons/favicon-32.png'] = mode
                 state = await update_state(page)
                 keys = await page.evaluate('() => caches.keys()')
@@ -135,6 +142,7 @@ async def verify_upgrade(pw, ok):
                 ok(f'安装失败 {mode}：拒绝新 SW、移除候选缓存、旧缓存逐字节不变', state == 'redundant' and new_key not in keys and untouched and served_css == old_css, f'state={state}, caches={keys}')
                 assert state == 'redundant', 'failed candidate must not activate'
 
+            (site / 'sw.js').write_text(new_source, encoding='utf-8')
             page, errors = await cold_launch(context, page, base)
             ok('失败更新后清除 HTTP 缓存、关闭旧页面，仍可离线冷启动', not errors and await page.locator('.card[data-id="202401"]').count() == 1, errors)
             await context.set_offline(False)
