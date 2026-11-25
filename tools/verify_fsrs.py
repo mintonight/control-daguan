@@ -79,10 +79,30 @@ async def main():
     await pg.goto(BASE + '?tab=retest', wait_until='networkidle')
     ok(f'{days} 天后: 两题都到期, 角标=2', (await txt('#dueBadge')) == '2', await txt('#dueBadge'))
     ok('按到期时间排序(早到期在前)', (await txt('#pos')) == '1 / 2' and f'question={q2}' in pg.url, pg.url)
-    # 在待复习里评分 → 移出并前进
+    # 在待复习里评分 → 当天保留、不自动跳题，并能修正评分
     await t('button[data-mark="mastered"]').click()
-    ok('待复习里评分后移出并跳到下一题', (await txt('#dueBadge')) == '1' and 'question=202301' in pg.url, pg.url)
+    ok('待复习里评分后保留并停在原题', (await txt('#dueBadge')) == '2' and f'question={q2}' in pg.url, pg.url)
     s = await store(); ok('复习日志累计', len(s['srs'][str(q2)]['logs']) == 2)
+    reps = s['srs'][str(q2)]['card']['reps']
+    log_id = s['srs'][str(q2)]['logs'][-1]['id']
+    await pg.reload(wait_until='networkidle')
+    ok('刷新后当天已评分题仍保留', (await txt('#dueBadge')) == '2' and f'question={q2}' in pg.url)
+    await t('#tabs button[data-tab="bank"]').click(); await t('#tabs button[data-tab="retest"]').click()
+    ok('重新进入复测仍保留', (await txt('#pos')) == '1 / 2' and f'question={q2}' in pg.url)
+    await pg.set_viewport_size({'width': 390, 'height': 844})
+    await pg.clock.set_fixed_time(T0 + dt.timedelta(days=days, hours=1, minutes=1))
+    await t('button[data-mark="unknown"]').click()
+    s = await store(); revised = s['srs'][str(q2)]
+    ok('移动端可修改当天评分，不累计次数或日志', revised['card']['reps'] == reps and len(revised['logs']) == 2 and revised['logs'][-1]['id'] == log_id and revised['logs'][-1]['rating'] == 1)
+    await pg.clock.set_fixed_time(T0 + dt.timedelta(days=days, hours=1, minutes=2))
+    await t('button[data-mark="mastered"]').click()
+    s = await store()
+    ok('反复修改不累计遗忘次数', s['srs'][str(q2)]['card']['lapses'] == 0 and s['srs'][str(q2)]['card']['reps'] == reps)
+    await pg.reload(wait_until='networkidle')
+    ok('移动端刷新后修改结果仍在', f'question={q2}' in pg.url and await t('button[data-mark="mastered"]').get_attribute('aria-pressed') == 'true')
+    await pg.set_viewport_size({'width': 1440, 'height': 900})
+    await t('#nextBtn').click()
+
     # 设置：目标记忆率
     await t('#gearBtn').click(); await open_sec(pg, 'review')
     ok('设置: 目标记忆率默认 0.90', (await txt('#retentionVal')) == '0.90')
@@ -140,6 +160,12 @@ async def main():
     await p2.goto(BASE + '?list=complete&question=202301', wait_until='networkidle')
     d2 = (await p2.locator('.card .due').first.inner_text()).strip()
     ok('学习日: 11-14 01:00 仍算 13 日，显示今日待复习', '今日待复习' in d2, d2)
+    await p2.locator('button[data-mark="mastered"]').click(); await idle(p2)
+    ok('凌晨评分后仍在当天复测集合', await badge() == '1')
+    await p2.clock.pause_at(dt.datetime(2026, 11, 14, 1, 59, 59, tzinfo=J))
+    await p2.reload(wait_until='networkidle')
+    await p2.clock.fast_forward(1000)
+    ok('开着页面跨 2AM 自动移除昨日已评分题', await p2.locator('#dueBadge').is_hidden() and await p2.locator('#cards .empty').count() == 1)
     await ctx2.close()
     # A failed storage write must reject idle even though the application displays its normal toast.
     await idle(pg)

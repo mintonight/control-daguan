@@ -4,7 +4,7 @@ import { kv } from './kv.js';
 import { byId } from './library.js';
 import { normRec, normSrs, MARK_STATES } from '../core/record.js';
 import { mergeRecords, canon, syncPart, normalizeNotes, NOTE_MAX } from '../core/merge.js';
-import { endOfStudyDay, dueIds } from '../core/studyday.js';
+import { dueIds } from '../core/studyday.js';
 import * as fsrs from '../srs/fsrs.js';
 import * as prefs from '../core/preferences.js';
 import { GistSync } from '../sync/gist.js';
@@ -55,7 +55,6 @@ export const hasNote = id => !!rec.notes[id]?.text?.trim();
 export const noteOf = id => rec.notes[id];
 export const previewMarks = id => fsrs.preview(rec.srs[id], rec.retention);
 export const dueToday = () => dueIds(rec.srs, new Date(), id => byId.has(id));
-export const isDueAfterToday = id => Date.parse(rec.srs[id].card.due) > endOfStudyDay(new Date()).getTime();
 
 // ---------- 写 ----------
 /** 切换收藏，返回切换前是否已收藏 */

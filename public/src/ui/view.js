@@ -1,11 +1,11 @@
 /* 主界面：目录、题目卡片、翻页、URL 状态与卡片上的交互。读写学习记录一律通过 store/records.js。 */
 import * as store from '../store/records.js';
 import { lib, byId, details, loadDetail } from '../store/library.js';
-import { dayStart, dayDiff as dayDiffAt, DAY_MS } from '../core/studyday.js';
+import { dayStart, endOfStudyDay, dayDiff as dayDiffAt, DAY_MS } from '../core/studyday.js';
 import { errataPlacement } from '../core/errata.js';
 import { $, isMobile, toast, closePops } from './dom.js';
 import { html, setHTML } from './html.js';
-import { debounce } from '../core/timers.js';
+import { after, debounce } from '../core/timers.js';
 import { IC, MARK_IC } from './icons.js';
 import { md } from './markdown.js';
 import { noteHTMLFor, confirmClear, commitNote, clearNote, flushNotes, afterNoteSaved, onNoteInput, focusNote } from './notes-editor.js';
@@ -293,8 +293,7 @@ function setMark(id, state) {
   const prev = store.markOf(id);
   store.setMark(id, state);
   if (st.tab === 'retest' && st.rv === 'due' && state) {
-    const sec = sectionIds(tree); const i = sec.indexOf(id);
-    if (store.isDueAfterToday(id)) { st.qid = sec[i + 1] ?? sec[i - 1] ?? null; toast(`已评分「${MARKS[state]}」，${fmtDue(store.rec.srs[id].card.due)}`); }
+    toast(`已评分「${MARKS[state]}」，当天保留，可回看或修改`);
   } else if (st.tab === 'retest' && st.rv === 'marked' && !['shaky', 'unknown'].includes(state) && prev) {
     const sec = sectionIds(tree); const i = sec.indexOf(id); const nxt = sec[i + 1] ?? sec[i - 1] ?? null;
     st.qid = nxt; toast(state === 'mastered' ? '已掌握，已移出复测' : '已取消标记，已移出复测');
@@ -302,6 +301,16 @@ function setMark(id, state) {
   render();
 }
 export function bind() {
+  // 页面跨凌晨 2 点保持打开时也换日；后台节流/休眠恢复时补一次检查。
+  let shownDay = +dayStart(new Date());
+  const refreshDay = () => {
+    const day = +dayStart(new Date());
+    if (day !== shownDay) { shownDay = day; flushNotes(); render(); }
+  };
+  const nextDay = () => after(+endOfStudyDay(new Date()) + 1 - Date.now(), () => { refreshDay(); nextDay(); }, { idle: false });
+  nextDay();
+  addEventListener('focus', refreshDay);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refreshDay(); });
   $('#tabs').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; st.tab = b.dataset.tab; st.node = null; render(); });
   $('#brand').addEventListener('click', e => { e.preventDefault(); Object.assign(st, { tab: 'bank', listId: 'complete', node: null, qid: null, q: '' }); $('#search').value = ''; render(); $('#main').scrollTo(0, 0); });
   $('#tocBtn').addEventListener('click', () => { if (isMobile()) $('#app').classList.toggle('drawer-open'); else store.setCollapsed(!store.rec.collapsed); render(); });

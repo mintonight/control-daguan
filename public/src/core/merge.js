@@ -49,7 +49,7 @@ function mergeNotes(a, b) {
 /** @param {...import('./types.js').ReviewLog[]} lists */
 function unionLogs(...lists) {
   /** @type {Map<string, import('./types.js').ReviewLog>} */
-  const m = new Map(); lists.flat().forEach(l => { if (l && l.id) m.set(l.id, pick(m.get(l.id), l) || l); });
+  const m = new Map(); lists.flat().forEach(l => { if (l && l.id) m.set(l.id, newer(m.get(l.id), l, x => Date.parse(x.review)) || l); });
   return [...m.values()].sort((x, y) => Date.parse(x.review) - Date.parse(y.review) || (x.id < y.id ? -1 : 1));
 }
 /** @param {import('./types.js').HistoryEntry[] | undefined} a @param {import('./types.js').HistoryEntry[] | undefined} b */

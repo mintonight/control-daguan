@@ -19,13 +19,27 @@ function endOfStudyDay(now) {
 /** d 比 now 晚几个学习日（同一天为 0，已过去为负） */
 /** @param {Date|string|number} d @param {Date|string|number} now */
 const dayDiff = (d, now) => Math.round((dayStart(d).getTime() - dayStart(now).getTime()) / DAY_MS);
-/** 到 now 所在学习日结束前到期的题号，按到期时间、题号排序；has(id) 过滤掉题库里已没有的题 */
+/** 今天的最近一条评分；只接受应用可用于还原评分前状态的完整日志。 */
+/** @param {import('./types.js').SrsEntry | undefined} entry @param {Date|string|number} now */
+function reviewToday(entry, now) {
+  const log = entry?.logs?.at(-1);
+  return log && dayDiff(log.review, now) === 0 && log.review === entry?.card.last_review &&
+    Number.isFinite(Date.parse(log.due || '')) && (log.state === 0 || log.state === 2) &&
+    typeof log.stability === 'number' && typeof log.difficulty === 'number' &&
+    typeof log.scheduled_days === 'number' ? log : undefined;
+}
+/** 今天的复测集合：未评分到期题 + 今天已评分的原到期题。由已有日志还原，无额外持久状态。 */
 /** @param {Record<string, import('./types.js').SrsEntry>} srs
  * @param {Date|string|number} now @param {(id:number)=>boolean} [has] */
 function dueIds(srs, now, has = () => true) {
   const lim = endOfStudyDay(now).getTime();
-  return Object.entries(srs).filter(([k, v]) => has(+k) && Date.parse(v.card.due) <= lim)
-    .sort((a, b) => Date.parse(a[1].card.due) - Date.parse(b[1].card.due) || Number(a[0]) - Number(b[0])).map(([k]) => +k);
+  return Object.entries(srs).map(([k, v]) => {
+    const log = reviewToday(v, now);
+    // ts-fsrs 的非新卡日志 due 是评分前 last_review；加上原 scheduled_days 即原到期时间。
+    const before = log && log.state !== 0 ? Date.parse(log.due || '') + (log.scheduled_days || 0) * DAY_MS : Infinity;
+    return { id: +k, due: Math.min(Date.parse(v.card.due), before) };
+  }).filter(v => has(v.id) && v.due <= lim)
+    .sort((a, b) => a.due - b.due || a.id - b.id).map(v => v.id);
 }
 
-export { DAY_CUT_H, DAY_MS, dayStart, endOfStudyDay, dayDiff, dueIds };
+export { DAY_CUT_H, DAY_MS, dayStart, endOfStudyDay, dayDiff, dueIds, reviewToday };
