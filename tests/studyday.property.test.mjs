@@ -4,7 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fc from 'fast-check';
 
-import { DAY_CUT_H, dayStart, endOfStudyDay, dayDiff, dueIds } from '../public/src/core/studyday.js';
+import { DAY_CUT_H, dayStart, endOfStudyDay, dayDiff, dueIds, pendingDueIds } from '../public/src/core/studyday.js';
 const RUNS = { numRuns: +(process.env.FC_RUNS || 300), ...(process.env.FC_SEED ? { seed: +process.env.FC_SEED } : {}) };
 const ZONES = ['UTC', 'Asia/Singapore', 'Asia/Shanghai', 'America/Los_Angeles', 'America/New_York', 'Europe/London', 'Europe/Berlin',
   'Australia/Sydney', 'Australia/Lord_Howe', 'America/Santiago', 'America/St_Johns', 'Pacific/Chatham', 'Asia/Kathmandu', 'America/Havana'];
@@ -74,8 +74,10 @@ for (const tz of ZONES) {
       for (const o of offs) assert.ok(dayDiff(now + o, later) <= dayDiff(now + o, now), 'dayDiff 随 now 推后不增大');
       const srs = Object.fromEntries(offs.map((o, i) => [String(i + 1), { card: { due: new Date(now + o).toISOString() } }]));
       const a = dueIds(srs, now), b = dueIds(srs, later);
+      const pending = pendingDueIds(srs, now);
       for (const id of a) assert.ok(b.includes(id), `题 ${id} 到期后不应消失`);
       assert.deepEqual(a, [...a].sort((x, y) => Date.parse(srs[x].card.due) - Date.parse(srs[y].card.due) || x - y));
+      assert.deepEqual(pending, a, '无当日评分日志时待复习应与当天集合相同');
     }), RUNS)));
 }
 

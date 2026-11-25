@@ -4,7 +4,7 @@ import * as F from 'ts-fsrs';
 process.env.TZ = 'Asia/Tokyo';
 globalThis.FSRS = F;
 const {review, preview} = await import('../public/src/srs/fsrs.js');
-const {dueIds} = await import('../public/src/core/studyday.js');
+const {dueIds, pendingDueIds} = await import('../public/src/core/studyday.js');
 const {mergeRecords} = await import('../public/src/core/merge.js');
 const at = s => new Date(s);
 const first = at('2026-11-10T10:00:00+09:00');
@@ -15,7 +15,9 @@ test('due review stays today after rating, reload/merge and correction; clears a
   const old = review(undefined, 1, 'unknown', .9, first);
   const rated = review(old, 1, 'mastered', .9, now);
   assert.deepEqual(dueIds({1: rated}, now), [1]);
+  assert.deepEqual(pendingDueIds({1: rated}, now), []);
   assert.deepEqual(dueIds(JSON.parse(JSON.stringify({1: rated})), edit), [1]);
+  assert.deepEqual(pendingDueIds(JSON.parse(JSON.stringify({1: rated})), edit), []);
   const changed = review(rated, 1, 'shaky', .9, edit);
   const expected = review(old, 1, 'shaky', .9, edit);
   assert.deepEqual(changed.card, expected.card);
@@ -28,13 +30,16 @@ test('due review stays today after rating, reload/merge and correction; clears a
     assert.deepEqual(merged.srs[1], changed);
     assert.deepEqual(mergeRecords(r(rated, +now), r(changed, +edit), policy).srs[1], changed);
     assert.deepEqual(dueIds(merged.srs, edit), [1]);
+    assert.deepEqual(pendingDueIds(merged.srs, edit), []);
   }
   assert.deepEqual(dueIds({1: changed}, at('2026-11-21T02:00:00+09:00')), []);
+  assert.deepEqual(pendingDueIds({1: changed}, at('2026-11-21T02:00:00+09:00')), []);
 });
 
 test('new ratings are not added to due queue; same-day edits do not inflate reps/lapses', () => {
   const a = review(undefined, 1, 'unknown', .9, now);
   assert.deepEqual(dueIds({1: a}, now), []);
+  assert.deepEqual(pendingDueIds({1: a}, now), []);
   let b = a;
   for (const mark of ['mastered', 'unknown', 'shaky', 'mastered']) {
     b = review(b, 1, mark, .9, edit);
@@ -51,8 +56,14 @@ test('retained queue keeps overdue order and excludes early reviews and unknown 
   const early = review(undefined, 3, 'mastered', .9, now);
   const due = {...old.card, due: '2026-11-19T00:00:00Z'};
   const rated = review(old, 2, 'mastered', .9, now);
-  assert.deepEqual(dueIds({1: {card: due, logs: []}, 2: rated, 3: early}, edit), [2, 1]);
+  const srs = {1: {card: due, logs: []}, 2: rated, 3: early};
+  assert.deepEqual(dueIds(srs, edit), [2, 1]);
+  assert.deepEqual(pendingDueIds(srs, edit), [1]);
+  const corrected = review(rated, 2, 'shaky', .9, edit);
+  assert.deepEqual(dueIds({1: srs[1], 2: corrected, 3: early}, edit), [2, 1]);
+  assert.deepEqual(pendingDueIds({1: srs[1], 2: corrected, 3: early}, edit), [1]);
   assert.deepEqual(dueIds({1: old, 2: rated}, edit, id => id === 1), [1]);
+  assert.deepEqual(pendingDueIds({1: old, 2: rated}, edit, id => id === 1), [1]);
 });
 
 test('truncated logs still permit correction; earlier lapse is preserved, current lapse can be undone', () => {
@@ -72,6 +83,21 @@ test('an existing card reviewed early is not added to today, including after cor
   const earlyTime = at('2026-11-11T10:00:00+09:00');
   const early = review(entry, 1, 'mastered', .9, earlyTime);
   assert.deepEqual(dueIds({1: early}, earlyTime), []);
+  assert.deepEqual(pendingDueIds({1: early}, earlyTime), []);
   const corrected = review(early, 1, 'shaky', .9, at(+earlyTime + 60e3));
   assert.deepEqual(dueIds({1: corrected}, earlyTime), []);
+  assert.deepEqual(pendingDueIds({1: corrected}, earlyTime), []);
+});
+
+test('pending due excludes today\'s reviews and is restored only when the card is still actually due', () => {
+  const old = review(undefined, 1, 'unknown', .9, first);
+  const other = review(undefined, 2, 'unknown', .9, first);
+  const rated = review(old, 1, 'mastered', .9, now);
+  assert.deepEqual(pendingDueIds({1: rated, 2: other}, now), [2]);
+  assert.deepEqual(dueIds({1: rated, 2: other}, now), [1, 2]);
+  // 取消标记只去掉标签，不回退调度：已评分题仍保留在当天列表，且不再计入待复习。
+  assert.deepEqual(pendingDueIds({1: rated, 2: other}, now), [2]);
+  const stillDue = {card: {...rated.card, due: now.toISOString()}, logs: []};
+  assert.deepEqual(pendingDueIds({1: stillDue}, now), [1]);
+  assert.deepEqual(dueIds({1: stillDue}, now), [1]);
 });

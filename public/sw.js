@@ -3,7 +3,7 @@
 
 // PRECACHE 由 tools/build_precache.py 在构建时写入，请勿手改
 const PRECACHE = {
-  "version": "a0453e5c958f",
+  "version": "4dd6716dcc17",
   "files": [
     "./",
     "./index.html",
@@ -129,14 +129,14 @@ const PRECACHE = {
     "./src/core/preferences.js": "sha256-HJSbruNuiaGKUkA8My1biSC7kHodgmD0ZtD0U8VpAVg=",
     "./src/core/question.js": "sha256-PpINkerXIOkAZBGQ5w1yoCEzsgpRRyRaicAp854Jlxs=",
     "./src/core/record.js": "sha256-3m3AcCxl6CH/n1gfW3VE3lsDghJ70JQbNmq0lBBNJYE=",
-    "./src/core/studyday.js": "sha256-VzhEix3jLy/Sl8lYGzWWTt7hD/Xig0OAbV0YZYx2Yrs=",
+    "./src/core/studyday.js": "sha256-olbUgRyh33Gm/8S1ZKVHoydnYGRiyJaKv2oFffGBNkM=",
     "./src/core/timers.js": "sha256-epooyZa2dmQmIh4s8SGdcAiZL3mn+VlVhmGLUTGoLCc=",
     "./src/core/types.js": "sha256-soZ2AcysefOo+nY4Zio/9+Q+DDZFjXBwH1ByCMBhwcs=",
     "./src/main.js": "sha256-SG8IU+unaIJlbd5sUuu1WQK8eMtkHRDUBICOMb9H3mg=",
     "./src/srs/fsrs.js": "sha256-mDKQEBqYyhVq8D/dmhCgqDAbmnubOq2RbfPexlGAioI=",
     "./src/store/kv.js": "sha256-VoI4k/uIBfijOfXhWAVPpnQQYyB7uoj/pzXu+1Z/jtQ=",
     "./src/store/library.js": "sha256-3M3bcOEePF2LpvpQEstv+CpPEw0T7/zz7hdWa1V+HzU=",
-    "./src/store/records.js": "sha256-yAg+bF/P6JtDv0BYL9VIzMykWKVVUj4ZbS1FJhR9DV8=",
+    "./src/store/records.js": "sha256-v1lAOlN3PXGTfy1K5onJs7jiobEmC0/sqUghzP8pri8=",
     "./src/sync/gist.js": "sha256-QVi8OZ5j9zzf2ZQ9wCs9tURD+0K9FC7yFM28M1FdP6w=",
     "./src/ui/dom.js": "sha256-3QRu+++AkqGTW2jXCupSN1M5w37IecQ38JbRTxZUBSI=",
     "./src/ui/html.js": "sha256-sxzgeI9nTk/eWS+fvMLy4rGVmxOxcQvhBm9i4o/AEHA=",
@@ -146,7 +146,7 @@ const PRECACHE = {
     "./src/ui/notes-editor.js": "sha256-qub7EVgNYhyOEFxTVqi9D5Grwdjl+xNu0B/ZxMzCk7A=",
     "./src/ui/pwa.js": "sha256-1DCPMSar0DcwXROH8RBsnSn9ch3iugfzOE9/hdSegnY=",
     "./src/ui/settings.js": "sha256-7oZ6t/9dVkbbtGPwuJtHJbz6/3YsC2DUfPnGKr0GDWU=",
-    "./src/ui/view.js": "sha256-PreYQ1uyqPpWTNXkVL0yjE/T5+1TOhePeAAkb6Nbl6Y=",
+    "./src/ui/view.js": "sha256-wzHb/phP/zsOj2SaNFP6ejS982HHnLSOJ3ANwZpI4u0=",
     "./vendor/dompurify/LICENSE": "sha256-z8d0m5b2O9McPEK1xHG/dWgUBT6EfBDz6wA0F7xSPTA=",
     "./vendor/dompurify/purify.min.js": "sha256-zTeJj5eCrfVIIMQTGRtWkYA/DxN8eZ1u3P04UjtMLDE=",
     "./vendor/idb-keyval/LICENCE": "sha256-IMJ9YzlhnusxE8uGXU6Yo/VZ5Slk/HXK6py1+nJnRWU=",

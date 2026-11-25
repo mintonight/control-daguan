@@ -81,14 +81,14 @@ async def main():
     ok('按到期时间排序(早到期在前)', (await txt('#pos')) == '1 / 2' and f'question={q2}' in pg.url, pg.url)
     # 在待复习里评分 → 当天保留、不自动跳题，并能修正评分
     await t('button[data-mark="mastered"]').click()
-    ok('待复习里评分后保留并停在原题', (await txt('#dueBadge')) == '2' and f'question={q2}' in pg.url, pg.url)
+    ok('待复习里评分后保留并停在原题，红点减1', (await txt('#dueBadge')) == '1' and (await txt('#pos')) == '1 / 2' and f'question={q2}' in pg.url, pg.url)
     s = await store(); ok('复习日志累计', len(s['srs'][str(q2)]['logs']) == 2)
     reps = s['srs'][str(q2)]['card']['reps']
     log_id = s['srs'][str(q2)]['logs'][-1]['id']
     await pg.reload(wait_until='networkidle')
-    ok('刷新后当天已评分题仍保留', (await txt('#dueBadge')) == '2' and f'question={q2}' in pg.url)
+    ok('刷新后当天已评分题仍保留，红点仍只计未复习', (await txt('#dueBadge')) == '1' and (await txt('#pos')) == '1 / 2' and f'question={q2}' in pg.url)
     await t('#tabs button[data-tab="bank"]').click(); await t('#tabs button[data-tab="retest"]').click()
-    ok('重新进入复测仍保留', (await txt('#pos')) == '1 / 2' and f'question={q2}' in pg.url)
+    ok('重新进入复测仍保留', (await txt('#pos')) == '1 / 2' and f'question={q2}' in pg.url and (await txt('#dueBadge')) == '1')
     await pg.set_viewport_size({'width': 390, 'height': 844})
     await pg.clock.set_fixed_time(T0 + dt.timedelta(days=days, hours=1, minutes=1))
     await t('button[data-mark="unknown"]').click()
@@ -98,8 +98,14 @@ async def main():
     await t('button[data-mark="mastered"]').click()
     s = await store()
     ok('反复修改不累计遗忘次数', s['srs'][str(q2)]['card']['lapses'] == 0 and s['srs'][str(q2)]['card']['reps'] == reps)
+    ok('同日修正评分不重复扣减红点', (await txt('#dueBadge')) == '1' and (await txt('#pos')) == '1 / 2')
     await pg.reload(wait_until='networkidle')
     ok('移动端刷新后修改结果仍在', f'question={q2}' in pg.url and await t('button[data-mark="mastered"]').get_attribute('aria-pressed') == 'true')
+    await t('.unmark').click()
+    ok('取消标记不回退调度，已评分题仍保留且红点不回升', (await txt('#dueBadge')) == '1' and (await txt('#pos')) == '1 / 2' and f'question={q2}' in pg.url and await t('.unmark').count() == 0)
+    await t('button[data-mark="mastered"]').click()
+    s = await store()
+    ok('取消后再标记仍是同日修正', s['srs'][str(q2)]['card']['reps'] == reps and len(s['srs'][str(q2)]['logs']) == 2 and (await txt('#dueBadge')) == '1')
     await pg.set_viewport_size({'width': 1440, 'height': 900})
     await t('#nextBtn').click()
 
@@ -125,6 +131,9 @@ async def main():
     # 导入 JSON 往返
     await imp(path)
     s = await store(); ok('导入 JSON: 恢复复习卡片与日志', len(s['srs']) == 2 and len(s['srs'][str(q2)]['logs']) == 2, json.dumps({k: len(v['logs']) for k, v in s['srs'].items()}) + json.dumps({k: len(v['logs']) for k, v in data['srs'].items()}))
+    await pg.goto(BASE + '?tab=retest', wait_until='networkidle')
+    ok('导入后刷新复测：已评分题仍在列表，红点只计未复习', (await txt('#dueBadge')) == '1' and (await txt('#pos')) == '1 / 2')
+    await t('#gearBtn').click()
     await imp(path)
     s = await store(); ok('重复导入: 日志按 id 去重', len(s['srs'][str(q2)]['logs']) == 2)
     # 记录码往返
@@ -161,7 +170,8 @@ async def main():
     d2 = (await p2.locator('.card .due').first.inner_text()).strip()
     ok('学习日: 11-14 01:00 仍算 13 日，显示今日待复习', '今日待复习' in d2, d2)
     await p2.locator('button[data-mark="mastered"]').click(); await idle(p2)
-    ok('凌晨评分后仍在当天复测集合', await badge() == '1')
+    await p2.goto(BASE + '?tab=retest', wait_until='networkidle')
+    ok('凌晨评分后仍在当天复测集合，红点已清除', await p2.locator('#dueBadge').is_hidden() and await p2.locator('.card').count() == 1)
     await p2.clock.pause_at(dt.datetime(2026, 11, 14, 1, 59, 59, tzinfo=J))
     await p2.reload(wait_until='networkidle')
     await p2.clock.fast_forward(1000)

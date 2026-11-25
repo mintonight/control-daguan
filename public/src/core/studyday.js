@@ -28,18 +28,23 @@ function reviewToday(entry, now) {
     typeof log.stability === 'number' && typeof log.difficulty === 'number' &&
     typeof log.scheduled_days === 'number' ? log : undefined;
 }
-/** 今天的复测集合：未评分到期题 + 今天已评分的原到期题。由已有日志还原，无额外持久状态。 */
+/** 今天的复测条目：未评分到期题 + 今天已评分的原到期题。由已有日志还原，无额外持久状态。 */
 /** @param {Record<string, import('./types.js').SrsEntry>} srs
  * @param {Date|string|number} now @param {(id:number)=>boolean} [has] */
-function dueIds(srs, now, has = () => true) {
+function dueEntries(srs, now, has = () => true) {
   const lim = endOfStudyDay(now).getTime();
   return Object.entries(srs).map(([k, v]) => {
     const log = reviewToday(v, now);
     // ts-fsrs 的非新卡日志 due 是评分前 last_review；加上原 scheduled_days 即原到期时间。
     const before = log && log.state !== 0 ? Date.parse(log.due || '') + (log.scheduled_days || 0) * DAY_MS : Infinity;
-    return { id: +k, due: Math.min(Date.parse(v.card.due), before) };
+    return { id: +k, due: Math.min(Date.parse(v.card.due), before), reviewed: !!log };
   }).filter(v => has(v.id) && v.due <= lim)
-    .sort((a, b) => a.due - b.due || a.id - b.id).map(v => v.id);
+    .sort((a, b) => a.due - b.due || a.id - b.id);
 }
+/** @param {Parameters<typeof dueEntries>} args @returns {number[]} */
+const dueIds = (...args) => dueEntries(...args).map(v => v.id);
+/** 红点只计尚未复习的到期题；同日修正仍算已复习。取消标记不改调度，也不把已复习题重新算作待复习。 */
+/** @param {Parameters<typeof dueEntries>} args @returns {number[]} */
+const pendingDueIds = (...args) => dueEntries(...args).filter(v => !v.reviewed).map(v => v.id);
 
-export { DAY_CUT_H, DAY_MS, dayStart, endOfStudyDay, dayDiff, dueIds, reviewToday };
+export { DAY_CUT_H, DAY_MS, dayStart, endOfStudyDay, dayDiff, dueIds, pendingDueIds, reviewToday };

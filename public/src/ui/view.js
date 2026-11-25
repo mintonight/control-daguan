@@ -90,7 +90,7 @@ export function render() {
   $('#listBtn').parentElement.hidden = st.tab !== 'bank';
   $('#rvSeg').hidden = st.tab !== 'retest';
   document.querySelectorAll('#rvSeg button').forEach(b => b.classList.toggle('on', b.dataset.rv === st.rv));
-  const nDue = store.dueToday().length, bd = $('#dueBadge'); bd.hidden = !nDue; bd.textContent = nDue; bd.title = `今日待复习 ${nDue} 题`;
+  const nDue = store.pendingToday().length, bd = $('#dueBadge'); bd.hidden = !nDue; bd.textContent = nDue; bd.title = `今日待复习 ${nDue} 题`;
   $('#retention').value = store.rec.retention; $('#retentionVal').textContent = store.rec.retention.toFixed(2);
   const L = curList();
   $('#listName').textContent = `${L.name} · ${L.questionIds.length} 题`;
