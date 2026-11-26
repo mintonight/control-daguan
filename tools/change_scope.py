@@ -10,10 +10,13 @@ RUNTIME = {
     'public/src/srs/fsrs.js': ['main', 'fsrs', 'sync'],
     'public/src/ui/notes-editor.js': ['main', 'notes', 'sync'],
 }
-MATH_TESTS = {'exam-style-priority.test.mjs', 'exam-style-remaining.test.mjs',
-              'featured-corrections.test.mjs', 'recent4-corrections.test.mjs',
-              'severe-final-two.test.mjs', 'severe-solvable-old.test.mjs',
-              'standalone-final.test.mjs', 'standalone-older.test.mjs', 'standalone-recent.test.mjs'}
+MATH_TESTS = {'exam-standard-solutions.test.mjs', 'exam-style-priority.test.mjs',
+              'exam-style-remaining.test.mjs', 'featured-corrections.test.mjs',
+              'recent4-corrections.test.mjs', 'severe-final-two.test.mjs',
+              'severe-solvable-old.test.mjs', 'standalone-final.test.mjs',
+              'standalone-older.test.mjs', 'standalone-recent.test.mjs'}
+GENERIC_PLOT_TOOLS = {'tools/plot_solutions.py', 'tools/redraw_freq_figs.py', 'tools/exam_plot.py'}
+DOC_FILE = re.compile(r'^(?!public/).+\.md$')
 PRECACHE = re.compile(r'const PRECACHE = \{.*?\};', re.S)
 
 
@@ -39,7 +42,7 @@ def asset_ids(path, read):
 
 def classify(paths, before, after, base_known=True):
     ids, runtime, reasons, generated, source_images, public_images = set(), set(), [], set(), set(), set()
-    broad_tests, metadata, plot_tools = [], [], []
+    broad_tests, metadata, plot_tools, generic_plot_tools, docs = [], [], [], [], []
     paths = sorted(set(paths))
     if not base_known:
         reasons.append('unknown git baseline')
@@ -75,8 +78,12 @@ def classify(paths, before, after, base_known=True):
                 ids.add(qid)
             elif path == 'tests/'+Path(path).name and Path(path).name in MATH_TESTS:
                 broad_tests.append(path)
-            elif re.fullmatch(r'tools/plot_q\d{6}\.py', path):
+            elif re.fullmatch(r'tools/plot_q\d{6}(?:_[a-z0-9]+)?\.py', path):
                 plot_tools.append(int(re.search(r'q(\d{6})',path)[1]))
+            elif path in GENERIC_PLOT_TOOLS:
+                generic_plot_tools.append(path)
+            elif DOC_FILE.fullmatch(path):
+                docs.append(path)
             elif path in RUNTIME:
                 runtime.update(RUNTIME[path])
             elif path == 'public/sw.js':
@@ -89,7 +96,7 @@ def classify(paths, before, after, base_known=True):
                 reasons.append(f'shared/unknown boundary: {path}')
         except (ValueError, TypeError, KeyError, AttributeError) as error:
             reasons.append(f'{path}: {error}')
-    if set(plot_tools) - ids:
+    if set(plot_tools) - ids or (generic_plot_tools and not ids):
         reasons.append('plotting code without identified content change')
     if generated - ids:
         reasons.append('generated question without corresponding source/test/image')
@@ -97,9 +104,9 @@ def classify(paths, before, after, base_known=True):
         reasons.append('generated/shared image without canonical change')
     if (metadata or broad_tests) and not ids:
         reasons.append('shared metadata/math tests without identified questions')
-    if not ids and not runtime:
+    if not ids and not runtime and not docs:
         reasons.append('no classified content or isolated runtime change')
-    mode = 'full' if reasons else 'runtime' if runtime else 'content'
+    mode = 'full' if reasons else 'runtime' if runtime else 'content' if ids else 'docs'
     return {'mode':mode, 'question_ids':sorted(ids), 'suites':SUITES if mode=='full' else [s for s in SUITES if s in runtime],
             'reasons':reasons, 'paths':paths, 'base_known':base_known}
 
@@ -142,7 +149,7 @@ def current_plan(root, base):
         except subprocess.CalledProcessError:return None
     def after(path):
         p = Path(root)/path
-        return p.read_text(errors='replace') if p.is_file() else None
+        return p.read_text(encoding='utf-8', errors='replace') if p.is_file() else None
     result = classify(paths,before,after,known)
     result['base'] = base
     return result

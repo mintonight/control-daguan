@@ -2,7 +2,7 @@
 用法: python3 tools/verify_sync.py [base_url]"""
 import asyncio, sys, json, re, time
 from playwright.async_api import async_playwright
-from verify_support import idle
+from verify_support import idle, launch_chromium
 BASE = sys.argv[1] if len(sys.argv) > 1 else 'http://localhost:8765/'
 R = []
 async def open_sec(p, key):
@@ -50,7 +50,7 @@ class FakeGitHub:
 
 async def main():
   async with async_playwright() as p:
-    b = await p.chromium.launch(executable_path='/usr/bin/google-chrome')
+    b = await launch_chromium(p)
     gh = FakeGitHub()
     async def newpage():
         ctx = await b.new_context(viewport={'width': 1440, 'height': 900})

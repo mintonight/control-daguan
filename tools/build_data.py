@@ -13,7 +13,9 @@ errs=validate_all(SRC_FILES)
 if errs:
   sys.exit('数据校验失败，未生成任何文件（共 %d 处）：\n'%len(errs)+'\n'.join('  - '+e for e in errs))
 for qf in SRC_FILES:
-  src=json.load(open(qf)); y=src['year']; base=os.path.dirname(qf)
+  with open(qf, encoding='utf-8') as f:
+    src=json.load(f)
+  y=src['year']; base=os.path.dirname(qf)
   os.makedirs(os.path.join(ROOT,'public','img'),exist_ok=True)
   def pub(rel):
     fn=os.path.basename(rel); shutil.copy(os.path.join(base,rel),os.path.join(ROOT,'public','img',fn)); return 'img/'+fn
@@ -22,7 +24,9 @@ for qf in SRC_FILES:
     figs=[pub(f) for f in d['figures']]
     stem=d['stem']; used=set()
     def rep(mo):
-      i=int(mo.group(1)); used.add(i); w=Image.open(os.path.join(ROOT,'public',figs[i-1])).width
+      i=int(mo.group(1)); used.add(i)
+      with Image.open(os.path.join(ROOT,'public',figs[i-1])) as im:
+        w=im.width
       width=d['figureWidths'][i-1] if 'figureWidths' in d else round(w*0.55)
       return f'![图{i}|{width}]({figs[i-1]})'
     stem=re.sub(r'\[\[fig:(\d+)\]\]',rep,stem)
@@ -39,8 +43,12 @@ for qf in SRC_FILES:
       for image in TEXT_IMAGES.findall(d.get(field, '')):
         pub(image)
     ans=[pub(a) for a in d['answerImages']]
+    orig_imgs=[]
+    for a in ans:
+      with Image.open(os.path.join(ROOT,'public',a)) as im:
+        orig_imgs.append(dict(src=a,w=round(im.width*0.6)))
     det=dict(answer=d.get('answer',''),explanation=d.get('explanation',''),notes=d.get('notes',''),
-        originalImages=[dict(src=a,w=round(Image.open(os.path.join(ROOT,'public',a)).width*0.6)) for a in ans],
+        originalImages=orig_imgs,
         answerPdfPages=src.get('answerPages',''))
     if d.get('errataLevel'): det['errataLevel']=d['errataLevel']
     details[qid]=det
@@ -89,8 +97,11 @@ for t in TOPIC_ORDER:
   if qs: lists.append(lst(f'topic-{t}',f'专题·{t}',qs,lambda q:[c for c in topic_cats(q)]))
 lib=dict(subject='自动控制原理（重庆大学 844）',source=f'重庆大学 {min(q["year"] for q in questions)}–{max(q["year"] for q in questions)} 初试真题',
          topicOrder=['历年真题','重点题目']+TOPIC_ORDER,years=years,lists=lists,questions=questions)
-json.dump(lib,open(os.path.join(OUT,'library.json'),'w'),ensure_ascii=False)
-for k,v in details.items(): json.dump(v,open(os.path.join(OUT,'questions',f'{k}.json'),'w'),ensure_ascii=False)
+with open(os.path.join(OUT,'library.json'),'w',encoding='utf-8',newline='\n') as f:
+  json.dump(lib,f,ensure_ascii=False)
+for k,v in details.items():
+  with open(os.path.join(OUT,'questions',f'{k}.json'),'w',encoding='utf-8',newline='\n') as f:
+    json.dump(v,f,ensure_ascii=False)
 print(len(questions),'questions;',{y:sum(1 for q in questions if q['year']==y) for y in years},
       'with figures',sum(q['hasFigure'] for q in questions),'with answers',sum(1 for v in details.values() if v['answer']),
       'answer images',sum(len(v['originalImages']) for v in details.values()))

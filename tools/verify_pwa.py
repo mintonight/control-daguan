@@ -9,7 +9,7 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from playwright.async_api import async_playwright
 
-from verify_support import idle
+from verify_support import idle, launch_persistent_chromium
 from build_precache import build
 from verify_sw_update import verify_upgrade
 from verify_pwa_resilience import verify_resilience, PREFIX as CACHE_PREFIX, RUNTIME
@@ -97,9 +97,8 @@ async def main():
     try:
       user_dir = tempfile.mkdtemp(prefix='cdg-chrome-')
       async with async_playwright() as pw:
-        ctx = await pw.chromium.launch_persistent_context(
-            user_dir, executable_path='/usr/bin/google-chrome',
-            viewport={'width': 1440, 'height': 900})
+        ctx = await launch_persistent_chromium(
+            pw, user_dir, viewport={'width': 1440, 'height': 900})
         pg = ctx.pages[0] if ctx.pages else await ctx.new_page(); errs = []
         pg.on('pageerror', lambda e: errs.append(str(e)))
         def on_console(m):

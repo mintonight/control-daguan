@@ -13,10 +13,11 @@ from validate_changes import browser_policy, commands
 
 class ValidationFlowTest(unittest.TestCase):
     def test_content_never_automatically_runs_six_browser_suites(self):
-        plan={'mode':'content','suites':[]}
-        self.assertEqual(browser_policy(plan),[])
-        self.assertEqual(browser_policy(plan,ci=True),[])
-        self.assertEqual(browser_policy(plan,full=True),SUITES)
+        for mode in ('content', 'docs'):
+            plan={'mode':mode,'suites':[]}
+            self.assertEqual(browser_policy(plan),[])
+            self.assertEqual(browser_policy(plan,ci=True),[])
+            self.assertEqual(browser_policy(plan,full=True),SUITES)
 
     def test_runtime_and_full_are_ci_owned_not_repeated_by_local_preflight(self):
         for suites in [['main','sync','settings'],SUITES]:
@@ -42,10 +43,12 @@ class ValidationFlowTest(unittest.TestCase):
                     self.assertIn(['npm','run',guard],commands())
 
     def test_ci_uses_shared_entry_full_history_and_one_build_artifact(self):
-        workflow=(ROOT/'.github/workflows/pages.yml').read_text()
+        workflow=(ROOT/'.github/workflows/pages.yml').read_text(encoding='utf-8')
         self.assertIn('python3 tools/validate_changes.py --ci',workflow)
         self.assertIn('fetch-depth: 0',workflow)
         self.assertIn('pull_request:',workflow)
+        self.assertIn('cache: pip',workflow)
+        self.assertIn('requirements-ci.txt',workflow)
         self.assertEqual(workflow.count('actions/checkout@'),1)
         self.assertNotIn('tools/build_precache.py',workflow)
         self.assertIn('actions/upload-pages-artifact@v3',workflow)

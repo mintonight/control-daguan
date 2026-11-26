@@ -42,7 +42,8 @@ def validate_file(path, seen_ids, seen_imgs):
     except ValueError:
         rel = str(path)
     try:
-        src = json.load(open(path, encoding='utf-8'))
+        with open(path, encoding='utf-8') as f:
+            src = json.load(f)
     except (OSError, ValueError) as e:
         return [f'{rel}: 不是合法 JSON：{e}']
     if not isinstance(src, dict):

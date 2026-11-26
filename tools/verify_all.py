@@ -24,20 +24,27 @@ def site_url(value):
 
 def execute(script, url):
     command = [sys.executable, '-u', str(ROOT / 'tools' / script), url]
+    popen_kwargs = {'start_new_session': True} if os.name != 'nt' else {}
     with subprocess.Popen(command, cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                          text=True, start_new_session=True) as process:
+                          text=True, encoding='utf-8', errors='replace', **popen_kwargs) as process:
         try:
             output, _ = process.communicate(timeout=300)
         except (subprocess.TimeoutExpired, KeyboardInterrupt):
             try:
-                os.killpg(process.pid, signal.SIGTERM)
+                if hasattr(os, 'killpg'):
+                    os.killpg(process.pid, signal.SIGTERM)
+                else:
+                    process.terminate()
             except ProcessLookupError:
                 pass
             try:
                 process.communicate(timeout=5)
             except subprocess.TimeoutExpired:
                 try:
-                    os.killpg(process.pid, signal.SIGKILL)
+                    if hasattr(os, 'killpg'):
+                        os.killpg(process.pid, signal.SIGKILL)
+                    else:
+                        process.kill()
                 except ProcessLookupError:
                     pass
                 process.communicate()

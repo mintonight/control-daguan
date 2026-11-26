@@ -73,6 +73,15 @@ class ChangeScopeTest(unittest.TestCase):
     def test_question_plot_code_is_content_only_with_its_content_change(self):
         self.assertEqual(self.plan(['tools/plot_q202305.py'])['mode'],'full')
         self.assertEqual(self.plan(['data-src/2023/questions.json','tools/plot_q202305.py'])['mode'],'content')
+        self.assertEqual(self.plan(['tools/plot_solutions.py'])['mode'],'full')
+        self.assertEqual(self.plan(['data-src/2023/questions.json','tools/plot_solutions.py'])['mode'],'content')
+        self.assertEqual(self.plan(['data-src/2023/questions.json','tests/exam-standard-solutions.test.mjs'])['mode'],'content')
+
+    def test_non_public_markdown_docs_skip_browser_suites_but_public_docs_stay_full(self):
+        p=self.plan(['README.md','FEATURES.md','incoming/SPEC.md'])
+        self.assertEqual(p['mode'],'docs');self.assertEqual(p['suites'],[]);self.assertEqual(p['question_ids'],[])
+        self.assertEqual(self.plan(['data-src/2023/questions.json','README.md'])['mode'],'content')
+        self.assertEqual(self.plan(['public/vendor/katex/README.md'])['mode'],'full')
 
     def test_mixed_runtime_content_uses_runtime_and_keeps_question_ids(self):
         p=self.plan(['data-src/2023/questions.json','public/src/sync/gist.js'])

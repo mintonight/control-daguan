@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 import urllib.request
 from playwright.async_api import async_playwright
+from verify_support import launch_chromium
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -31,10 +32,10 @@ async def render(url, ids, directory):
     directory.mkdir(parents=True, exist_ok=True)
     rows = []
     async with async_playwright() as p:
-        browser = await p.chromium.launch(executable_path='/usr/bin/google-chrome', args=['--no-sandbox'])
+        browser = await launch_chromium(p, args=['--no-sandbox'])
         errors = []
         for qid in ids:
-            data = json.loads((ROOT/f'public/data/questions/{qid}.json').read_text())
+            data = json.loads((ROOT/f'public/data/questions/{qid}.json').read_text(encoding='utf-8'))
             for width, height, name in [(1200,1000,'desktop'),(390,844,'mobile')]:
                 page = await browser.new_page(viewport={'width':width,'height':height})
                 page.on('pageerror', lambda error: errors.append(str(error)))

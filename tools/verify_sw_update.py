@@ -11,7 +11,7 @@ import threading
 from urllib.parse import urlsplit
 
 from build_precache import build
-from verify_support import idle
+from verify_support import idle, launch_persistent_chromium
 
 ROOT = Path(__file__).resolve().parents[1]
 PREFIX = '/control-daguan/'
@@ -107,8 +107,7 @@ async def verify_upgrade(pw, ok):
         server.faults = {}
         threading.Thread(target=server.serve_forever, daemon=True).start()
         base = f'http://127.0.0.1:{server.server_address[1]}{PREFIX}'
-        context = await pw.chromium.launch_persistent_context(
-            str(Path(tmp) / 'profile'), executable_path='/usr/bin/google-chrome')
+        context = await launch_persistent_chromium(pw, str(Path(tmp) / 'profile'))
         try:
             page = context.pages[0]
             await page.goto(base, wait_until='domcontentloaded')

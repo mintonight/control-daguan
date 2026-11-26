@@ -31,8 +31,8 @@ class RunnerTests(unittest.TestCase):
         import ast
         import re
         for source in (ROOT / 'tools').glob('*.py'):
-            ast.parse(source.read_text(), filename=str(source))
-        documented = set(re.findall(r'python3 tools/verify_all.py http://localhost:8765/ --only (\w+)', (ROOT / 'FEATURES.md').read_text()))
+            ast.parse(source.read_text(encoding='utf-8'), filename=str(source))
+        documented = set(re.findall(r'python3 tools/verify_all.py http://localhost:8765/ --only (\w+)', (ROOT / 'FEATURES.md').read_text(encoding='utf-8')))
         self.assertEqual(documented, set(runner.SUITES))
         self.assertFalse(list((ROOT / 'tools').glob('shot*.py')))
 
@@ -64,7 +64,7 @@ class RunnerTests(unittest.TestCase):
         self.assertIn('cannot launch', (self.directory / 'fsrs.log').read_text())
 
     def test_interrupt_remains_an_interrupt_if_child_exits_during_cleanup(self):
-        with patch.object(runner.subprocess, 'Popen') as popen, patch.object(runner.os, 'killpg', side_effect=ProcessLookupError()):
+        with patch.object(runner.subprocess, 'Popen') as popen, patch.object(runner.os, 'killpg', side_effect=ProcessLookupError(), create=True):
             process = popen.return_value.__enter__.return_value
             process.communicate.side_effect = [KeyboardInterrupt(), ('', None)]
             with self.assertRaises(KeyboardInterrupt):

@@ -10,6 +10,7 @@ import tarfile
 import tempfile
 import threading
 
+from verify_support import launch_chromium
 from verify_sw_update import UpgradeHandler
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -48,7 +49,7 @@ async def verify_protocol_upgrades(pw, ok):
             server.faults = {}
             threading.Thread(target=server.serve_forever, daemon=True).start()
             base = f'http://127.0.0.1:{server.server_port}/control-daguan/'
-            browser = await pw.chromium.launch(executable_path='/usr/bin/google-chrome')
+            browser = await launch_chromium(pw)
             ctx = await browser.new_context()
             if rev == '704dce59':
                 await ctx.add_init_script("Object.defineProperty(navigator.storage, 'persist', {value: () => new Promise(() => {})})")
@@ -132,7 +133,7 @@ async def verify_live_upgrade(pw, base, output, ok):
     with tempfile.TemporaryDirectory(prefix='cdg-live-old-profile-') as tmp:
         root = Path(tmp)
         publish_release('704dce59', root)
-        browser = await pw.chromium.launch(executable_path='/usr/bin/google-chrome')
+        browser = await launch_chromium(pw)
         context = await browser.new_context(viewport={'width':1440, 'height':900})
         prefix = urlsplit(base).path
         async def old_assets(route):

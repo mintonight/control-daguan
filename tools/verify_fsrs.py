@@ -1,8 +1,8 @@
 """FSRS 复习调度验收：评分 → 间隔预览/到期日更新 → 模拟时间到期 → 导出/导入往返、记录码往返、旧版记录兼容。
 用法: python3 tools/verify_fsrs.py [base_url]"""
-import asyncio, sys, json, re, datetime as dt
+import asyncio, sys, json, os, re, tempfile, datetime as dt
 from playwright.async_api import async_playwright
-from verify_support import idle
+from verify_support import idle, launch_chromium
 BASE = sys.argv[1] if len(sys.argv) > 1 else 'http://localhost:8765/'
 R = []
 async def open_sec(p, key):
@@ -15,7 +15,7 @@ def ok(name, cond, detail=''):
 T0 = dt.datetime(2026, 11, 10, 10, 0, tzinfo=dt.timezone(dt.timedelta(hours=9)))
 async def main():
   async with async_playwright() as p:
-    b = await p.chromium.launch(executable_path='/usr/bin/google-chrome')
+    b = await launch_chromium(p)
     ctx = await b.new_context(viewport={'width': 1440, 'height': 900}, accept_downloads=True, timezone_id='Asia/Tokyo')
     await ctx.grant_permissions(['clipboard-read', 'clipboard-write'])
     pg = await ctx.new_page(); errs = []
@@ -143,7 +143,10 @@ async def main():
     s = await store(); ok('记录码往返: 恢复复习卡片', len(s['srs']) == 2 and s['srs'][str(q2)]['card']['reps'] == 2, await txt('#setMsg'))
     # 旧版 v1 记录兼容
     v1 = {'app': 'control-daguan', 'version': 1, 'favorites': [202305], 'marks': {'202305': {'state': 'shaky', 'at': 1}}, 'history': []}
-    open('/tmp/v1.json', 'w').write(json.dumps(v1)); await imp('/tmp/v1.json')
+    v1_path = os.path.join(tempfile.gettempdir(), 'v1.json')
+    with open(v1_path, 'w', encoding='utf-8') as f:
+        json.dump(v1, f)
+    await imp(v1_path)
     s = await store(); ok('导入旧版 v1 记录: 标记合并、复习进度不受影响', s['marks'].get('202305', {}).get('state') == 'shaky' and len(s['srs']) == 2, await txt('#setMsg'))
     await pg.evaluate("localStorage.setItem('control-daguan:v1', JSON.stringify({favorites:[202301],marks:{'202301':{state:'unknown',at:1}},history:[]}))"); await pg.reload(wait_until='networkidle')
     s = await store(); ok('旧版 localStorage 记录并入 IndexedDB 后删除旧键', await pg.evaluate("localStorage.getItem('control-daguan:v1')") is None and len(s['srs']) == 2 and not errs, str(errs))

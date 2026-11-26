@@ -22,7 +22,7 @@ GUARD_TESTS = ['lint-rules.test.mjs','type-contracts.test.mjs','wait-policy.test
 
 def commands():
     # npm test already runs repository-wide ESLint, positive/negative tsc and the wait-policy scanner.
-    package = json.loads((ROOT/'package.json').read_text())
+    package = json.loads((ROOT/'package.json').read_text(encoding='utf-8'))
     guards = all((ROOT/'tests'/name).is_file() for name in GUARD_TESTS)
     result = [['npm','test'],[sys.executable,'-m','unittest','discover','-s','tests','-p','test_*.py']]
     if not guards or package['scripts']['test'] != 'node --test "tests/**/*.test.mjs"':
@@ -60,7 +60,7 @@ def main(argv=None):
     if base is None:
         if args.ci:
             event_path = os.environ.get('GITHUB_EVENT_PATH')
-            event = json.loads(Path(event_path).read_text()) if event_path else {}
+            event = json.loads(Path(event_path).read_text(encoding='utf-8')) if event_path else {}
             base = event_base(ROOT,os.environ.get('GITHUB_EVENT_NAME'),event)
         else:
             base = 'HEAD'
@@ -99,21 +99,22 @@ def main(argv=None):
                 step(' '.join(command),lambda c=command:run(c))
             run(['git','diff','--check'])
             required = browser_policy(plan,args.ci,args.full)
-            with server() as url:
-                if required==SUITES:
-                    def all_suites():
-                        if full_browser([url,'--shots']):
-                            raise RuntimeError('full browser verification failed')
-                    step('six browser suites and snapshots',all_suites)
-                elif required:
-                    def selected():
-                        results=run_suites(url,required,OUT/'browser')
-                        report['browser_suites']=results
-                        if not all(row['status']=='passed' for row in results):
-                            raise RuntimeError('selected browser verification failed')
-                    step('selected browser suites',selected)
-                # Only changed/representative questions, never full-library snapshots on content.
-                step('targeted desktop/mobile text, original images and KaTeX',lambda:verify(url,ids,OUT/'content'))
+            if required or plan['mode'] != 'docs':
+                with server() as url:
+                    if required==SUITES:
+                        def all_suites():
+                            if full_browser([url,'--shots']):
+                                raise RuntimeError('full browser verification failed')
+                        step('six browser suites and snapshots',all_suites)
+                    elif required:
+                        def selected():
+                            results=run_suites(url,required,OUT/'browser')
+                            report['browser_suites']=results
+                            if not all(row['status']=='passed' for row in results):
+                                raise RuntimeError('selected browser verification failed')
+                        step('selected browser suites',selected)
+                    # Only changed/representative questions, never full-library snapshots on content.
+                    step('targeted desktop/mobile text, original images and KaTeX',lambda:verify(url,ids,OUT/'content'))
             report['deferred_to_ci'] = plan['suites'] if not args.ci and not args.full else []
             if report['deferred_to_ci']:
                 print('LOCAL PREFLIGHT ONLY: CI must still pass '+','.join(report['deferred_to_ci']),flush=True)
@@ -125,7 +126,7 @@ def main(argv=None):
         print(str(error),file=sys.stderr)
         return 1
     finally:
-        (OUT/'report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n')
+        (OUT/'report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
 
 
 if __name__=='__main__':

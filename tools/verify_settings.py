@@ -2,7 +2,7 @@
 用法: python3 tools/verify_settings.py [base_url]"""
 import asyncio, sys, json
 from playwright.async_api import async_playwright
-from verify_support import idle
+from verify_support import idle, launch_chromium
 BASE = sys.argv[1] if len(sys.argv) > 1 else 'http://localhost:8765/'
 R = []
 SECS = ['read', 'review', 'records', 'sync', 'offline', 'about']
@@ -24,7 +24,7 @@ async def layout(p):
 
 async def main():
   async with async_playwright() as pw:
-    b = await pw.chromium.launch(executable_path='/usr/bin/google-chrome')
+    b = await launch_chromium(pw)
     ctx = await b.new_context(viewport={'width': 1440, 'height': 900}, accept_downloads=True)
     pg = await ctx.new_page(); errs = []
     pg.on('pageerror', lambda e: errs.append(str(e))); pg.on('console', lambda m: errs.append(m.text) if m.type == 'error' else None)

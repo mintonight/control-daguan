@@ -8,6 +8,7 @@ import tempfile
 import threading
 
 from build_precache import build
+from verify_support import launch_chromium
 
 ROOT = Path(__file__).resolve().parents[1]
 PREFIX = 'control-daguan:%2Fcontrol-daguan%2F:'
@@ -36,7 +37,7 @@ async def verify_resilience(pw, ok):
         server = ThreadingHTTPServer(('127.0.0.1', 0), partial(QuietHandler, directory=tmp))
         threading.Thread(target=server.serve_forever, daemon=True).start()
         base = f'http://127.0.0.1:{server.server_port}/'
-        browser = await pw.chromium.launch(executable_path='/usr/bin/google-chrome')
+        browser = await launch_chromium(pw)
         try:
             ctx = await browser.new_context()
             await ctx.route('**/sw.js', lambda route: route.abort())
@@ -140,7 +141,7 @@ async def verify_resilience(pw, ok):
 async def verify_live(pw, base, directory, ok):
     """Public deployed assets, isolated test profile. No signed-in profile or account data is used."""
     directory.mkdir(parents=True, exist_ok=True)
-    browser = await pw.chromium.launch(executable_path='/usr/bin/google-chrome')
+    browser = await launch_chromium(pw)
     context = await browser.new_context(viewport={'width': 1440, 'height': 900})
     try:
         page = await context.new_page()

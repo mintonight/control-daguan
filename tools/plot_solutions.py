@@ -72,7 +72,7 @@ def svg_wrap(width, height, body_lines, title=''):
 def save_svg(rel_path, content):
     p = ROOT / rel_path
     p.parent.mkdir(parents=True, exist_ok=True)
-    p.write_text(content, encoding='utf-8')
+    p.write_text(content, encoding='utf-8', newline='\n')
     print(f'wrote {rel_path}')
 
 

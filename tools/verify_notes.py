@@ -1,8 +1,8 @@
 """题目笔记验收：编辑/自动保存/持久化、Markdown 与公式渲染、XSS 清洗、列表标识、导出/导入/记录码、合并规则与 Gist 同步（模拟 API）。
 用法: python3 tools/verify_notes.py [base_url]"""
-import asyncio, sys, json, re
+import asyncio, sys, json, os, re, tempfile
 from playwright.async_api import async_playwright
-from verify_support import idle
+from verify_support import idle, launch_chromium
 from verify_copy_tex import check_note
 BASE = sys.argv[1] if len(sys.argv) > 1 else 'http://localhost:8765/'
 R = []
@@ -66,7 +66,7 @@ cost = "$5"  # 代码里的 $x$ 不当公式
 
 async def main():
   async with async_playwright() as p:
-    b = await p.chromium.launch(executable_path='/usr/bin/google-chrome')
+    b = await launch_chromium(p)
     gh = FakeGitHub()
     async def newpage(w=1440, h=900):
         ctx = await b.new_context(viewport={'width': w, 'height': h}, accept_downloads=True)
@@ -170,14 +170,16 @@ async def main():
     ok('记录码往返包含笔记', r2.get('notes', {}).get('202301', {}).get('text') == exp['notes']['202301']['text'] and await pg2.locator('.note-flag').count() == 1)
     # 新设备导入 JSON；旧 v2（无 notes）文件导入不清空笔记；较旧的笔记不覆盖较新的
     ctx3, pg3 = await newpage(); await pg3.goto(QURL, wait_until='networkidle')
-    imp = '/tmp/cdg-notes-import.json'
-    json.dump(exp, open(imp, 'w'), ensure_ascii=False)
+    imp = os.path.join(tempfile.gettempdir(), 'cdg-notes-import.json')
+    with open(imp, 'w', encoding='utf-8') as f: json.dump(exp, f, ensure_ascii=False)
     await pg3.locator('#gearBtn').click(); await pg3.locator('#importFile').set_input_files(imp); await idle(pg3)
     ok('导入 JSON 恢复笔记并标识、默认收起', (await rec(pg3))['notes']['202301']['text'] == exp['notes']['202301']['text'] and await pg3.locator('.note-flag').count() == 1 and await pg3.locator('.notebox').count() == 0)
-    old = {k: v for k, v in exp.items() if k != 'notes'}; json.dump(old, open(imp, 'w'))
+    old = {k: v for k, v in exp.items() if k != 'notes'}
+    with open(imp, 'w', encoding='utf-8') as f: json.dump(old, f)
     await pg3.locator('#importFile').set_input_files(imp); await idle(pg3)
     ok('导入不含 notes 的旧 v2 文件：成功且不清空笔记', '已导入' in await pg3.locator('#setMsg').inner_text() and (await rec(pg3))['notes']['202301']['text'] == exp['notes']['202301']['text'])
-    stale = {**exp, 'notes': {'202301': {'text': '旧内容', 'at': 1000}, '209999': {'text': '不存在的题', 'at': 9e12}}}; json.dump(stale, open(imp, 'w'), ensure_ascii=False)
+    stale = {**exp, 'notes': {'202301': {'text': '旧内容', 'at': 1000}, '209999': {'text': '不存在的题', 'at': 9e12}}}
+    with open(imp, 'w', encoding='utf-8') as f: json.dump(stale, f, ensure_ascii=False)
     await pg3.locator('#importFile').set_input_files(imp); await idle(pg3); r3 = await rec(pg3)
     ok('导入时较新的本地笔记不被旧笔记覆盖，未知题号忽略', r3['notes']['202301']['text'] == exp['notes']['202301']['text'] and '209999' not in r3['notes'])
     await ctx2.close(); await ctx3.close()

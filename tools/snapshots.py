@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 from urllib.parse import urlsplit
 from playwright.async_api import async_playwright
-from verify_support import idle
+from verify_support import idle, launch_chromium
 
 ROOT = Path(__file__).resolve().parents[1]
 MATRIX = {'desktop': {'width': 1440, 'height': 900}, 'mobile': {'width': 390, 'height': 844}}
@@ -24,7 +24,7 @@ async def capture(base, directory):
     origin = urlsplit(base).netloc
     note = (ROOT / 'tests/fixtures/snapshot-note.md').read_text(encoding='utf-8')
     async with async_playwright() as pw:
-        browser = await pw.chromium.launch(executable_path='/usr/bin/google-chrome')
+        browser = await launch_chromium(pw)
         try:
             for scheme in ('light', 'dark'):
                 for device, viewport in MATRIX.items():
