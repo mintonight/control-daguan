@@ -13,7 +13,7 @@ import threading
 import time
 
 from change_scope import current_plan, event_base, SUITES
-from verify_all import main as full_browser, run_suites, site_url
+from verify_all import DEFAULT_JOBS, main as full_browser, run_suites, site_url
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT/'shots/validation'
@@ -39,7 +39,10 @@ def server():
     class QuietHandler(SimpleHTTPRequestHandler):
         def log_message(self, *args):
             pass
-    httpd = ThreadingHTTPServer(('127.0.0.1',0),partial(QuietHandler,directory=str(ROOT/'public')))
+    class LocalServer(ThreadingHTTPServer):
+        request_queue_size = 128
+        daemon_threads = True
+    httpd = LocalServer(('127.0.0.1',0),partial(QuietHandler,directory=str(ROOT/'public')))
     thread = threading.Thread(target=httpd.serve_forever, daemon=True)
     thread.start()
     try:
@@ -108,7 +111,7 @@ def main(argv=None):
                         step('six browser suites and snapshots',all_suites)
                     elif required:
                         def selected():
-                            results=run_suites(url,required,OUT/'browser')
+                            results=run_suites(url,required,OUT/'browser',jobs=DEFAULT_JOBS)
                             report['browser_suites']=results
                             if not all(row['status']=='passed' for row in results):
                                 raise RuntimeError('selected browser verification failed')

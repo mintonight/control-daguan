@@ -23,9 +23,9 @@ class RunnerTests(unittest.TestCase):
         self.addCleanup(self.tmp.cleanup)
         self.directory = Path(self.tmp.name)
 
-    def run_fake(self, names, execute):
+    def run_fake(self, names, execute, jobs=1):
         with contextlib.redirect_stdout(io.StringIO()):
-            return runner.run_suites('http://localhost:8765/', names, self.directory, execute)
+            return runner.run_suites('http://localhost:8765/', names, self.directory, execute, jobs=jobs)
 
     def test_tools_parse_and_feature_map_commands_name_real_suites(self):
         import ast
@@ -77,12 +77,42 @@ class RunnerTests(unittest.TestCase):
         self.assertEqual([r['status'] for r in results], ['interrupted', 'skipped', 'skipped'])
 
     def test_unknown_suite_and_unsafe_url_exit_two_without_launching_browser(self):
-        for args in [['http://localhost:8765/', '--only', 'unknown'], ['https://user:pass@example.com/'], ['file:///tmp/site']]:
+        for args in [['http://localhost:8765/', '--only', 'unknown'], ['http://localhost:8765/', '--jobs', '0'], ['https://user:pass@example.com/'], ['file:///tmp/site']]:
             with self.subTest(args=args):
                 result = subprocess.run([sys.executable, str(ROOT / 'tools/verify_all.py'), *args], capture_output=True, text=True)
                 self.assertEqual(result.returncode, 2)
                 self.assertIn('error:', result.stderr)
                 self.assertNotIn('RUN ', result.stdout)
+
+    def test_parallel_execution_runs_concurrently_preserves_order_and_isolates_failures(self):
+        import threading
+        barrier = threading.Barrier(2, timeout=5)
+        def execute(script, url):
+            if script in ('verify.py', 'verify_pwa.py'):
+                barrier.wait()
+            if script == 'verify_fsrs.py':
+                return 1, 'FAIL fsrs\n'
+            if script == 'verify_sync.py':
+                raise OSError('spawn error')
+            return 0, '3/3 passed\n'
+        names = ['main', 'fsrs', 'sync', 'notes', 'settings', 'pwa']
+        results = self.run_fake(names, execute, jobs=3)
+        self.assertEqual([r['suite'] for r in results], names)
+        self.assertEqual([r['status'] for r in results], ['passed', 'failed', 'failed', 'passed', 'passed', 'passed'])
+        for name in names:
+            self.assertTrue((self.directory / f'{name}.log').is_file())
+        self.assertIn('spawn error', (self.directory / 'sync.log').read_text(encoding='utf-8'))
+
+    def test_main_uses_parallel_default_jobs_and_honors_jobs_flag(self):
+        seen = []
+        def fake_run(url, names, directory, jobs=1):
+            seen.append((names, jobs))
+            return [{'suite': n, 'status': 'passed'} for n in names]
+        with patch.object(runner, 'ROOT', self.directory), patch.object(runner, 'run_suites', side_effect=fake_run), contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(runner.main(['http://localhost:8765/']), 0)
+            self.assertEqual(runner.main(['http://localhost:8765/', '--jobs', '2']), 0)
+        self.assertEqual(seen[0][1], runner.DEFAULT_JOBS)
+        self.assertEqual(seen[1][1], 2)
 
     def test_snapshot_failure_and_interrupt_have_machine_readable_exit_reports(self):
         for error, expected in [(RuntimeError('capture failed'), 1), (KeyboardInterrupt(), 130)]:
