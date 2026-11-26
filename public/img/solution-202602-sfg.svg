@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="620" height="275" viewBox="0 0 620 275" role="img">
+  <title>202602 信号流图</title>
+  <rect width="100%" height="100%" fill="white"/>
+  <defs>
+    <marker id="ar" markerWidth="10" markerHeight="10" refX="7.5" refY="4" orient="auto-start-reverse" markerUnits="userSpaceOnUse">
+      <path d="M0 1.5L8 4L0 6.5Z" fill="#111"/>
+    </marker>
+  </defs>
+  <g font-family="Arial,'PingFang SC','Microsoft YaHei',sans-serif" fill="#111">
+    <line x1="65.0" y1="130.0" x2="220.0" y2="130.0" stroke="#111" stroke-width="1.8"/>
+    <polygon points="146.50,130.00 138.50,133.84 138.50,126.16" fill="#111"/>
+    <text x="142.5" y="118.0" font-size="13" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="3.5" stroke-linejoin="round">1</text>
+    <line x1="220.0" y1="130.0" x2="370.0" y2="130.0" stroke="#111" stroke-width="1.8"/>
+    <polygon points="299.00,130.00 291.00,133.84 291.00,126.16" fill="#111"/>
+    <text x="295.0" y="118.0" font-size="13" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="3.5" stroke-linejoin="round">1</text>
+    <line x1="370.0" y1="130.0" x2="545.0" y2="130.0" stroke="#111" stroke-width="1.8"/>
+    <polygon points="461.50,130.00 453.50,133.84 453.50,126.16" fill="#111"/>
+    <text x="457.5" y="118.0" font-size="13" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="3.5" stroke-linejoin="round">G(s)</text>
+    <line x1="370.0" y1="44.0" x2="370.0" y2="130.0" stroke="#111" stroke-width="1.8"/>
+    <polygon points="370.00,91.00 366.16,83.00 373.84,83.00" fill="#111"/>
+    <text x="386.0" y="91.0" font-size="13">1</text>
+    <path d="M 65.0 130.0 Q 142.5 230.0 220.0 130.0" fill="none" stroke="#111" stroke-width="1.7"/>
+    <polygon points="146.50,180.00 138.50,183.84 138.50,176.16" fill="#111"/>
+    <text x="142.5" y="198.0" font-size="13" text-anchor="middle" fill="#111" paint-order="stroke" stroke="white" stroke-width="3.5" stroke-linejoin="round">5H(s)</text>
+    <path d="M 545.0 130.0 Q 382.5 278.0 220.0 130.0" fill="none" stroke="#111" stroke-width="1.7"/>
+    <polygon points="378.50,204.00 386.50,200.16 386.50,207.84" fill="#111"/>
+    <text x="382.5" y="222.0" font-size="13" text-anchor="middle" fill="#111" paint-order="stroke" stroke="white" stroke-width="3.5" stroke-linejoin="round">−H(s)</text>
+    <circle cx="65.0" cy="130.0" r="4.2" fill="white" stroke="#111" stroke-width="2.0"/>
+    <text x="65.0" y="116.0" font-size="14" font-weight="bold" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="3.5" stroke-linejoin="round">R(s)</text>
+    <circle cx="220.0" cy="130.0" r="4.2" fill="white" stroke="#111" stroke-width="2.0"/>
+    <text x="220.0" y="116.0" font-size="14" font-weight="bold" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="3.5" stroke-linejoin="round">X<tspan dy="3.5" font-size="76%">1</tspan><tspan dy="-3.5">&#8203;</tspan>(s)</text>
+    <circle cx="370.0" cy="130.0" r="4.2" fill="white" stroke="#111" stroke-width="2.0"/>
+    <text x="370.0" y="150.0" font-size="14" font-weight="bold" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="3.5" stroke-linejoin="round">X<tspan dy="3.5" font-size="76%">2</tspan><tspan dy="-3.5">&#8203;</tspan>(s)</text>
+    <circle cx="545.0" cy="130.0" r="4.2" fill="white" stroke="#111" stroke-width="2.0"/>
+    <text x="545.0" y="116.0" font-size="14" font-weight="bold" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="3.5" stroke-linejoin="round">C(s)</text>
+    <circle cx="370.0" cy="44.0" r="4.2" fill="white" stroke="#111" stroke-width="2.0"/>
+    <text x="370.0" y="32.0" font-size="14" font-weight="bold" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="3.5" stroke-linejoin="round">N(s)</text>
+    <text x="310.0" y="263" font-size="13.5" font-weight="bold" text-anchor="middle">系统信号流图（回路 L<tspan dy="3.5" font-size="76%">1</tspan><tspan dy="-3.5">&#8203;</tspan> = −G(s)H(s)；R→C 两通路 P<tspan dy="3.5" font-size="76%">1</tspan><tspan dy="-3.5">&#8203;</tspan>=G, P<tspan dy="3.5" font-size="76%">2</tspan><tspan dy="-3.5">&#8203;</tspan>=5GH）</text>
+  </g>
+</svg>

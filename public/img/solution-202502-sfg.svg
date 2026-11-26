@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="280" viewBox="0 0 640 280" role="img">
+  <title>202502 信号流图</title>
+  <rect width="100%" height="100%" fill="white"/>
+  <defs>
+    <marker id="ar" markerWidth="10" markerHeight="10" refX="7.5" refY="4" orient="auto-start-reverse" markerUnits="userSpaceOnUse">
+      <path d="M0 1.5L8 4L0 6.5Z" fill="#111"/>
+    </marker>
+  </defs>
+  <g font-family="Arial,'PingFang SC','Microsoft YaHei',sans-serif" fill="#111">
+    <line x1="55.0" y1="135.0" x2="155.0" y2="135.0" stroke="#111" stroke-width="1.8"/>
+    <polygon points="109.00,135.00 101.00,138.84 101.00,131.16" fill="#111"/>
+    <text x="105.0" y="123.0" font-size="13" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="3.5" stroke-linejoin="round">1</text>
+    <line x1="155.0" y1="135.0" x2="295.0" y2="135.0" stroke="#111" stroke-width="1.8"/>
+    <polygon points="229.00,135.00 221.00,138.84 221.00,131.16" fill="#111"/>
+    <text x="225.0" y="123.0" font-size="13" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="3.5" stroke-linejoin="round">K</text>
+    <line x1="295.0" y1="135.0" x2="435.0" y2="135.0" stroke="#111" stroke-width="1.8"/>
+    <polygon points="369.00,135.00 361.00,138.84 361.00,131.16" fill="#111"/>
+    <text x="365.0" y="123.0" font-size="13" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="3.5" stroke-linejoin="round">1/s</text>
+    <line x1="435.0" y1="135.0" x2="575.0" y2="135.0" stroke="#111" stroke-width="1.8"/>
+    <polygon points="509.00,135.00 501.00,138.84 501.00,131.16" fill="#111"/>
+    <text x="505.0" y="123.0" font-size="13" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="3.5" stroke-linejoin="round">1/(s+1)</text>
+    <path d="M 435.0 135.0 Q 365.0 25.0 295.0 135.0" fill="none" stroke="#111" stroke-width="1.7"/>
+    <polygon points="361.00,80.00 369.00,76.16 369.00,83.84" fill="#111"/>
+    <text x="365.0" y="70.0" font-size="13" text-anchor="middle" fill="#111" paint-order="stroke" stroke="white" stroke-width="3.5" stroke-linejoin="round">−T<tspan dy="3.5" font-size="76%">d</tspan><tspan dy="-3.5">&#8203;</tspan></text>
+    <path d="M 575.0 135.0 Q 505.0 209.0 435.0 135.0" fill="none" stroke="#111" stroke-width="1.7"/>
+    <polygon points="501.00,172.00 509.00,168.16 509.00,175.84" fill="#111"/>
+    <text x="505.0" y="190.0" font-size="13" text-anchor="middle" fill="#111" paint-order="stroke" stroke="white" stroke-width="3.5" stroke-linejoin="round">−1</text>
+    <path d="M 435.0 135.0 Q 295.0 289.0 155.0 135.0" fill="none" stroke="#111" stroke-width="1.7"/>
+    <polygon points="291.00,212.00 299.00,208.16 299.00,215.84" fill="#111"/>
+    <text x="295.0" y="230.0" font-size="13" text-anchor="middle" fill="#111" paint-order="stroke" stroke="white" stroke-width="3.5" stroke-linejoin="round">−1</text>
+    <circle cx="55.0" cy="135.0" r="4.2" fill="white" stroke="#111" stroke-width="2.0"/>
+    <text x="55.0" y="121.0" font-size="14" font-weight="bold" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="3.5" stroke-linejoin="round">R(s)</text>
+    <circle cx="155.0" cy="135.0" r="4.2" fill="white" stroke="#111" stroke-width="2.0"/>
+    <text x="155.0" y="121.0" font-size="14" font-weight="bold" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="3.5" stroke-linejoin="round">E(s)</text>
+    <circle cx="295.0" cy="135.0" r="4.2" fill="white" stroke="#111" stroke-width="2.0"/>
+    <text x="295.0" y="155.0" font-size="14" font-weight="bold" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="3.5" stroke-linejoin="round">X<tspan dy="3.5" font-size="76%">1</tspan><tspan dy="-3.5">&#8203;</tspan>(s)</text>
+    <circle cx="435.0" cy="135.0" r="4.2" fill="white" stroke="#111" stroke-width="2.0"/>
+    <text x="451.0" y="121.0" font-size="14" font-weight="bold" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="3.5" stroke-linejoin="round">V(s)</text>
+    <circle cx="575.0" cy="135.0" r="4.2" fill="white" stroke="#111" stroke-width="2.0"/>
+    <text x="575.0" y="121.0" font-size="14" font-weight="bold" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="3.5" stroke-linejoin="round">C(s)</text>
+    <text x="320.0" y="268" font-size="13.5" font-weight="bold" text-anchor="middle">系统信号流图（三条接触回路 L<tspan dy="3.5" font-size="76%">1</tspan><tspan dy="-3.5">&#8203;</tspan> = −K/s，L<tspan dy="3.5" font-size="76%">2</tspan><tspan dy="-3.5">&#8203;</tspan> = −T<tspan dy="3.5" font-size="76%">d</tspan><tspan dy="-3.5">&#8203;</tspan>/s，L<tspan dy="3.5" font-size="76%">3</tspan><tspan dy="-3.5">&#8203;</tspan> = −1/(s+1)）</text>
+  </g>
+</svg>

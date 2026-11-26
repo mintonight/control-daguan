@@ -8,12 +8,12 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'tools'))
-from validate_data import validate_file
+from validate_data import TEXT_IMAGES, validate_file
 
 
 class FigureWidthsTest(unittest.TestCase):
     def validate_widths(self, widths, omit=False):
-        source = json.loads((ROOT / 'data-src/2023/questions.json').read_text())
+        source = json.loads((ROOT / 'data-src/2023/questions.json').read_text(encoding='utf-8'))
         question = copy.deepcopy(source['questions'][1])
         question.pop('figureWidths', None)
         if not omit:
@@ -22,10 +22,11 @@ class FigureWidthsTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             folder = Path(directory) / '2023'
             (folder / 'img').mkdir(parents=True)
-            for image in question['figures'] + question['answerImages']:
+            text_imgs = TEXT_IMAGES.findall(question.get('answer', '') + '\n' + question.get('explanation', ''))
+            for image in set(question['figures'] + question['answerImages'] + text_imgs):
                 shutil.copyfile(ROOT / 'data-src/2023' / image, folder / image)
             path = folder / 'questions.json'
-            path.write_text(json.dumps(source))
+            path.write_text(json.dumps(source, ensure_ascii=False), encoding='utf-8')
             return validate_file(str(path), {}, {})
 
     def test_optional_positive_pixel_width(self):

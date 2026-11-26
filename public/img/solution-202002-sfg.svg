@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="370" viewBox="0 0 600 370" role="img">
+  <title>202002 信号流图</title>
+  <rect width="100%" height="100%" fill="white"/>
+  <defs>
+    <marker id="ar" markerWidth="10" markerHeight="10" refX="7.5" refY="4" orient="auto-start-reverse" markerUnits="userSpaceOnUse">
+      <path d="M0 1.5L8 4L0 6.5Z" fill="#111"/>
+    </marker>
+  </defs>
+  <g font-family="Arial,'PingFang SC','Microsoft YaHei',sans-serif" fill="#111">
+    <text x="300.0" y="24" font-size="13.5" font-weight="bold" text-anchor="middle">(a) 第 1 问系统信号流图</text>
+    <line x1="75.0" y1="80.0" x2="195.0" y2="80.0" stroke="#111" stroke-width="1.8"/>
+    <polygon points="139.00,80.00 131.00,83.84 131.00,76.16" fill="#111"/>
+    <text x="135.0" y="69.0" font-size="13" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="3.5" stroke-linejoin="round">1</text>
+    <line x1="195.0" y1="80.0" x2="340.0" y2="80.0" stroke="#111" stroke-width="1.8"/>
+    <polygon points="271.50,80.00 263.50,83.84 263.50,76.16" fill="#111"/>
+    <text x="267.5" y="69.0" font-size="13" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="3.5" stroke-linejoin="round">1</text>
+    <line x1="340.0" y1="80.0" x2="515.0" y2="80.0" stroke="#111" stroke-width="1.8"/>
+    <polygon points="431.50,80.00 423.50,83.84 423.50,76.16" fill="#111"/>
+    <text x="427.5" y="69.0" font-size="13" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="3.5" stroke-linejoin="round">2/s</text>
+    <path d="M 515.0 80.0 Q 427.5 140.0 340.0 80.0" fill="none" stroke="#111" stroke-width="1.7"/>
+    <polygon points="423.50,110.00 431.50,106.16 431.50,113.84" fill="#111"/>
+    <text x="427.5" y="127.0" font-size="13" text-anchor="middle" fill="#111" paint-order="stroke" stroke="white" stroke-width="3.5" stroke-linejoin="round">−K<tspan dy="3.5" font-size="76%">d</tspan><tspan dy="-3.5">&#8203;</tspan></text>
+    <path d="M 515.0 80.0 Q 355.0 228.0 195.0 80.0" fill="none" stroke="#111" stroke-width="1.7"/>
+    <polygon points="351.00,154.00 359.00,150.16 359.00,157.84" fill="#111"/>
+    <text x="355.0" y="171.0" font-size="13" text-anchor="middle" fill="#111" paint-order="stroke" stroke="white" stroke-width="3.5" stroke-linejoin="round">−5</text>
+    <circle cx="75.0" cy="80.0" r="4.2" fill="white" stroke="#111" stroke-width="2.0"/>
+    <text x="75.0" y="67.0" font-size="14" font-weight="bold" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="3.5" stroke-linejoin="round">R</text>
+    <circle cx="195.0" cy="80.0" r="4.2" fill="white" stroke="#111" stroke-width="2.0"/>
+    <text x="195.0" y="67.0" font-size="14" font-weight="bold" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="3.5" stroke-linejoin="round">E</text>
+    <circle cx="340.0" cy="80.0" r="4.2" fill="white" stroke="#111" stroke-width="2.0"/>
+    <text x="340.0" y="67.0" font-size="14" font-weight="bold" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="3.5" stroke-linejoin="round">X<tspan dy="3.5" font-size="76%">1</tspan><tspan dy="-3.5">&#8203;</tspan></text>
+    <circle cx="515.0" cy="80.0" r="4.2" fill="white" stroke="#111" stroke-width="2.0"/>
+    <text x="515.0" y="67.0" font-size="14" font-weight="bold" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="3.5" stroke-linejoin="round">Y</text>
+    <line x1="36" y1="182" x2="564" y2="182" stroke="#ddd" stroke-width="1" stroke-dasharray="4 4"/>
+    <text x="300.0" y="206" font-size="13.5" font-weight="bold" text-anchor="middle">(b) 第 2 问引入 G<tspan dy="3.5" font-size="76%">c</tspan><tspan dy="-3.5">&#8203;</tspan>(s) = K<tspan dy="3.5" font-size="76%">1</tspan><tspan dy="-3.5">&#8203;</tspan>/(s+5) 后的信号流图</text>
+    <line x1="75.0" y1="256.0" x2="195.0" y2="256.0" stroke="#111" stroke-width="1.8"/>
+    <polygon points="139.00,256.00 131.00,259.84 131.00,252.16" fill="#111"/>
+    <text x="135.0" y="245.0" font-size="13" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="3.5" stroke-linejoin="round">1</text>
+    <line x1="195.0" y1="256.0" x2="355.0" y2="256.0" stroke="#111" stroke-width="1.8"/>
+    <polygon points="279.00,256.00 271.00,259.84 271.00,252.16" fill="#111"/>
+    <text x="275.0" y="245.0" font-size="13" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="3.5" stroke-linejoin="round">K<tspan dy="3.5" font-size="76%">1</tspan><tspan dy="-3.5">&#8203;</tspan>/(s+5)</text>
+    <line x1="355.0" y1="256.0" x2="515.0" y2="256.0" stroke="#111" stroke-width="1.8"/>
+    <polygon points="439.00,256.00 431.00,259.84 431.00,252.16" fill="#111"/>
+    <text x="435.0" y="245.0" font-size="13" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="3.5" stroke-linejoin="round">2/s</text>
+    <path d="M 515.0 256.0 Q 435.0 316.0 355.0 256.0" fill="none" stroke="#111" stroke-width="1.7"/>
+    <polygon points="431.00,286.00 439.00,282.16 439.00,289.84" fill="#111"/>
+    <text x="435.0" y="303.0" font-size="13" text-anchor="middle" fill="#111" paint-order="stroke" stroke="white" stroke-width="3.5" stroke-linejoin="round">−K<tspan dy="3.5" font-size="76%">d</tspan><tspan dy="-3.5">&#8203;</tspan></text>
+    <path d="M 515.0 256.0 Q 355.0 404.0 195.0 256.0" fill="none" stroke="#111" stroke-width="1.7"/>
+    <polygon points="351.00,330.00 359.00,326.16 359.00,333.84" fill="#111"/>
+    <text x="355.0" y="347.0" font-size="13" text-anchor="middle" fill="#111" paint-order="stroke" stroke="white" stroke-width="3.5" stroke-linejoin="round">−5</text>
+    <circle cx="75.0" cy="256.0" r="4.2" fill="white" stroke="#111" stroke-width="2.0"/>
+    <text x="75.0" y="243.0" font-size="14" font-weight="bold" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="3.5" stroke-linejoin="round">R</text>
+    <circle cx="195.0" cy="256.0" r="4.2" fill="white" stroke="#111" stroke-width="2.0"/>
+    <text x="195.0" y="243.0" font-size="14" font-weight="bold" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="3.5" stroke-linejoin="round">E</text>
+    <circle cx="355.0" cy="256.0" r="4.2" fill="white" stroke="#111" stroke-width="2.0"/>
+    <text x="355.0" y="243.0" font-size="14" font-weight="bold" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="3.5" stroke-linejoin="round">X<tspan dy="3.5" font-size="76%">1</tspan><tspan dy="-3.5">&#8203;</tspan></text>
+    <circle cx="515.0" cy="256.0" r="4.2" fill="white" stroke="#111" stroke-width="2.0"/>
+    <text x="515.0" y="243.0" font-size="14" font-weight="bold" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="3.5" stroke-linejoin="round">Y</text>
+  </g>
+</svg>

@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="620" height="280" viewBox="0 0 620 280" role="img">
+  <title>202302 信号流图</title>
+  <rect width="100%" height="100%" fill="white"/>
+  <defs>
+    <marker id="ar" markerWidth="10" markerHeight="10" refX="7.5" refY="4" orient="auto-start-reverse" markerUnits="userSpaceOnUse">
+      <path d="M0 1.5L8 4L0 6.5Z" fill="#111"/>
+    </marker>
+  </defs>
+  <g font-family="Arial,'PingFang SC','Microsoft YaHei',sans-serif" fill="#111">
+    <line x1="60.0" y1="132.0" x2="175.0" y2="132.0" stroke="#111" stroke-width="1.8"/>
+    <polygon points="121.50,132.00 113.50,135.84 113.50,128.16" fill="#111"/>
+    <text x="117.5" y="120.0" font-size="13" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="3.5" stroke-linejoin="round">1</text>
+    <line x1="175.0" y1="132.0" x2="345.0" y2="132.0" stroke="#111" stroke-width="1.8"/>
+    <polygon points="264.00,132.00 256.00,135.84 256.00,128.16" fill="#111"/>
+    <text x="260.0" y="120.0" font-size="13" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="3.5" stroke-linejoin="round">1/(1.2s+1)</text>
+    <line x1="345.0" y1="132.0" x2="540.0" y2="132.0" stroke="#111" stroke-width="1.8"/>
+    <polygon points="446.50,132.00 438.50,135.84 438.50,128.16" fill="#111"/>
+    <text x="442.5" y="120.0" font-size="13" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="3.5" stroke-linejoin="round">1/s</text>
+    <path d="M 60.0 132.0 Q 202.5 -3.0 345.0 132.0" fill="none" stroke="#111" stroke-width="1.7"/>
+    <polygon points="206.50,64.50 198.50,68.34 198.50,60.66" fill="#111"/>
+    <text x="202.5" y="54.5" font-size="13" text-anchor="middle" fill="#111" paint-order="stroke" stroke="white" stroke-width="3.5" stroke-linejoin="round">G<tspan dy="3.5" font-size="76%">c</tspan><tspan dy="-3.5">&#8203;</tspan>(s)</text>
+    <path d="M 540.0 132.0 Q 442.5 210.0 345.0 132.0" fill="none" stroke="#111" stroke-width="1.7"/>
+    <polygon points="438.50,171.00 446.50,167.16 446.50,174.84" fill="#111"/>
+    <text x="442.5" y="189.0" font-size="13" text-anchor="middle" fill="#111" paint-order="stroke" stroke="white" stroke-width="3.5" stroke-linejoin="round">−K<tspan dy="3.5" font-size="76%">t</tspan><tspan dy="-3.5">&#8203;</tspan></text>
+    <path d="M 540.0 132.0 Q 357.5 304.0 175.0 132.0" fill="none" stroke="#111" stroke-width="1.7"/>
+    <polygon points="353.50,218.00 361.50,214.16 361.50,221.84" fill="#111"/>
+    <text x="357.5" y="236.0" font-size="13" text-anchor="middle" fill="#111" paint-order="stroke" stroke="white" stroke-width="3.5" stroke-linejoin="round">−K<tspan dy="3.5" font-size="76%">d</tspan><tspan dy="-3.5">&#8203;</tspan></text>
+    <circle cx="60.0" cy="132.0" r="4.2" fill="white" stroke="#111" stroke-width="2.0"/>
+    <text x="60.0" y="152.0" font-size="14" font-weight="bold" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="3.5" stroke-linejoin="round">R(s)</text>
+    <circle cx="175.0" cy="132.0" r="4.2" fill="white" stroke="#111" stroke-width="2.0"/>
+    <text x="175.0" y="118.0" font-size="14" font-weight="bold" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="3.5" stroke-linejoin="round">E(s)</text>
+    <circle cx="345.0" cy="132.0" r="4.2" fill="white" stroke="#111" stroke-width="2.0"/>
+    <text x="359.0" y="118.0" font-size="14" font-weight="bold" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="3.5" stroke-linejoin="round">V(s)</text>
+    <circle cx="540.0" cy="132.0" r="4.2" fill="white" stroke="#111" stroke-width="2.0"/>
+    <text x="540.0" y="118.0" font-size="14" font-weight="bold" text-anchor="middle" paint-order="stroke" stroke="white" stroke-width="3.5" stroke-linejoin="round">Y(s)</text>
+    <text x="310.0" y="268" font-size="13.5" font-weight="bold" text-anchor="middle">系统信号流图（前向通路 P<tspan dy="3.5" font-size="76%">1</tspan><tspan dy="-3.5">&#8203;</tspan>, P<tspan dy="3.5" font-size="76%">2</tspan><tspan dy="-3.5">&#8203;</tspan>；回路 L<tspan dy="3.5" font-size="76%">1</tspan><tspan dy="-3.5">&#8203;</tspan> = −K<tspan dy="3.5" font-size="76%">t</tspan><tspan dy="-3.5">&#8203;</tspan>/s, L<tspan dy="3.5" font-size="76%">2</tspan><tspan dy="-3.5">&#8203;</tspan> = −K<tspan dy="3.5" font-size="76%">d</tspan><tspan dy="-3.5">&#8203;</tspan>/[s(1.2s+1)]）</text>
+  </g>
+</svg>

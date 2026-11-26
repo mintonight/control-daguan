@@ -7,9 +7,9 @@ for (const year of [2016, 2017, 2018, 2019]) {
 }
 const q = id => rows.get(id);
 const near = (a, b, eps = 1e-10) => assert.ok(Math.abs(a - b) < eps, `${a} != ${b}`);
-test('2016–2019 inventory distinguishes 27 written records from 6 original-image-only records', () => {
+test('2016–2019 inventory has all 33 records with independent written solutions', () => {
   assert.equal(rows.size, 33); // 2019 contains nine questions, not eight.
-  assert.equal([...rows.values()].filter(x => x.answer && x.explanation).length, 27);
+  assert.equal([...rows.values()].filter(x => x.answer && x.explanation).length, 33);
   for (const [id, row] of rows) {
     if (!row.answer) { assert.equal(row.explanation, ''); assert.ok(row.answerImages.length); continue; }
     for (const field of ['answer', 'explanation']) {

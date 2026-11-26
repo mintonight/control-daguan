@@ -12,8 +12,8 @@ function named(text, name) {
   const begin = text.indexOf('\\begin{bmatrix}', at), end = text.indexOf('\\end{bmatrix}', begin);
   return text.slice(begin + '\\begin{bmatrix}'.length, end).split('\\\\').map(row => row.split('&').map(Number));
 }
-test('last batch is exactly 23 records:14 independent written solutions and9 image-only records', () => {
-  assert.equal(rows.size, 23);assert.equal([...rows.values()].filter(x => x.answer).length, 14);
+test('last batch is exactly 23 records: all 23 independent written solutions', () => {
+  assert.equal(rows.size, 23);assert.equal([...rows.values()].filter(x => x.answer).length, 23);
   for (const [id, row] of rows) {
     if (!row.answer) {assert.equal(row.explanation, '');assert.ok(row.answerImages.length);continue;}
     for (const field of ['answer', 'explanation']) {
@@ -77,13 +77,13 @@ test('202101 cascade closure produces the displayed ODE coefficients and negativ
   }
 });
 
-test('completed all-bank coverage reconciles88 actual records with73 written and15 image-only without banning stem figures', () => {
+test('completed all-bank coverage reconciles 88 actual records with all 88 written without banning stem figures', () => {
   const counts=[],all=[];
   for(let year=2016;year<=2026;year++) {
     const records=JSON.parse(readFileSync(new URL(`../data-src/${year}/questions.json`,import.meta.url))).questions;
     counts.push(records.length);all.push(...records);
   }
   assert.deepEqual(counts,[8,8,8,9,7,8,8,8,8,8,8]);assert.equal(all.length,88);
-  assert.equal(all.filter(r=>r.answer&&r.explanation).length,73);assert.equal(all.filter(r=>!r.answer&&!r.explanation).length,15);
+  assert.equal(all.filter(r=>r.answer&&r.explanation).length,88);assert.equal(all.filter(r=>!r.answer&&!r.explanation).length,0);
   for(const row of all.filter(r=>r.answer)) for(const field of ['answer','explanation']) assert.doesNotMatch(row[field],/原答案|原解|原书|见原图解析|答案中的|即上述/);
 });
