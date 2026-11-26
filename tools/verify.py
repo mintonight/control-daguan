@@ -163,9 +163,20 @@ async def main():
         imgs_ok = await pg.evaluate("[...document.querySelectorAll('.card img')].every(img => img.complete && img.naturalWidth > 0)")
         if errs_k or not imgs_ok: bad_tex.append((q['id'], errs_k, imgs_ok))
     ok(f'全部 {len(lib["questions"])} 题: 题干/答案/解析 KaTeX 无报错、图片全部加载', not bad_tex, str(bad_tex))
-    await pg.goto(BASE + '?list=complete&question=201602', wait_until='networkidle'); await t('button[aria-label="答案"]').click(); await pg.wait_for_selector('.box .orig img')
-    ok('仅原图答案题: 答案框显示原图+勘误说明', await t('.box .orig img').count() == 2 and await t('.box .note').count() == 1 and await t('.src-tabs').count() == 0)
-    await t('button[aria-label="解析"]').click(); ok('仅原图答案题: 同时开解析时答案框指向解析', '见下方' in await t('.box').first.inner_text() and await t('.box .orig img').count() == 2)
+    # 仅原图答案题（全题库已补全文字，此处临时拦截模拟无文字的仅原图回退逻辑）
+    async def mock_image_only(route):
+      resp = await route.fetch()
+      payload = await resp.json()
+      payload['answer'] = ''
+      payload['explanation'] = ''
+      await route.fulfill(status=200, content_type='application/json', body=json.dumps(payload, ensure_ascii=False))
+    await pg.route('**/data/questions/201602.json', mock_image_only)
+    try:
+      await pg.goto(BASE + '?list=complete&question=201602', wait_until='networkidle'); await t('button[aria-label="答案"]').click(); await pg.wait_for_selector('.box .orig img')
+      ok('仅原图答案题: 答案框显示原图+勘误说明', await t('.box .orig img').count() == 2 and await t('.box .note').count() == 1 and await t('.src-tabs').count() == 0)
+      await t('button[aria-label="解析"]').click(); ok('仅原图答案题: 同时开解析时答案框指向解析', '见下方' in await t('.box').first.inner_text() and await t('.box .orig img').count() == 2)
+    finally:
+      await pg.unroute('**/data/questions/201602.json', mock_image_only)
     # 文字+原图题：解析区切换（默认文字，点击后才加载原图）
     await pg.goto(BASE + '?list=complete&question=202501', wait_until='networkidle')
     await t('button[aria-label="解析"]').click(); await pg.wait_for_selector('.box[data-kind="exp"] .src-tabs')
