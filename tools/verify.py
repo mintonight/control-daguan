@@ -1,7 +1,7 @@
 """逐个点击控制大观的每个交互控件并断言效果。用法: python3 tools/verify.py [base_url]"""
-import asyncio, sys, json, os
+import asyncio, sys, json, os, tempfile
 from playwright.async_api import async_playwright
-from verify_support import idle
+from verify_support import idle, launch_chromium
 from verify_copy_tex import check_question
 BASE = sys.argv[1] if len(sys.argv) > 1 else 'http://localhost:8765/'
 R = []
@@ -14,7 +14,7 @@ def ok(name, cond, detail=''):
     R.append((name, bool(cond), detail)); print(('PASS' if cond else 'FAIL'), name, detail)
 async def main():
   async with async_playwright() as p:
-    b = await p.chromium.launch(executable_path='/usr/bin/google-chrome')
+    b = await launch_chromium(p)
     ctx = await b.new_context(viewport={'width': 1440, 'height': 900}, accept_downloads=True)
     await ctx.grant_permissions(['clipboard-read', 'clipboard-write'], origin=BASE.rstrip('/').rsplit('/', 0)[0] if False else None)
     pg = await ctx.new_page(); errs = []
@@ -143,7 +143,7 @@ async def main():
     await t('#codeInput').fill(code[:-3] + 'zzz'); await t('#importCodeBtn').click(); ok('记录码校验失败提示', '校验失败' in await txt('#setMsg'), await txt('#setMsg'))
     await t('#importFile').set_input_files(path); await idle(pg); ok('导入记录 JSON', '已导入' in await txt('#setMsg'), await txt('#setMsg'))
     stored = await pg.evaluate("__cdg.kv.get('rec')"); ok('导入后数据写回(IndexedDB)', stored and len(stored['marks']) >= 1, json.dumps(stored['marks'])[:80])
-    bad = '/tmp/bad.json'; open(bad, 'w').write('{"x":1}'); await t('#importFile').set_input_files(bad); await idle(pg)
+    bad = os.path.join(tempfile.gettempdir(), 'bad.json'); open(bad, 'w', encoding='utf-8').write('{"x":1}'); await t('#importFile').set_input_files(bad); await idle(pg)
     ok('导入无效 JSON 提示', '不是有效' in await txt('#setMsg'), await txt('#setMsg'))
     await pg.mouse.click(400, 400); ok('点击外部关闭设置', not await t('#settings').is_visible())
     # 品牌链接
@@ -163,20 +163,22 @@ async def main():
         imgs_ok = await pg.evaluate("[...document.querySelectorAll('.card img')].every(img => img.complete && img.naturalWidth > 0)")
         if errs_k or not imgs_ok: bad_tex.append((q['id'], errs_k, imgs_ok))
     ok(f'全部 {len(lib["questions"])} 题: 题干/答案/解析 KaTeX 无报错、图片全部加载', not bad_tex, str(bad_tex))
-    # 仅原图答案题（全题库已补全文字，此处临时拦截模拟无文字的仅原图回退逻辑）
-    async def mock_image_only(route):
-      resp = await route.fetch()
-      payload = await resp.json()
-      payload['answer'] = ''
-      payload['explanation'] = ''
-      await route.fulfill(status=200, content_type='application/json', body=json.dumps(payload, ensure_ascii=False))
-    await pg.route('**/data/questions/201602.json', mock_image_only)
+    # 仅原图答案题（全题库已补全文字，此处在禁用 SW 的独立上下文中拦截模拟无文字的仅原图回退逻辑）
+    mock_ctx = await b.new_context(viewport={'width': 1440, 'height': 900}, service_workers='block')
     try:
-      await pg.goto(BASE + '?list=complete&question=201602', wait_until='networkidle'); await t('button[aria-label="答案"]').click(); await pg.wait_for_selector('.box .orig img')
-      ok('仅原图答案题: 答案框显示原图+勘误说明', await t('.box .orig img').count() == 2 and await t('.box .note').count() == 1 and await t('.src-tabs').count() == 0)
-      await t('button[aria-label="解析"]').click(); ok('仅原图答案题: 同时开解析时答案框指向解析', '见下方' in await t('.box').first.inner_text() and await t('.box .orig img').count() == 2)
+      mpg = await mock_ctx.new_page()
+      async def mock_image_only(route):
+        resp = await route.fetch()
+        payload = await resp.json()
+        payload['answer'] = ''
+        payload['explanation'] = ''
+        await route.fulfill(status=200, content_type='application/json', body=json.dumps(payload, ensure_ascii=False))
+      await mpg.route('**/data/questions/201602.json', mock_image_only)
+      await mpg.goto(BASE + '?list=complete&question=201602', wait_until='networkidle'); await mpg.locator('button[aria-label="答案"]').click(); await mpg.wait_for_selector('.box .orig img')
+      ok('仅原图答案题: 答案框显示原图+勘误说明', await mpg.locator('.box .orig img').count() == 2 and await mpg.locator('.box .note').count() == 1 and await mpg.locator('.src-tabs').count() == 0)
+      await mpg.locator('button[aria-label="解析"]').click(); ok('仅原图答案题: 同时开解析时答案框指向解析', '见下方' in await mpg.locator('.box').first.inner_text() and await mpg.locator('.box .orig img').count() == 2)
     finally:
-      await pg.unroute('**/data/questions/201602.json', mock_image_only)
+      await mock_ctx.close()
     # 文字+原图题：解析区切换（默认文字，点击后才加载原图）
     await pg.goto(BASE + '?list=complete&question=202501', wait_until='networkidle')
     await t('button[aria-label="解析"]').click(); await pg.wait_for_selector('.box[data-kind="exp"] .src-tabs')

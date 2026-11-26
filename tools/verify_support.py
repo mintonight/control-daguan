@@ -1,5 +1,18 @@
 """Browser-test synchronization. idle observes app work; assertions observe browser/SW state."""
 import asyncio
+import os
+
+
+async def launch_chromium(pw, **kwargs):
+    """Launch Chrome on CI/Linux or fall back to local Chrome/Edge/Chromium on other platforms."""
+    if os.path.exists('/usr/bin/google-chrome'):
+        return await pw.chromium.launch(executable_path='/usr/bin/google-chrome', **kwargs)
+    for opt in ({'channel': 'chrome'}, {'channel': 'msedge'}, {}):
+        try:
+            return await pw.chromium.launch(**opt, **kwargs)
+        except Exception:
+            continue
+    return await pw.chromium.launch(**kwargs)
 
 
 async def idle(page, *, allow_failure=False, timeout=15):

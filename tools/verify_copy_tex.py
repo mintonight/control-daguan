@@ -1,4 +1,8 @@
 """Shared browser check: copying rendered KaTeX yields its LaTeX source (KaTeX contrib copy-tex)."""
+import re
+
+INLINE_TEX = re.compile(r'(?<!\$)\$(?!\$)([^$\n]+?)(?<!\$)\$(?!\$)')
+DISPLAY_TEX = re.compile(r'\$\$([\s\S]+?)\$\$')
 
 # Selects the given DOM range, triggers the browser copy command, and records the
 # text/plain payload that the real copy event put on the clipboard.
@@ -9,10 +13,6 @@ SELECT = """([target, mode]) => {
     const walker = document.createTreeWalker(el.querySelector('.katex-html'), NodeFilter.SHOW_TEXT);
     const first = walker.nextNode(); let last = first; for (let n; (n = walker.nextNode());) last = n;
     r.setStart(first, 0); r.setEnd(last, last.length);
-  } else if (mode === 'from') {
-    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT); let n;
-    while ((n = walker.nextNode()) && !n.data.includes('令'));
-    r.setStart(n, n.data.indexOf('令')); r.setEnd(el, el.childNodes.length);
   } else if (mode === 'node') r.selectNode(el);
   else r.selectNodeContents(el);
   const s = getSelection(); s.removeAllRanges(); s.addRange(r);
@@ -36,17 +36,29 @@ def norm(text):
 async def check_question(page, ok, qid=202302):
     """Inline, display and mixed text+formula copy inside a text explanation."""
     data = await page.evaluate(f"fetch('data/questions/{qid}.json').then(r => r.json())")
-    para = next(p for p in data['explanation'].split('\n\n') if '令 $U(s)$' in p)
-    para = para[para.index('令'):]
+    para = next(
+        p.strip() for p in re.split(r'\n\s*\n', data['explanation'])
+        if '**' not in p and '![' not in p and INLINE_TEX.search(p) and DISPLAY_TEX.search(p)
+    )
+    inline_m = INLINE_TEX.search(para)
+    display_m = DISPLAY_TEX.search(para)
+    first_inline = inline_m.group(0)
+    prefix = para[:min(inline_m.start(), display_m.start())].strip()
     body = '.box[data-kind="exp"] .body'
-    first_p = await page.evaluate_handle(f"[...document.querySelectorAll('{body} p')].find(p => p.textContent.includes('令 U'))")
-    inline = await first_p.evaluate_handle("p => p.querySelector(':scope > .katex')")
-    display = await first_p.evaluate_handle("p => p.querySelector('.katex-display')")
+    target_p = await page.evaluate_handle(
+        """([body, prefix]) => [...document.querySelectorAll(`${body} p`)].find(p =>
+            p.querySelector(':scope > .katex') && p.querySelector('.katex-display') &&
+            (!prefix || p.textContent.startsWith(prefix))
+        )""",
+        [body, prefix],
+    )
+    inline = await target_p.evaluate_handle("p => p.querySelector(':scope > .katex')")
+    display = await target_p.evaluate_handle("p => p.querySelector('.katex-display')")
     event, clip = await copy(page, inline, 'inside')
-    ok('复制公式: 行内公式内部选区复制为 $LaTeX$', event == clip == '$U(s)$', (event, clip))
+    ok('复制公式: 行内公式内部选区复制为 $LaTeX$', event == clip == first_inline, (event, clip, first_inline))
     event, clip = await copy(page, display, 'node')
     ok('复制公式: 块级公式复制为 $$LaTeX$$', event == clip and clip.startswith('$$') and clip.endswith('$$') and clip in para, (event, clip))
-    event, clip = await copy(page, first_p, 'from')
+    event, clip = await copy(page, target_p, 'contents')
     ok('复制公式: 文字与公式混合选区保留文字并还原源码', event == clip and norm(clip) == norm(para), (clip, para))
     plain = await page.evaluate_handle(f"[...document.querySelectorAll('{body} strong')][0]")
     event, clip = await copy(page, plain, 'contents')
